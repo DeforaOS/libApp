@@ -16,6 +16,18 @@
 
 
 #functions
+#transport
+_transport()
+{
+	[ $# -eq 2 ]						|| return 1
+	transport="$1"
+	name="$2"
+
+	echo "transport: Testing $transport" 1<&2
+	./transport -p "$transport"
+}
+
+
 #usage
 _usage()
 {
@@ -45,8 +57,14 @@ target="$1"
 
 > "$target"
 FAILED=
-./transport -p tcp	>> "$target"	|| FAILED="$FAILED tcp(error $?)"
-./transport -p udp	>> "$target"	|| FAILED="$FAILED udp(error $?)"
+_transport tcp4 127.0.0.1:4242	>> "$target" || FAILED="$FAILED tcp4(error $?)"
+_transport tcp6 ::1.4242	>> "$target" || FAILED="$FAILED tcp6(error $?)"
+_transport tcp  127.0.0.1:4242	>> "$target" || FAILED="$FAILED tcp(error $?)"
+_transport tcp  ::1.4242	>> "$target" || FAILED="$FAILED tcp(error $?)"
+_transport udp4 127.0.0.1:4242	>> "$target" || FAILED="$FAILED udp4(error $?)"
+_transport udp6 ::1.4242	>> "$target" || FAILED="$FAILED udp6(error $?)"
+_transport udp  127.0.0.1:4242	>> "$target" || FAILED="$FAILED udp(error $?)"
+_transport udp  ::1.4242	>> "$target" || FAILED="$FAILED udp(error $?)"
 [ -z "$FAILED" ]			&& exit 0
 echo "Failed tests:$FAILED" 1>&2
 #XXX ignore errors for now

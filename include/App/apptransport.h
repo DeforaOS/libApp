@@ -50,8 +50,9 @@ typedef struct _AppTransportPluginDefinition AppTransportPluginDefinition;
 
 typedef struct _AppTransportPluginHelper
 {
-	AppTransport * apptransport;
+	AppTransport * transport;
 	Event * event;
+
 	/* callbacks */
 	int (*status)(AppTransport * transport, AppTransportStatus status,
 			unsigned int code, char const * message);

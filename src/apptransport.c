@@ -43,6 +43,8 @@ struct _AppTransport
 /* protected */
 /* functions */
 /* apptransport_new */
+static void _new_helper(AppTransport * transport);
+
 AppTransport * apptransport_new(AppTransportMode mode, char const * plugin,
 		char const * name)
 {
@@ -53,7 +55,7 @@ AppTransport * apptransport_new(AppTransportMode mode, char const * plugin,
 		return NULL;
 	memset(transport, 0, sizeof(*transport));
 	/* initialize the helper */
-	/* FIXME implement */
+	_new_helper(transport);
 	/* load the transport plug-in */
 	if((transport->plugin = plugin_new(LIBDIR, "App", "transport", plugin))
 			== NULL
@@ -69,6 +71,12 @@ AppTransport * apptransport_new(AppTransportMode mode, char const * plugin,
 		return NULL;
 	}
 	return transport;
+}
+
+static void _new_helper(AppTransport * transport)
+{
+	transport->helper.transport = transport;
+	/* FIXME really implement */
 }
 
 
