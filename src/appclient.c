@@ -415,6 +415,7 @@ static int _new_connect(AppClient * appclient, char const * app)
 				!= 1)
 			return error_set_code(1, "%s", ERR_error_string(
 						ERR_get_error(), NULL));
+		appclient->error = _callback_error_ssl;
 		appclient->read = _callback_read_ssl;
 		appclient->write = _callback_write_ssl;
 		SSL_set_connect_state(appclient->ssl);
