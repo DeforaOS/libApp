@@ -1,4 +1,4 @@
-/* $Id$ */
+/* $Id: apptransport.h,v 1.1 2012/09/28 00:25:56 khorben Exp $ */
 /* Copyright (c) 2012 Pierre Pronchery <khorben@defora.org> */
 /* This file is part of DeforaOS System libApp */
 /* This program is free software: you can redistribute it and/or modify
