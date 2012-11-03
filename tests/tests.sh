@@ -23,7 +23,7 @@ _transport()
 	transport="$1"
 	name="$2"
 
-	echo "transport: Testing $transport" 1<&2
+	echo "transport: Testing $transport ($name)" 1<&2
 	./transport -p "$transport"
 }
 
