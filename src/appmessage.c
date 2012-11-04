@@ -16,6 +16,7 @@
 
 
 #include <stdarg.h>
+#include <stddef.h>
 #include <System.h>
 #include "App/appmessage.h"
 
