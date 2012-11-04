@@ -193,7 +193,7 @@ static int _init_address(char const * name, struct sockaddr_in * sa)
 		return -1;
 	sa->sin_family = AF_INET;
 	sa->sin_port = htons(l);
-	memcpy(&sa->sin_addr, he->h_addr, sizeof(sa->sin_addr));
+	memcpy(&sa->sin_addr, he->h_addr_list[0], sizeof(sa->sin_addr));
 	return 0;
 }
 
