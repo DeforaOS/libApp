@@ -506,12 +506,12 @@ static int _tcp_callback_connect(int fd, TCP * tcp)
 	if(res != 0)
 	{
 		/* the connection failed */
-		error_set_code(1, "%s: %s", "connect", strerror(errno));
+		error_set_code(1, "%s: %s", "connect", strerror(res));
 		close(fd);
 		tcp->u.client.fd = -1;
 		/* FIXME report error */
 #ifdef DEBUG
-		fprintf(stderr, "DEBUG: %s() %s\n", __func__, strerror(errno));
+		fprintf(stderr, "DEBUG: %s() %s\n", __func__, strerror(res));
 #endif
 		return -1;
 	}
