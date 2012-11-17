@@ -25,11 +25,20 @@
 #include <string.h>
 #include <limits.h>
 #include <errno.h>
-#include <netinet/in.h>
-#include <arpa/inet.h>
-#include <netdb.h>
+#ifdef __WIN32__
+# include <Winsock2.h>
+#else
+# include <netinet/in.h>
+# include <arpa/inet.h>
+# include <netdb.h>
+#endif
 #include <System.h>
 #include "App/apptransport.h"
+
+/* portability */
+#ifdef __WIN32__
+# define close(fd) closesocket(fd)
+#endif
 
 
 /* UDP */

@@ -27,11 +27,20 @@
 #include <string.h>
 #include <limits.h>
 #include <errno.h>
-#include <netinet/in.h>
-#include <arpa/inet.h>
-#include <netdb.h>
+#ifdef __WIN32__
+# include <Winsock2.h>
+#else
+# include <netinet/in.h>
+# include <arpa/inet.h>
+# include <netdb.h>
+#endif
 #include <System.h>
 #include "App/apptransport.h"
+
+/* portability */
+#ifdef __WIN32__
+# define close(fd) closesocket(fd)
+#endif
 
 
 /* TCP */
@@ -539,8 +548,8 @@ static int _tcp_socket_callback_read(int fd, TCPSocket * tcpsocket)
 	if((p = realloc(tcpsocket->bufin, tcpsocket->bufin_cnt + inc)) == NULL)
 		return -1;
 	tcpsocket->bufin = p;
-	if((ssize = read(tcpsocket->fd, &tcpsocket->bufin[tcpsocket->bufin_cnt],
-					inc)) < 0)
+	if((ssize = recv(tcpsocket->fd, &tcpsocket->bufin[tcpsocket->bufin_cnt],
+					inc, 0)) < 0)
 	{
 		error_set_code(1, "%s", strerror(errno));
 		close(tcpsocket->fd);
@@ -579,8 +588,8 @@ static int _tcp_socket_callback_write(int fd, TCPSocket * tcpsocket)
 	/* check parameters */
 	if(tcpsocket->fd != fd)
 		return -1;
-	if((ssize = write(tcpsocket->fd, tcpsocket->bufout,
-					tcpsocket->bufout_cnt)) < 0)
+	if((ssize = send(tcpsocket->fd, tcpsocket->bufout,
+					tcpsocket->bufout_cnt, 0)) < 0)
 	{
 		/* XXX report error (and reconnect) */
 		error_set_code(1, "%s", strerror(errno));
