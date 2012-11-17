@@ -41,6 +41,11 @@
 #include "appinterface.h"
 #include "common.h"
 
+/* portability */
+#ifdef __WIN32__
+# define close(fd)	closesocket(fd)
+#endif
+
 
 /* AppClient */
 /* private */
@@ -104,7 +109,11 @@ static int _appclient_timeout(AppClient * appclient)
 #endif
 	event_unregister_io_read(appclient->event, appclient->fd);
 	event_unregister_io_write(appclient->event, appclient->fd);
+#ifdef __WIN32__
+	errno = WSAETIMEDOUT;
+#else
 	errno = ETIMEDOUT;
+#endif
 	return error_set_code(1, "%s", strerror(errno));
 }
 
@@ -224,7 +233,7 @@ static int _callback_error(AppClient * appclient)
 static ssize_t _callback_read(AppClient * appclient, char * buffer,
 		size_t count)
 {
-	return read(appclient->fd, buffer, count);
+	return recv(appclient->fd, buffer, count, 0);
 }
 
 
@@ -232,7 +241,7 @@ static ssize_t _callback_read(AppClient * appclient, char * buffer,
 static ssize_t _callback_write(AppClient * appclient, char const * buffer,
 		size_t count)
 {
-	return write(appclient->fd, buffer, count);
+	return send(appclient->fd, buffer, count, 0);
 }
 
 
