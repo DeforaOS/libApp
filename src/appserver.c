@@ -41,6 +41,11 @@
 #include "common.h"
 #include "../config.h"
 
+/* portability */
+#ifdef __WIN32__
+# define close(fd)	closesocket(fd)
+#endif
+
 
 /* AppServerClient */
 /* private */
@@ -439,7 +444,7 @@ static char const * _appserver_error_ssl(void)
 static ssize_t _callback_read(AppServerClient * asc, char * buffer,
 		size_t count)
 {
-	return read(asc->fd, buffer, count);
+	return recv(asc->fd, buffer, count, 0);
 }
 
 
@@ -447,7 +452,7 @@ static ssize_t _callback_read(AppServerClient * asc, char * buffer,
 static ssize_t _callback_write(AppServerClient * asc, char const * buffer,
 		size_t count)
 {
-	return write(asc->fd, buffer, count);
+	return send(asc->fd, buffer, count, 0);
 }
 
 
