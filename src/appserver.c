@@ -560,7 +560,7 @@ static int _new_server(AppServer * appserver, char const * app, int options)
 			: INADDR_LOOPBACK);
 	if(bind(fd, (struct sockaddr *)&sa, sizeof(sa)) == 0)
 	{
-		if(listen(fd, 5) == 0)
+		if(listen(fd, SOMAXCONN) == 0)
 		{
 			event_register_io_read(appserver->event, fd,
 					(EventIOFunc)_appserver_accept,

@@ -261,7 +261,7 @@ static int _init_server(TCP * tcp, char const * name)
 #ifdef DEBUG
 	fprintf(stderr, "DEBUG: %s() %s\n", __func__, "listen()");
 #endif
-	if(listen(tcp->u.server.fd, 5) != 0)
+	if(listen(tcp->u.server.fd, SOMAXCONN) != 0)
 		return -_tcp_error("listen", 1);
 	event_register_io_read(tcp->helper->event, tcp->u.server.fd,
 			(EventIOFunc)_tcp_callback_accept, tcp);
