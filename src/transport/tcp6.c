@@ -15,4 +15,5 @@
 
 
 
+#define TCP_FAMILY AF_INET6
 #include "tcp.c"

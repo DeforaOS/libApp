@@ -42,6 +42,11 @@
 # define close(fd) closesocket(fd)
 #endif
 
+/* for tcp4 and tcp6 */
+#ifndef TCP_FAMILY
+# define TCP_FAMILY AF_INET
+#endif
+
 
 /* TCP */
 /* private */
@@ -200,7 +205,7 @@ static int _init_address(char const * name, struct sockaddr_in * sa)
 	/* check for errors */
 	if(l < 0)
 		return -1;
-	sa->sin_family = AF_INET;
+	sa->sin_family = TCP_FAMILY;
 	sa->sin_port = htons(l);
 	memcpy(&sa->sin_addr, he->h_addr_list[0], sizeof(sa->sin_addr));
 	return 0;
