@@ -40,6 +40,11 @@
 # define close(fd) closesocket(fd)
 #endif
 
+/* for udp4 and udp6 */
+#ifndef UDP_FAMILY
+# define UDP_FAMILY AF_INET
+#endif
+
 
 /* UDP */
 /* private */
@@ -96,10 +101,11 @@ AppTransportPluginDefinition transport =
 /* functions */
 /* plug-in */
 /* udp_init */
-static int _init_address(char const * name, struct sockaddr_in * sa);
+static int _init_address(char const * name, int * domain,
+		struct sockaddr_in * sa);
 static int _init_client(UDP * udp, char const * name);
 static int _init_server(UDP * udp, char const * name);
-static int _init_socket(UDP * udp);
+static int _init_socket(UDP * udp, int domain);
 
 static UDP * _udp_init(AppTransportPluginHelper * helper,
 		AppTransportMode mode, char const * name)
@@ -134,7 +140,8 @@ static UDP * _udp_init(AppTransportPluginHelper * helper,
 	return udp;
 }
 
-static int _init_address(char const * name, struct sockaddr_in * sa)
+static int _init_address(char const * name, int * domain,
+		struct sockaddr_in * sa)
 {
 	char * p;
 	char * q;
@@ -160,7 +167,7 @@ static int _init_address(char const * name, struct sockaddr_in * sa)
 	/* check for errors */
 	if(l < 0)
 		return -1;
-	sa->sin_family = AF_INET;
+	sa->sin_family = *domain;
 	sa->sin_port = htons(l);
 	memcpy(&sa->sin_addr, he->h_addr_list[0], sizeof(sa->sin_addr));
 	return 0;
@@ -168,13 +175,14 @@ static int _init_address(char const * name, struct sockaddr_in * sa)
 
 static int _init_client(UDP * udp, char const * name)
 {
+	int domain = UDP_FAMILY;
 	struct sockaddr_in sa;
 
 	/* obtain the remote address */
-	if(_init_address(name, &sa) != 0)
+	if(_init_address(name, &domain, &sa) != 0)
 		return -1;
 	/* create the socket */
-	if(_init_socket(udp) != 0)
+	if(_init_socket(udp, domain) != 0)
 		return -1;
 	/* listen for incoming messages */
 	event_register_io_read(udp->helper->event, udp->fd,
@@ -184,13 +192,14 @@ static int _init_client(UDP * udp, char const * name)
 
 static int _init_server(UDP * udp, char const * name)
 {
+	int domain = UDP_FAMILY;
 	struct sockaddr_in sa;
 
 	/* obtain the local address */
-	if(_init_address(name, &sa) != 0)
+	if(_init_address(name, &domain, &sa) != 0)
 		return -1;
 	/* create the socket */
-	if(_init_socket(udp) != 0)
+	if(_init_socket(udp, domain) != 0)
 		return -1;
 	/* listen for incoming messages */
 	event_register_io_read(udp->helper->event, udp->fd,
@@ -198,11 +207,11 @@ static int _init_server(UDP * udp, char const * name)
 	return 0;
 }
 
-static int _init_socket(UDP * udp)
+static int _init_socket(UDP * udp, int domain)
 {
 	int flags;
 
-	if((udp->fd = socket(AF_INET, SOCK_STREAM, 0)) < 0)
+	if((udp->fd = socket(domain, SOCK_STREAM, 0)) < 0)
 		return -_udp_error("socket", 1);
 	/* set the socket as non-blocking */
 	if((flags = fcntl(udp->fd, F_GETFL)) == -1)

@@ -15,4 +15,5 @@
 
 
 
+#define UDP_FAMILY AF_INET6
 #include "udp.c"

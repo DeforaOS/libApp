@@ -109,7 +109,7 @@ static int _tcp_error(char const * message, int code);
 static int _tcp_server_add_client(TCP * tcp, TCPSocket * client);
 
 /* sockets */
-static int _tcp_socket_init(TCPSocket * tcpsocket, TCP * tcp);
+static int _tcp_socket_init(TCPSocket * tcpsocket, int domain, TCP * tcp);
 static void _tcp_socket_init_fd(TCPSocket * tcpsocket, TCP * tcp, int fd);
 static TCPSocket * _tcp_socket_new_fd(TCP * tcp, int fd);
 static void _tcp_socket_delete(TCPSocket * tcpsocket);
@@ -141,7 +141,8 @@ AppTransportPluginDefinition transport =
 /* functions */
 /* plug-in */
 /* tcp_init */
-static int _init_address(char const * name, struct sockaddr_in * sa);
+static int _init_address(char const * name, int * domain,
+		struct sockaddr_in * sa);
 static int _init_client(TCP * tcp, char const * name);
 static int _init_server(TCP * tcp, char const * name);
 
@@ -179,7 +180,8 @@ static TCP * _tcp_init(AppTransportPluginHelper * helper,
 	return tcp;
 }
 
-static int _init_address(char const * name, struct sockaddr_in * sa)
+static int _init_address(char const * name, int * domain,
+		struct sockaddr_in * sa)
 {
 	char * p;
 	char * q;
@@ -205,7 +207,7 @@ static int _init_address(char const * name, struct sockaddr_in * sa)
 	/* check for errors */
 	if(l < 0)
 		return -1;
-	sa->sin_family = TCP_FAMILY;
+	sa->sin_family = *domain;
 	sa->sin_port = htons(l);
 	memcpy(&sa->sin_addr, he->h_addr_list[0], sizeof(sa->sin_addr));
 	return 0;
@@ -213,13 +215,14 @@ static int _init_address(char const * name, struct sockaddr_in * sa)
 
 static int _init_client(TCP * tcp, char const * name)
 {
+	int domain = TCP_FAMILY;
 	struct sockaddr_in sa;
 
 	/* obtain the remote address */
-	if(_init_address(name, &sa) != 0)
+	if(_init_address(name, &domain, &sa) != 0)
 		return -1;
 	/* initialize the client socket */
-	if(_tcp_socket_init(&tcp->u.client, tcp) != 0)
+	if(_tcp_socket_init(&tcp->u.client, domain, tcp) != 0)
 		return -1;
 	/* connect to the remote host */
 #ifdef DEBUG
@@ -246,13 +249,14 @@ static int _init_client(TCP * tcp, char const * name)
 static int _init_server(TCP * tcp, char const * name)
 {
 	TCPSocket tcpsocket;
+	int domain = TCP_FAMILY;
 	struct sockaddr_in sa;
 
 	/* obtain the local address */
-	if(_init_address(name, &sa) != 0)
+	if(_init_address(name, &domain, &sa) != 0)
 		return -1;
 	/* create the socket */
-	if(_tcp_socket_init(&tcpsocket, tcp) != 0)
+	if(_tcp_socket_init(&tcpsocket, domain, tcp) != 0)
 		return -1;
 	/* XXX ugly */
 	tcp->u.server.fd = tcpsocket.fd;
@@ -329,11 +333,11 @@ static int _tcp_server_add_client(TCP * tcp, TCPSocket * client)
 
 /* sockets */
 /* tcp_socket_init */
-static int _tcp_socket_init(TCPSocket * tcpsocket, TCP * tcp)
+static int _tcp_socket_init(TCPSocket * tcpsocket, int domain, TCP * tcp)
 {
 	int flags;
 
-	if((tcpsocket->fd = socket(AF_INET, SOCK_STREAM, 0)) < 0)
+	if((tcpsocket->fd = socket(domain, SOCK_STREAM, 0)) < 0)
 		return -_tcp_error("socket", 1);
 	_tcp_socket_init_fd(tcpsocket, tcp, tcpsocket->fd);
 	/* set the socket as non-blocking */
