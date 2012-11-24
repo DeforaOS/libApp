@@ -475,7 +475,7 @@ static int _tcp_socket_queue(TCPSocket * tcpsocket, Buffer * buffer)
 				tcpsocket);
 	tcpsocket->bufout_cnt += len + sizeof(len);
 #ifdef DEBUG
-	fprintf(stderr, "DEBUG: %s(%d) => 0\n", __func__, tcpsocket->fd);
+	fprintf(stderr, "DEBUG: %s(%d) => %d\n", __func__, tcpsocket->fd, 0);
 #endif
 	return 0;
 }
