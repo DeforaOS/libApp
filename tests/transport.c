@@ -83,12 +83,15 @@ static int _transport(char const * protocol, char const * name)
 	helper->event = event_new();
 	helper->client_new = _transport_helper_client_new;
 	/* create a server and a client */
-	transport.server = transport.plugind->init(helper, ATM_SERVER, name);
-	transport.client = transport.plugind->init(helper, ATM_CLIENT, name);
+	transport.server = (helper->event != NULL)
+		? transport.plugind->init(helper, ATM_SERVER, name) : NULL;
+	transport.client = (helper->event != NULL)
+		? transport.plugind->init(helper, ATM_CLIENT, name) : NULL;
 	if(helper->event == NULL || transport.server == NULL
 			|| transport.client == NULL)
 	{
-		event_delete(helper->event);
+		if(helper->event != NULL)
+			event_delete(helper->event);
 		if(transport.client != NULL)
 			transport.plugind->destroy(transport.client);
 		if(transport.server != NULL)
