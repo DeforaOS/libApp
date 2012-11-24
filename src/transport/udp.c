@@ -42,7 +42,7 @@
 
 /* for udp4 and udp6 */
 #ifndef UDP_FAMILY
-# define UDP_FAMILY AF_INET
+# define UDP_FAMILY PF_UNSPEC
 #endif
 
 
@@ -61,6 +61,9 @@ struct _AppTransportPlugin
 {
 	AppTransportPluginHelper * helper;
 	int fd;
+
+	struct addrinfo * ai;
+	struct addrinfo * aip;
 
 	/* output queue */
 	UDPMessage * messages;
@@ -101,8 +104,7 @@ AppTransportPluginDefinition transport =
 /* functions */
 /* plug-in */
 /* udp_init */
-static int _init_address(char const * name, int * domain,
-		struct sockaddr_in * sa);
+static int _init_address(UDP * udp, char const * name, int domain);
 static int _init_client(UDP * udp, char const * name);
 static int _init_server(UDP * udp, char const * name);
 static int _init_socket(UDP * udp, int domain);
@@ -117,6 +119,8 @@ static UDP * _udp_init(AppTransportPluginHelper * helper,
 		return NULL;
 	udp->helper = helper;
 	udp->fd = -1;
+	udp->ai = NULL;
+	udp->aip = NULL;
 	udp->messages = NULL;
 	udp->messages_cnt = 0;
 	switch(mode)
@@ -140,70 +144,91 @@ static UDP * _udp_init(AppTransportPluginHelper * helper,
 	return udp;
 }
 
-static int _init_address(char const * name, int * domain,
-		struct sockaddr_in * sa)
+static int _init_address(UDP * udp, char const * name, int domain)
 {
 	char * p;
 	char * q;
 	char * r;
-	struct hostent * he;
 	long l = -1;
+	struct addrinfo hints;
+	int res = 0;
 
 	/* obtain the name */
 	if((p = strdup(name)) == NULL)
 		return -error_set_code(1, "%s", strerror(errno));
-	if((q = strchr(p, ':')) != NULL)
+	/* FIXME wrong for IPv6 notation (should be '.' then) */
+	if((q = strrchr(p, ':')) != NULL)
 	{
 		*(q++) = '\0';
 		/* obtain the port number */
 		l = strtol(q, &r, 10);
-		if(q[0] == '\0' || *r != '\0' || l < 0 || l > 65535)
+		if(q[0] == '\0' || *r != '\0')
 			l = -error_set_code(1, "%s", strerror(EINVAL));
 	}
 	/* FIXME perform this asynchronously */
-	if((he = gethostbyname(p)) == NULL)
-		l = -error_set_code(1, "%s", hstrerror(h_errno));
+	memset(&hints, 0, sizeof(hints));
+	hints.ai_family = domain;
+	hints.ai_socktype = SOCK_DGRAM;
+	if(l >= 0)
+		res = getaddrinfo(p, q, &hints, &udp->ai);
 	free(p);
 	/* check for errors */
-	if(l < 0)
+	if(res != 0)
+	{
+		error_set_code(1, "%s", gai_strerror(res));
+		if(udp->ai != NULL)
+			freeaddrinfo(udp->ai);
+		udp->ai = NULL;
 		return -1;
-	sa->sin_family = *domain;
-	sa->sin_port = htons(l);
-	memcpy(&sa->sin_addr, he->h_addr_list[0], sizeof(sa->sin_addr));
-	return 0;
+	}
+	return (udp->ai != NULL) ? 0 : -1;
 }
 
 static int _init_client(UDP * udp, char const * name)
 {
-	int domain = UDP_FAMILY;
-	struct sockaddr_in sa;
-
 	/* obtain the remote address */
-	if(_init_address(name, &domain, &sa) != 0)
+	if(_init_address(udp, name, UDP_FAMILY) != 0)
 		return -1;
-	/* create the socket */
-	if(_init_socket(udp, domain) != 0)
+	for(udp->aip = udp->ai; udp->aip != NULL; udp->aip = udp->aip->ai_next)
+	{
+		/* create the socket */
+		if(_init_socket(udp, udp->aip->ai_family) != 0)
+			continue;
+		/* listen for incoming messages */
+		event_register_io_read(udp->helper->event, udp->fd,
+				(EventIOFunc)_udp_callback_read, udp);
+		break;
+	}
+	if(udp->aip == NULL)
+	{
+		freeaddrinfo(udp->ai);
+		udp->ai = NULL;
 		return -1;
-	/* listen for incoming messages */
-	event_register_io_read(udp->helper->event, udp->fd,
-			(EventIOFunc)_udp_callback_read, udp);
+	}
 	return 0;
 }
 
 static int _init_server(UDP * udp, char const * name)
 {
-	int domain = UDP_FAMILY;
-	struct sockaddr_in sa;
-
 	/* obtain the local address */
-	if(_init_address(name, &domain, &sa) != 0)
+	if(_init_address(udp, name, UDP_FAMILY) != 0)
 		return -1;
-	/* create the socket */
-	if(_init_socket(udp, domain) != 0)
+	for(udp->aip = udp->ai; udp->aip != NULL; udp->aip = udp->aip->ai_next)
+	{
+		/* create the socket */
+		if(_init_socket(udp, udp->aip->ai_family) != 0)
+			continue;
+		/* listen for incoming messages */
+		event_register_io_read(udp->helper->event, udp->fd,
+				(EventIOFunc)_udp_callback_read, udp);
+		break;
+	}
+	if(udp->aip == NULL)
+	{
+		freeaddrinfo(udp->ai);
+		udp->ai = NULL;
 		return -1;
-	/* listen for incoming messages */
-	event_register_io_read(udp->helper->event, udp->fd,
-			(EventIOFunc)_udp_callback_read, udp);
+	}
 	return 0;
 }
 
@@ -211,7 +236,7 @@ static int _init_socket(UDP * udp, int domain)
 {
 	int flags;
 
-	if((udp->fd = socket(domain, SOCK_STREAM, 0)) < 0)
+	if((udp->fd = socket(domain, SOCK_DGRAM, 0)) < 0)
 		return -_udp_error("socket", 1);
 	/* set the socket as non-blocking */
 	if((flags = fcntl(udp->fd, F_GETFL)) == -1)
@@ -232,6 +257,8 @@ static void _udp_destroy(UDP * udp)
 	if(udp->fd >= 0)
 		close(udp->fd);
 	free(udp->messages);
+	if(udp->ai != NULL)
+		freeaddrinfo(udp->ai);
 	object_delete(udp);
 }
 
@@ -239,8 +266,25 @@ static void _udp_destroy(UDP * udp)
 /* udp_send */
 static int _udp_send(UDP * udp, AppMessage * message, int acknowledge)
 {
+#ifdef DEBUG
+	struct sockaddr_in * sa;
+#endif
+
+#ifdef DEBUG
+	if(udp->aip->ai_family == PF_INET)
+	{
+		sa = (struct sockaddr_in *)udp->aip->ai_addr;
+		fprintf(stderr, "DEBUG: %s() %s (%s:%u)\n", __func__,
+				"sendto()", inet_ntoa(sa->sin_addr),
+				ntohs(sa->sin_port));
+	}
+	else
+		fprintf(stderr, "DEBUG: %s() %s %d\n", __func__,
+				"sendto()", udp->aip->ai_family);
+#endif
 	/* FIXME really implement */
-	return -1;
+	return sendto(udp->fd, NULL, 0, 0, udp->aip->ai_addr,
+			udp->aip->ai_addrlen);
 }
 
 
@@ -259,6 +303,7 @@ static int _udp_callback_read(int fd, UDP * udp)
 {
 	char buf[65536];
 	ssize_t ssize;
+	/* FIXME may not be the right type of struct sockaddr */
 	struct sockaddr_in sa;
 	socklen_t sa_len;
 

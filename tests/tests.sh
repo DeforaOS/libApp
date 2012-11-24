@@ -65,8 +65,10 @@ _transport tcp  ::1.4242	>> "$target" || FAILED="$FAILED tcp(error $?)"
 _transport tcp  ::1:4242	>> "$target" || FAILED="$FAILED tcp(error $?)"
 _transport udp4 127.0.0.1:4242	>> "$target" || FAILED="$FAILED udp4(error $?)"
 _transport udp6 ::1.4242	>> "$target" || FAILED="$FAILED udp6(error $?)"
+_transport udp6 ::1:4242	>> "$target" || FAILED="$FAILED udp6(error $?)"
 _transport udp  127.0.0.1:4242	>> "$target" || FAILED="$FAILED udp(error $?)"
 _transport udp  ::1.4242	>> "$target" || FAILED="$FAILED udp(error $?)"
+_transport udp  ::1:4242	>> "$target" || FAILED="$FAILED udp(error $?)"
 [ -z "$FAILED" ]			&& exit 0
 echo "Failed tests:$FAILED" 1>&2
 #XXX ignore errors for now
