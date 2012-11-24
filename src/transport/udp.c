@@ -303,9 +303,8 @@ static int _udp_callback_read(int fd, UDP * udp)
 {
 	char buf[65536];
 	ssize_t ssize;
-	/* FIXME may not be the right type of struct sockaddr */
-	struct sockaddr_in sa;
-	socklen_t sa_len;
+	struct sockaddr * sa;
+	socklen_t sa_len = udp->aip->ai_addrlen;
 
 #ifdef DEBUG
 	fprintf(stderr, "DEBUG: %s(%d)\n", __func__, fd);
@@ -313,11 +312,13 @@ static int _udp_callback_read(int fd, UDP * udp)
 	/* check arguments */
 	if(fd != udp->fd)
 		return -1;
-	if((ssize = recvfrom(fd, buf, sizeof(buf), 0, (struct sockaddr *)&sa,
-					&sa_len)) < 0)
+	if((sa = malloc(sa_len)) == NULL)
+		return -_udp_error(NULL, 1);
+	if((ssize = recvfrom(fd, buf, sizeof(buf), 0, sa, &sa_len)) < 0)
 	{
 		/* XXX report error (and re-open the socket) */
-		error_set_code(1, "%s: %s", "recvfrom", strerror(errno));
+		_udp_error("recvfrom", 1);
+		free(sa);
 		close(udp->fd);
 		udp->fd = -1;
 		return -1;
@@ -334,5 +335,6 @@ static int _udp_callback_read(int fd, UDP * udp)
 	fprintf(stderr, "DEBUG: %s() received message (%ld)\n", __func__,
 			ssize);
 #endif
+	free(sa);
 	return 0;
 }
