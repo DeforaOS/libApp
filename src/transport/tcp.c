@@ -44,7 +44,7 @@
 
 /* for tcp4 and tcp6 */
 #ifndef TCP_FAMILY
-# define TCP_FAMILY AF_INET
+# define TCP_FAMILY PF_UNSPEC
 #endif
 
 
@@ -153,6 +153,9 @@ static TCP * _tcp_init(AppTransportPluginHelper * helper,
 	TCP * tcp;
 	int res;
 
+#ifdef DEBUG
+	fprintf(stderr, "DEBUG: %s(%u, \"%s\")\n", __func__, mode, name);
+#endif
 	if((tcp = object_new(sizeof(*tcp))) == NULL)
 		return NULL;
 	memset(tcp, 0, sizeof(*tcp));
@@ -173,7 +176,8 @@ static TCP * _tcp_init(AppTransportPluginHelper * helper,
 	if(res != 0)
 	{
 #ifdef DEBUG
-		fprintf(stderr, "DEBUG: %s() => %d\n", __func__, res);
+		fprintf(stderr, "DEBUG: %s() => %d (%s)\n", __func__, res,
+				error_get());
 #endif
 		_tcp_destroy(tcp);
 		return NULL;
@@ -188,34 +192,37 @@ static int _init_address(TCP * tcp, char const * name, int domain)
 	char * r;
 	long l = -1;
 	struct addrinfo hints;
-	int res;
+	int res = 0;
 
 	/* obtain the name */
 	if((p = strdup(name)) == NULL)
 		return -error_set_code(1, "%s", strerror(errno));
-	if((q = strchr(p, ':')) != NULL)
+	/* FIXME wrong for IPv6 notation (should be '.' then) */
+	if((q = strrchr(p, ':')) != NULL)
 	{
 		*(q++) = '\0';
 		/* obtain the port number */
 		l = strtol(q, &r, 10);
-		if(q[0] == '\0' || *r != '\0' || l < 0 || l > 65535)
+		if(q[0] == '\0' || *r != '\0')
 			l = -error_set_code(1, "%s", strerror(EINVAL));
 	}
 	/* FIXME perform this asynchronously */
 	memset(&hints, 0, sizeof(hints));
 	hints.ai_family = domain;
 	hints.ai_socktype = SOCK_STREAM;
-	res = getaddrinfo(p, q, NULL, &tcp->ai);
+	if(l >= 0)
+		res = getaddrinfo(p, q, &hints, &tcp->ai);
 	free(p);
 	/* check for errors */
 	if(res != 0)
 	{
 		error_set_code(1, "%s", gai_strerror(res));
-		freeaddrinfo(tcp->ai);
+		if(tcp->ai != NULL)
+			freeaddrinfo(tcp->ai);
 		tcp->ai = NULL;
 		return -1;
 	}
-	return 0;
+	return (tcp->ai != NULL) ? 0 : -1;
 }
 
 static int _init_client(TCP * tcp, char const * name)
@@ -225,26 +232,36 @@ static int _init_client(TCP * tcp, char const * name)
 	struct sockaddr_in * sa;
 #endif
 
+	tcp->u.client.fd = -1;
 	/* obtain the remote address */
 	if(_init_address(tcp, name, TCP_FAMILY) != 0)
 		return -1;
 	/* connect to the remote host */
 	for(aip = tcp->ai; aip != NULL; aip = aip->ai_next)
 	{
+		tcp->u.client.fd = -1;
 		/* initialize the client socket */
 		if(_tcp_socket_init(&tcp->u.client, aip->ai_family, tcp) != 0)
 			continue;
 #ifdef DEBUG
-		sa = (struct sockaddr_in *)aip->ai_addr;
-		fprintf(stderr, "DEBUG: %s() %s %d (%s:%u)\n", __func__,
-				"connect()", aip->ai_family,
-				inet_ntoa(sa->sin_addr), ntohs(sa->sin_port));
+		if(aip->ai_family == PF_INET)
+		{
+			sa = (struct sockaddr_in *)aip->ai_addr;
+			fprintf(stderr, "DEBUG: %s() %s (%s:%u)\n", __func__,
+					"connect()", inet_ntoa(sa->sin_addr),
+					ntohs(sa->sin_port));
+		}
+		else
+			fprintf(stderr, "DEBUG: %s() %s %d\n", __func__,
+					"connect()", aip->ai_family);
 #endif
 		if(connect(tcp->u.client.fd, aip->ai_addr, aip->ai_addrlen)
 				!= 0)
 		{
 			if(errno != EINPROGRESS)
 			{
+				close(tcp->u.client.fd);
+				tcp->u.client.fd = -1;
 				_tcp_error("socket", 1);
 				continue;
 			}
@@ -278,6 +295,7 @@ static int _init_server(TCP * tcp, char const * name)
 		return -1;
 	for(aip = tcp->ai; aip != NULL; aip = aip->ai_next)
 	{
+		tcp->u.server.fd = -1;
 		/* create the socket */
 		if(_tcp_socket_init(&tcpsocket, aip->ai_family, tcp) != 0)
 			continue;
@@ -285,14 +303,22 @@ static int _init_server(TCP * tcp, char const * name)
 		tcp->u.server.fd = tcpsocket.fd;
 		/* accept incoming connections */
 #ifdef DEBUG
-		sa = (struct sockaddr_in *)aip->ai_addr;
-		fprintf(stderr, "DEBUG: %s() %s %d (%s:%u)\n", __func__,
-				"bind()", aip->ai_family,
-				inet_ntoa(sa->sin_addr), ntohs(sa->sin_port));
+		if(aip->ai_family == PF_INET)
+		{
+			sa = (struct sockaddr_in *)aip->ai_addr;
+			fprintf(stderr, "DEBUG: %s() %s (%s:%u)\n", __func__,
+					"bind()", inet_ntoa(sa->sin_addr),
+					ntohs(sa->sin_port));
+		}
+		else
+			fprintf(stderr, "DEBUG: %s() %s %d\n", __func__,
+					"bind()", aip->ai_family);
 #endif
 		if(bind(tcp->u.server.fd, aip->ai_addr, aip->ai_addrlen) != 0)
 		{
 			_tcp_error("bind", 1);
+			close(tcp->u.server.fd);
+			tcp->u.server.fd = -1;
 			continue;
 		}
 #ifdef DEBUG
@@ -301,6 +327,8 @@ static int _init_server(TCP * tcp, char const * name)
 		if(listen(tcp->u.server.fd, SOMAXCONN) != 0)
 		{
 			_tcp_error("listen", 1);
+			close(tcp->u.server.fd);
+			tcp->u.server.fd = -1;
 			continue;
 		}
 		event_register_io_read(tcp->helper->event, tcp->u.server.fd,
@@ -316,6 +344,9 @@ static int _init_server(TCP * tcp, char const * name)
 /* tcp_destroy */
 static void _tcp_destroy(TCP * tcp)
 {
+#ifdef DEBUG
+	fprintf(stderr, "DEBUG: %s()\n", __func__);
+#endif
 	switch(tcp->mode)
 	{
 		case ATM_CLIENT:
@@ -326,6 +357,8 @@ static void _tcp_destroy(TCP * tcp)
 				close(tcp->u.server.fd);
 			break;
 	}
+	if(tcp->ai != NULL)
+		freeaddrinfo(tcp->ai);
 	object_delete(tcp);
 }
 
@@ -342,6 +375,9 @@ static int _tcp_send(TCP * tcp, AppMessage * message, int acknowledge)
 /* tcp_error */
 static int _tcp_error(char const * message, int code)
 {
+#ifdef DEBUG
+	fprintf(stderr, "DEBUG: %s(\"%s\", %d)\n", __func__, message, code);
+#endif
 	return error_set_code(code, "%s%s%s", (message != NULL) ? message : "",
 			(message != NULL) ? ": " : "", strerror(errno));
 }
@@ -451,6 +487,7 @@ static int _accept_client(TCP * tcp, int fd);
 
 static int _tcp_callback_accept(int fd, TCP * tcp)
 {
+	/* FIXME may not be the right type of struct sockaddr */
 	struct sockaddr_in sa;
 	socklen_t sa_size = sizeof(sa);
 

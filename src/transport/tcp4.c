@@ -15,5 +15,5 @@
 
 
 
-#define TCP_FAMILY AF_INET
+#define TCP_FAMILY PF_INET
 #include "tcp.c"
