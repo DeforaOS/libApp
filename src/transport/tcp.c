@@ -73,6 +73,8 @@ struct _AppTransportPlugin
 	AppTransportPluginHelper * helper;
 	AppTransportMode mode;
 
+	struct addrinfo * ai;
+
 	union
 	{
 		struct
@@ -141,8 +143,7 @@ AppTransportPluginDefinition transport =
 /* functions */
 /* plug-in */
 /* tcp_init */
-static int _init_address(char const * name, int * domain,
-		struct sockaddr_in * sa);
+static int _init_address(TCP * tcp, char const * name, int domain);
 static int _init_client(TCP * tcp, char const * name);
 static int _init_server(TCP * tcp, char const * name);
 
@@ -180,14 +181,14 @@ static TCP * _tcp_init(AppTransportPluginHelper * helper,
 	return tcp;
 }
 
-static int _init_address(char const * name, int * domain,
-		struct sockaddr_in * sa)
+static int _init_address(TCP * tcp, char const * name, int domain)
 {
 	char * p;
 	char * q;
 	char * r;
-	struct hostent * he;
 	long l = -1;
+	struct addrinfo hints;
+	int res;
 
 	/* obtain the name */
 	if((p = strdup(name)) == NULL)
@@ -201,80 +202,114 @@ static int _init_address(char const * name, int * domain,
 			l = -error_set_code(1, "%s", strerror(EINVAL));
 	}
 	/* FIXME perform this asynchronously */
-	if((he = gethostbyname(p)) == NULL)
-		l = -error_set_code(1, "%s", hstrerror(h_errno));
+	memset(&hints, 0, sizeof(hints));
+	hints.ai_family = domain;
+	hints.ai_socktype = SOCK_STREAM;
+	res = getaddrinfo(p, q, NULL, &tcp->ai);
 	free(p);
 	/* check for errors */
-	if(l < 0)
+	if(res != 0)
+	{
+		error_set_code(1, "%s", gai_strerror(res));
+		freeaddrinfo(tcp->ai);
+		tcp->ai = NULL;
 		return -1;
-	sa->sin_family = *domain;
-	sa->sin_port = htons(l);
-	memcpy(&sa->sin_addr, he->h_addr_list[0], sizeof(sa->sin_addr));
+	}
 	return 0;
 }
 
 static int _init_client(TCP * tcp, char const * name)
 {
-	int domain = TCP_FAMILY;
-	struct sockaddr_in sa;
+	struct addrinfo * aip;
+#ifdef DEBUG
+	struct sockaddr_in * sa;
+#endif
 
 	/* obtain the remote address */
-	if(_init_address(name, &domain, &sa) != 0)
-		return -1;
-	/* initialize the client socket */
-	if(_tcp_socket_init(&tcp->u.client, domain, tcp) != 0)
+	if(_init_address(tcp, name, TCP_FAMILY) != 0)
 		return -1;
 	/* connect to the remote host */
-#ifdef DEBUG
-	fprintf(stderr, "DEBUG: %s() %s (%s:%u)\n", __func__, "connect()",
-			inet_ntoa(sa.sin_addr), ntohs(sa.sin_port));
-#endif
-	if(connect(tcp->u.client.fd, (struct sockaddr *)&sa, sizeof(sa)) != 0)
+	for(aip = tcp->ai; aip != NULL; aip = aip->ai_next)
 	{
-		if(errno != EINPROGRESS)
-			return -_tcp_error("socket", 1);
-		else
+		/* initialize the client socket */
+		if(_tcp_socket_init(&tcp->u.client, aip->ai_family, tcp) != 0)
+			continue;
+#ifdef DEBUG
+		sa = (struct sockaddr_in *)aip->ai_addr;
+		fprintf(stderr, "DEBUG: %s() %s %d (%s:%u)\n", __func__,
+				"connect()", aip->ai_family,
+				inet_ntoa(sa->sin_addr), ntohs(sa->sin_port));
+#endif
+		if(connect(tcp->u.client.fd, aip->ai_addr, aip->ai_addrlen)
+				!= 0)
+		{
+			if(errno != EINPROGRESS)
+			{
+				_tcp_error("socket", 1);
+				continue;
+			}
 			event_register_io_write(tcp->helper->event,
 					tcp->u.client.fd,
 					(EventIOFunc)_tcp_callback_connect,
 					tcp);
+		}
+		else
+			event_register_io_read(tcp->helper->event,
+					tcp->u.client.fd,
+					(EventIOFunc)_tcp_socket_callback_read,
+					&tcp->u.client);
+		break;
 	}
-	else
-		event_register_io_read(tcp->helper->event, tcp->u.client.fd,
-				(EventIOFunc)_tcp_socket_callback_read,
-				&tcp->u.client);
-	return 0;
+	freeaddrinfo(tcp->ai);
+	tcp->ai = NULL;
+	return (aip != NULL) ? 0 : -1;
 }
 
 static int _init_server(TCP * tcp, char const * name)
 {
+	struct addrinfo * aip;
 	TCPSocket tcpsocket;
-	int domain = TCP_FAMILY;
-	struct sockaddr_in sa;
+#ifdef DEBUG
+	struct sockaddr_in * sa;
+#endif
 
 	/* obtain the local address */
-	if(_init_address(name, &domain, &sa) != 0)
+	if(_init_address(tcp, name, TCP_FAMILY) != 0)
 		return -1;
-	/* create the socket */
-	if(_tcp_socket_init(&tcpsocket, domain, tcp) != 0)
-		return -1;
-	/* XXX ugly */
-	tcp->u.server.fd = tcpsocket.fd;
-	/* accept incoming connections */
+	for(aip = tcp->ai; aip != NULL; aip = aip->ai_next)
+	{
+		/* create the socket */
+		if(_tcp_socket_init(&tcpsocket, aip->ai_family, tcp) != 0)
+			continue;
+		/* XXX ugly */
+		tcp->u.server.fd = tcpsocket.fd;
+		/* accept incoming connections */
 #ifdef DEBUG
-	fprintf(stderr, "DEBUG: %s() %s (%s:%u)\n", __func__, "bind()",
-			inet_ntoa(sa.sin_addr), ntohs(sa.sin_port));
+		sa = (struct sockaddr_in *)aip->ai_addr;
+		fprintf(stderr, "DEBUG: %s() %s %d (%s:%u)\n", __func__,
+				"bind()", aip->ai_family,
+				inet_ntoa(sa->sin_addr), ntohs(sa->sin_port));
 #endif
-	if(bind(tcp->u.server.fd, (struct sockaddr *)&sa, sizeof(sa)) != 0)
-		return -_tcp_error("bind", 1);
+		if(bind(tcp->u.server.fd, aip->ai_addr, aip->ai_addrlen) != 0)
+		{
+			_tcp_error("bind", 1);
+			continue;
+		}
 #ifdef DEBUG
-	fprintf(stderr, "DEBUG: %s() %s\n", __func__, "listen()");
+		fprintf(stderr, "DEBUG: %s() %s\n", __func__, "listen()");
 #endif
-	if(listen(tcp->u.server.fd, SOMAXCONN) != 0)
-		return -_tcp_error("listen", 1);
-	event_register_io_read(tcp->helper->event, tcp->u.server.fd,
-			(EventIOFunc)_tcp_callback_accept, tcp);
-	return 0;
+		if(listen(tcp->u.server.fd, SOMAXCONN) != 0)
+		{
+			_tcp_error("listen", 1);
+			continue;
+		}
+		event_register_io_read(tcp->helper->event, tcp->u.server.fd,
+				(EventIOFunc)_tcp_callback_accept, tcp);
+		break;
+	}
+	freeaddrinfo(tcp->ai);
+	tcp->ai = NULL;
+	return (aip != NULL) ? 0 : -1;
 }
 
 
