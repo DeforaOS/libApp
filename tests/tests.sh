@@ -24,7 +24,7 @@ _transport()
 	name="$2"
 
 	echo "transport: Testing $transport ($name)" 1<&2
-	./transport -p "$transport"
+	./transport -p "$transport" "$name"
 }
 
 
@@ -59,8 +59,10 @@ target="$1"
 FAILED=
 _transport tcp4 127.0.0.1:4242	>> "$target" || FAILED="$FAILED tcp4(error $?)"
 _transport tcp6 ::1.4242	>> "$target" || FAILED="$FAILED tcp6(error $?)"
+_transport tcp6 ::1:4242	>> "$target" || FAILED="$FAILED tcp6(error $?)"
 _transport tcp  127.0.0.1:4242	>> "$target" || FAILED="$FAILED tcp(error $?)"
 _transport tcp  ::1.4242	>> "$target" || FAILED="$FAILED tcp(error $?)"
+_transport tcp  ::1:4242	>> "$target" || FAILED="$FAILED tcp(error $?)"
 _transport udp4 127.0.0.1:4242	>> "$target" || FAILED="$FAILED udp4(error $?)"
 _transport udp6 ::1.4242	>> "$target" || FAILED="$FAILED udp6(error $?)"
 _transport udp  127.0.0.1:4242	>> "$target" || FAILED="$FAILED udp(error $?)"
