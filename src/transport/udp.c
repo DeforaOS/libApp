@@ -146,21 +146,26 @@ static UDP * _udp_init(AppTransportPluginHelper * helper,
 
 static int _init_address(UDP * udp, char const * name, int domain)
 {
+	char sep = ':';
 	char * p;
 	char * q;
 	char * r;
-	long l = -1;
+	long l;
 	struct addrinfo hints;
 	int res = 0;
 
+	/* guess the port separator */
+	if((q = strchr(name, ':')) != NULL && strchr(++q, ':') != NULL)
+		sep = '.';
 	/* obtain the name */
 	if((p = strdup(name)) == NULL)
 		return -error_set_code(1, "%s", strerror(errno));
-	/* FIXME wrong for IPv6 notation (should be '.' then) */
-	if((q = strrchr(p, ':')) != NULL)
+	/* obtain the port number */
+	if((q = strrchr(p, sep)) == NULL)
+		l = -error_set_code(1, "%s", strerror(EINVAL));
+	else
 	{
 		*(q++) = '\0';
-		/* obtain the port number */
 		l = strtol(q, &r, 10);
 		if(q[0] == '\0' || *r != '\0')
 			l = -error_set_code(1, "%s", strerror(EINVAL));
