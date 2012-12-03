@@ -454,31 +454,44 @@ static TCPSocket * _tcp_socket_new_fd(TCP * tcp, int fd)
 /* tcp_socket_queue */
 static int _tcp_socket_queue(TCPSocket * tcpsocket, Buffer * buffer)
 {
-	size_t inc;
 	uint32_t len;
 	char * p;
+	Variable * v;
+	Buffer * b = NULL;
 
 #ifdef DEBUG
 	fprintf(stderr, "DEBUG: %s(%d)\n", __func__, tcpsocket->fd);
 #endif
-	/* FIXME serialize the buffer instead */
-	len = buffer_get_size(buffer);
-	if((inc = ((len + sizeof(len)) | (INC - 1)) + 1) < len + sizeof(len))
-		inc = len + sizeof(len);
-	if((p = realloc(tcpsocket->bufout, tcpsocket->bufout_cnt + inc))
-			== NULL)
+	/* serialize the buffer */
+	v = variable_new(VT_BUFFER, buffer);
+	b = buffer_new(0, NULL);
+	if(v == NULL || b == NULL || variable_serialize(v, b, 0) != 0)
+	{
+		if(v != NULL)
+			variable_delete(v);
+		if(b != NULL)
+			buffer_delete(b);
 		return -1;
+	}
+	variable_delete(v);
+	len = buffer_get_size(b);
+	/* FIXME queue the serialized buffer directly as a message instead */
+	if((p = realloc(tcpsocket->bufout, tcpsocket->bufout_cnt + len))
+			== NULL)
+	{
+		buffer_delete(b);
+		return -1;
+	}
 	tcpsocket->bufout = p;
-	/* FIXME use the proper endian */
-	memcpy(tcpsocket->bufout, &len, sizeof(len));
-	memcpy(&tcpsocket->bufout[sizeof(len)], buffer_get_data(buffer), len);
+	memcpy(&p[tcpsocket->bufout_cnt], buffer_get_data(b), len);
 	/* register the callback if necessary */
 	if(tcpsocket->bufout_cnt == 0)
 		event_register_io_write(tcpsocket->tcp->helper->event,
 				tcpsocket->fd,
 				(EventIOFunc)_tcp_socket_callback_write,
 				tcpsocket);
-	tcpsocket->bufout_cnt += len + sizeof(len);
+	tcpsocket->bufout_cnt += len;
+	buffer_delete(b);
 #ifdef DEBUG
 	fprintf(stderr, "DEBUG: %s(%d) => %d\n", __func__, tcpsocket->fd, 0);
 #endif
