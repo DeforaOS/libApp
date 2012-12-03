@@ -371,8 +371,19 @@ static void _tcp_destroy(TCP * tcp)
 /* tcp_send */
 static int _tcp_send(TCP * tcp, AppMessage * message, int acknowledge)
 {
-	/* FIXME implement */
-	return -1;
+	Buffer * buffer;
+
+	/* XXX this assumes being a client */
+	if((buffer = buffer_new(0, NULL)) == NULL)
+		return -1;
+	if(appmessage_serialize(message, buffer) != 0
+			|| _tcp_socket_queue(&tcp->u.client, buffer) != 0)
+	{
+		buffer_delete(buffer);
+		return -1;
+	}
+	buffer_delete(buffer);
+	return 0;
 }
 
 

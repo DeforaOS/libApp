@@ -90,3 +90,12 @@ static void _delete_call(AppMessage * message)
 {
 	string_delete(message->t.call.method);
 }
+
+
+/* useful */
+/* appmessage_serialize */
+int appmessage_serialize(AppMessage * message, Buffer * buffer)
+{
+	/* FIXME implement */
+	return -1;
+}
