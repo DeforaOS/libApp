@@ -96,6 +96,13 @@ static void _delete_call(AppMessage * message)
 /* appmessage_serialize */
 int appmessage_serialize(AppMessage * message, Buffer * buffer)
 {
-	/* FIXME implement */
-	return -1;
+	int ret;
+	Variable * v;
+
+	if((v = variable_new(VT_UINT8, &message->type)) == NULL)
+		return -1;
+	/* FIXME really implement */
+	ret = variable_serialize(v, buffer, 0);
+	variable_delete(v);
+	return ret;
 }

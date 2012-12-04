@@ -35,6 +35,7 @@
 # include <netdb.h>
 #endif
 #include <System.h>
+#include "App/appmessage.h"
 #include "App/apptransport.h"
 
 /* portability */
