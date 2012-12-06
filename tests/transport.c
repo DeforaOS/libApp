@@ -28,7 +28,7 @@
 
 /* private */
 /* types */
-typedef struct _Transport
+typedef struct _AppTransport
 {
 	int ret;
 	AppTransportPluginHelper helper;
@@ -59,7 +59,7 @@ static int _transport(char const * protocol, char const * name)
 {
 	char * cwd;
 	Plugin * plugin;
-	Transport transport;
+	AppTransport transport;
 	AppTransportPluginHelper * helper = &transport.helper;
 	struct timeval tv;
 
