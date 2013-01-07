@@ -14,6 +14,7 @@ libApp.pc: libApp.pc.in ../config.sh
 
 clean:
 	$(RM) -- $(libApp.pc_OBJS)
+	./pkgconfig.sh -c -P "$(PREFIX)" -- "libApp.pc"
 
 distclean: clean
 	$(RM) -- $(TARGETS)
