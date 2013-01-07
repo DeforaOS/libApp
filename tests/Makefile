@@ -3,17 +3,17 @@ PREFIX	= /usr/local
 DESTDIR	=
 BINDIR	= $(PREFIX)/bin
 SBINDIR	= $(PREFIX)/sbin
-CC	?= cc
+CC	= cc
 CPPFLAGSF= -I ../include
-CPPFLAGS?=
+CPPFLAGS=
 CFLAGSF	= -W `pkg-config --cflags libSystem`
 CFLAGS	= -Wall -g -O2
 LDFLAGSF= `pkg-config --libs libSystem` -lApp
 LDFLAGS	= -L../src -Wl,-rpath,../src
-RM	?= rm -f
-LN	?= ln -f
-MKDIR	?= mkdir -p
-INSTALL	?= install
+RM	= rm -f
+LN	= ln -f
+MKDIR	= mkdir -p
+INSTALL	= install
 
 
 all: $(TARGETS)
