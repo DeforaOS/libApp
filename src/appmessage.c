@@ -203,7 +203,6 @@ int appmessage_serialize(AppMessage * message, Buffer * buffer)
 					"Unable to serialize message type ",
 					message->type);
 	}
-	return ret;
 }
 
 static int _serialize_append(Buffer * buffer, Buffer * b)
