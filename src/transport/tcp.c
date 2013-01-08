@@ -1,5 +1,5 @@
 /* $Id$ */
-/* Copyright (c) 2012 Pierre Pronchery <khorben@defora.org> */
+/* Copyright (c) 2012-2013 Pierre Pronchery <khorben@defora.org> */
 /* This file is part of DeforaOS System libApp */
 /* This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -672,6 +672,8 @@ static int _tcp_socket_callback_read(int fd, TCPSocket * tcpsocket)
 	const size_t inc = INC;
 	ssize_t ssize;
 	char * p;
+	size_t size;
+	Variable * v;
 
 #ifdef DEBUG
 	fprintf(stderr, "DEBUG: %s(%d)\n", __func__, fd);
@@ -701,12 +703,17 @@ static int _tcp_socket_callback_read(int fd, TCPSocket * tcpsocket)
 		/* FIXME report transfer clean shutdown */
 		return -1;
 	}
+	else
+		tcpsocket->bufin_cnt += ssize;
 #ifdef DEBUG
 	fprintf(stderr, "DEBUG: %s() read() => %ld\n", __func__, ssize);
 #endif
+	size = tcpsocket->bufin_cnt;
+	v = variable_new_deserialize_type(VT_BUFFER, &size, tcpsocket->bufin);
 	/* FIXME parse the incoming data:
-	 * - deserialize as a buffer (message unit)
 	 * - deserialize the buffer as a message */
+	if(v != NULL)
+		variable_delete(v);
 	return 0;
 }
 
@@ -741,7 +748,7 @@ static int _tcp_socket_callback_write(int fd, TCPSocket * tcpsocket)
 #ifdef DEBUG
 	fprintf(stderr, "DEBUG: %s() write() => %ld\n", __func__, ssize);
 #endif
-	/* XXX use a sliding cursor instead */
+	/* XXX use a sliding cursor instead (and then queue the next message) */
 	memmove(tcpsocket->bufout, &tcpsocket->bufout[ssize],
 			tcpsocket->bufout_cnt - ssize);
 	tcpsocket->bufout_cnt -= ssize;
