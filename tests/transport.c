@@ -12,8 +12,6 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>. */
-/* FIXME:
- * - consider the transport successful once connected */
 
 
 
@@ -117,9 +115,9 @@ static int _transport(char const * protocol, char const * name)
 	}
 	else if(transport.ret != 0)
 		error_print("transport");
-	event_delete(helper->event);
 	transport.plugind->destroy(transport.client);
 	transport.plugind->destroy(transport.server);
+	event_delete(helper->event);
 	plugin_delete(plugin);
 	return transport.ret;
 }
@@ -142,10 +140,17 @@ static AppTransportClient * _transport_helper_client_new(
 static int _transport_helper_client_receive(AppTransport * transport,
 		AppTransportClient * client, AppMessage * message)
 {
+	String const * method;
+
 #ifdef DEBUG
-	fprintf(stderr, "DEBUG: %s()\n", __func__);
+	fprintf(stderr, "DEBUG: %s() %u \"%s\"\n", __func__,
+			appmessage_get_type(message),
+			appmessage_get_method(message));
 #endif
-	/* FIXME really implement */
+	if(appmessage_get_type(message) == AMT_CALL
+			&& (method = appmessage_get_method(message)) != NULL
+			&& strcmp(method, "hello") == 0)
+		event_loop_quit(transport->helper.event);
 	return 0;
 }
 
