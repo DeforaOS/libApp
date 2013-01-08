@@ -45,6 +45,8 @@ static int _transport(char const * protocol, char const * name);
 /* helpers */
 static AppTransportClient * _transport_helper_client_new(
 		AppTransport * transport);
+static int _transport_helper_client_receive(AppTransport * transport,
+		AppTransportClient * client, AppMessage * message);
 
 /* callbacks */
 static int _transport_callback_idle(void * data);
@@ -82,6 +84,7 @@ static int _transport(char const * protocol, char const * name)
 	helper->transport = &transport;
 	helper->event = event_new();
 	helper->client_new = _transport_helper_client_new;
+	helper->client_receive = _transport_helper_client_receive;
 	/* create a server and a client */
 	transport.server = (helper->event != NULL)
 		? transport.plugind->init(helper, ATM_SERVER, name) : NULL;
@@ -132,6 +135,18 @@ static AppTransportClient * _transport_helper_client_new(
 #endif
 	/* FIXME really implement */
 	return (AppTransportClient*)transport;
+}
+
+
+/* transport_helper_client_receive */
+static int _transport_helper_client_receive(AppTransport * transport,
+		AppTransportClient * client, AppMessage * message)
+{
+#ifdef DEBUG
+	fprintf(stderr, "DEBUG: %s()\n", __func__);
+#endif
+	/* FIXME really implement */
+	return 0;
 }
 
 

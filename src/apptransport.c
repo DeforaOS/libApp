@@ -40,6 +40,12 @@ struct _AppTransport
 };
 
 
+/* prototypes */
+/* helpers */
+static int _apptransport_helper_client_receive(AppTransport * transport,
+		AppTransportClient * client, AppMessage * message);
+
+
 /* protected */
 /* functions */
 /* apptransport_new */
@@ -76,6 +82,7 @@ AppTransport * apptransport_new(AppTransportMode mode, char const * plugin,
 static void _new_helper(AppTransport * transport)
 {
 	transport->helper.transport = transport;
+	transport->helper.client_receive = _apptransport_helper_client_receive;
 	/* FIXME really implement */
 }
 
@@ -88,4 +95,16 @@ void apptransport_delete(AppTransport * transport)
 	if(transport->plugin != NULL)
 		plugin_delete(transport->plugin);
 	object_delete(transport);
+}
+
+
+/* private */
+/* functions */
+/* helpers */
+/* apptransport_helper_client_receive */
+static int _apptransport_helper_client_receive(AppTransport * transport,
+		AppTransportClient * client, AppMessage * message)
+{
+	/* FIXME implement */
+	return 0;
 }

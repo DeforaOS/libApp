@@ -670,6 +670,8 @@ static int _tcp_callback_connect(int fd, TCP * tcp)
 static int _tcp_socket_callback_read(int fd, TCPSocket * tcpsocket)
 {
 	const size_t inc = INC;
+	TCP * tcp = tcpsocket->tcp;
+	AppTransportPluginHelper * helper = tcp->helper;
 	ssize_t ssize;
 	char * p;
 	size_t size;
@@ -726,7 +728,8 @@ static int _tcp_socket_callback_read(int fd, TCPSocket * tcpsocket)
 	}
 	if(message != NULL)
 	{
-		/* FIXME report the message */
+		helper->client_receive(helper->transport, tcpsocket->client,
+				message);
 		appmessage_delete(message);
 	}
 	else
