@@ -36,8 +36,8 @@ struct _AppMessage
 		struct
 		{
 			char * method;
-			Variable ** var;
-			size_t var_cnt;
+			Variable ** args;
+			size_t args_cnt;
 		} call;
 	} t;
 };
@@ -122,8 +122,8 @@ AppMessage * appmessage_new_deserialize(Buffer * buffer)
 			variable_get_as(v, VT_STRING, &message->t.call.method);
 			variable_delete(v);
 			/* FIXME really implement */
-			message->t.call.var = NULL;
-			message->t.call.var_cnt = 0;
+			message->t.call.args = NULL;
+			message->t.call.args_cnt = 0;
 			break;
 		default:
 			error_set_code(1, "%s%u", "Unknown message type ", u8);
@@ -175,6 +175,7 @@ AppMessageType appmessage_get_type(AppMessage * message)
 /* useful */
 /* appmessage_serialize */
 static int _serialize_append(Buffer * buffer, Buffer * b);
+static int _serialize_call(AppMessage * message, Buffer * buffer, Buffer * b);
 
 int appmessage_serialize(AppMessage * message, Buffer * buffer)
 {
@@ -196,17 +197,7 @@ int appmessage_serialize(AppMessage * message, Buffer * buffer)
 	switch(message->type)
 	{
 		case AMT_CALL:
-			if((v = variable_new(VT_STRING, message->t.call.method))
-					== NULL)
-				return -1;
-			ret = (variable_serialize(v, b, 0) == 0
-					&& _serialize_append(buffer, b) == 0)
-				? 0 : -1;
-			variable_delete(v);
-			if(ret != 0)
-				break;
-			/* FIXME append the arguments */
-			break;
+			return _serialize_call(message, buffer, b);
 		default:
 			return -error_set_code(1, "%s%u",
 					"Unable to serialize message type ",
@@ -219,4 +210,25 @@ static int _serialize_append(Buffer * buffer, Buffer * b)
 {
 	return buffer_set_data(buffer, buffer_get_size(buffer),
 			buffer_get_data(b), buffer_get_size(b));
+}
+
+static int _serialize_call(AppMessage * message, Buffer * buffer, Buffer * b)
+{
+	int ret;
+	Variable * v;
+	size_t i;
+
+	if((v = variable_new(VT_STRING, message->t.call.method)) == NULL)
+		return -1;
+	ret = (variable_serialize(v, b, 0) == 0
+			&& _serialize_append(buffer, b) == 0) ? 0 : -1;
+	variable_delete(v);
+	if(ret != 0)
+		return ret;
+	for(i = 0; i < message->t.call.args_cnt; i++)
+		if(variable_serialize(message->t.call.args[i], b, 1) != 0
+				|| _serialize_append(buffer, b) != 0)
+			break;
+	buffer_delete(b);
+	return (i == message->t.call.args_cnt) ? 0 : -1;
 }
