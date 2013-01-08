@@ -17,6 +17,7 @@
 
 #include <stdarg.h>
 #include <stddef.h>
+#include <stdlib.h>
 #ifdef DEBUG
 # include <stdio.h>
 #endif
@@ -76,6 +77,9 @@ AppMessage * appmessage_new_call(char const * method, ...)
 
 
 /* appmessage_new_deserialize */
+static AppMessage * _new_deserialize_call(AppMessage * message,
+		char const * data, size_t size, size_t pos);
+
 AppMessage * appmessage_new_deserialize(Buffer * buffer)
 {
 	AppMessage * message;
@@ -106,30 +110,69 @@ AppMessage * appmessage_new_deserialize(Buffer * buffer)
 	switch((message->type = u8))
 	{
 		case AMT_CALL:
-#ifdef DEBUG
-			fprintf(stderr, "DEBUG: %s() AMT_CALL\n", __func__);
-#endif
-			s = size;
-			v = variable_new_deserialize_type(VT_STRING, &s,
-					&data[pos]);
-			if(v == NULL)
-			{
-				error_set_code(1, "%s%u", "Unknown method ");
-				object_delete(message);
-				return NULL;
-			}
-			/* XXX may fail */
-			variable_get_as(v, VT_STRING, &message->t.call.method);
-			variable_delete(v);
-			/* FIXME really implement */
-			message->t.call.args = NULL;
-			message->t.call.args_cnt = 0;
-			break;
+			return _new_deserialize_call(message, data, size, pos);
 		default:
 			error_set_code(1, "%s%u", "Unknown message type ", u8);
 			/* XXX should not happen */
 			object_delete(message);
 			return NULL;
+	}
+}
+
+static AppMessage * _new_deserialize_call(AppMessage * message,
+		char const * data, size_t size, size_t pos)
+{
+	size_t s;
+	Variable * v;
+	size_t i;
+	Variable ** p;
+
+#ifdef DEBUG
+	fprintf(stderr, "DEBUG: %s()\n", __func__);
+#endif
+	message->t.call.method = NULL;
+	message->t.call.args = NULL;
+	message->t.call.args_cnt = 0;
+	s = size;
+	if((v = variable_new_deserialize_type(VT_STRING, &s, &data[pos]))
+			== NULL)
+	{
+		error_set_code(1, "%s%u", "Unknown method ");
+		appmessage_delete(message);
+		return NULL;
+	}
+	pos += s;
+	size -= s;
+	/* XXX may fail */
+	variable_get_as(v, VT_STRING, &message->t.call.method);
+	variable_delete(v);
+	/* deserialize the arguments */
+	for(i = 0; pos < size; i++)
+	{
+#ifdef DEBUG
+		fprintf(stderr, "DEBUG: %s() %lu\n", __func__, i);
+#endif
+		if((p = realloc(message->t.call.args, sizeof(*p) * (i + 1)))
+				== NULL)
+		{
+			appmessage_delete(message);
+			return NULL;
+		}
+		message->t.call.args = p;
+		s = size;
+		if((v = variable_new_deserialize(&s, &data[pos])) == NULL)
+		{
+			appmessage_delete(message);
+			return NULL;
+		}
+#ifdef DEBUG
+		fprintf(stderr, "DEBUG: %s() %lu (%u)\n", __func__, i,
+				variable_get_type(v));
+#endif
+		pos += s;
+		size -= s;
+		message->t.call.args[i] = v;
+		message->t.call.args_cnt = i + 1;
 	}
 	return message;
 }
