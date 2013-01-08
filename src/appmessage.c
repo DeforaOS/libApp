@@ -81,6 +81,7 @@ AppMessage * appmessage_new_deserialize(Buffer * buffer)
 	AppMessage * message;
 	char const * data = buffer_get_data(buffer);
 	size_t size = buffer_get_size(buffer);
+	size_t pos = 0;
 	size_t s;
 	Variable * v;
 	uint32_t u32;
@@ -91,11 +92,14 @@ AppMessage * appmessage_new_deserialize(Buffer * buffer)
 	if((message = object_new(sizeof(*message))) == NULL)
 		return NULL;
 	s = size;
-	if((v = variable_new_deserialize_type(VT_UINT32, &s, data)) == NULL)
+	if((v = variable_new_deserialize_type(VT_UINT32, &s, &data[pos]))
+			== NULL)
 	{
 		object_delete(message);
 		return NULL;
 	}
+	pos += s;
+	size -= s;
 	/* XXX may fail */
 	variable_get_as(v, VT_UINT32, &u32);
 	variable_delete(v);
@@ -105,8 +109,19 @@ AppMessage * appmessage_new_deserialize(Buffer * buffer)
 #ifdef DEBUG
 			fprintf(stderr, "DEBUG: %s() AMT_CALL\n", __func__);
 #endif
+			s = size;
+			v = variable_new_deserialize_type(VT_STRING, &s,
+					&data[pos]);
+			if(v == NULL)
+			{
+				error_set_code(1, "%s%u", "Unknown method ");
+				object_delete(message);
+				return NULL;
+			}
+			/* XXX may fail */
+			variable_get_as(v, VT_STRING, &message->t.call.method);
+			variable_delete(v);
 			/* FIXME really implement */
-			message->t.call.method = NULL;
 			message->t.call.var = NULL;
 			message->t.call.var_cnt = 0;
 			break;

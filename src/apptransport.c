@@ -1,5 +1,5 @@
 /* $Id$ */
-/* Copyright (c) 2012 Pierre Pronchery <khorben@defora.org> */
+/* Copyright (c) 2012-2013 Pierre Pronchery <khorben@defora.org> */
 /* This file is part of DeforaOS System libApp */
 /* This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -15,8 +15,12 @@
 
 
 
+#ifdef DEBUG
+# include <stdio.h>
+#endif
 #include <string.h>
 #include <System.h>
+#include "App/appmessage.h"
 #include "apptransport.h"
 #include "../config.h"
 
@@ -105,6 +109,11 @@ void apptransport_delete(AppTransport * transport)
 static int _apptransport_helper_client_receive(AppTransport * transport,
 		AppTransportClient * client, AppMessage * message)
 {
+#ifdef DEBUG
+	fprintf(stderr, "DEBUG: %s() %u \"%s\"\n", __func__,
+			appmessage_get_type(message),
+			appmessage_get_method(message));
+#endif
 	/* FIXME implement */
 	return 0;
 }
