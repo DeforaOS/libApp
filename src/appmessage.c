@@ -62,27 +62,77 @@ AppMessage * appmessage_new_call(char const * method, ...)
 	message->t.call.method = string_new(method);
 	message->t.call.args = NULL;
 	message->t.call.args_cnt = 0;
+	/* check for errors */
+	if(message->t.call.method == NULL)
+	{
+		appmessage_delete(message);
+		return NULL;
+	}
 	/* copy the arguments */
 	va_start(ap, method);
 	for(i = 0; (type = va_arg(ap, int)) >= 0; i++)
 	{
 		if((p = realloc(message->t.call.args, sizeof(*p) * (i + 1)))
 				== NULL)
+		{
+			appmessage_delete(message);
+			message = NULL;
 			break;
+		}
 		message->t.call.args = p;
 		if((v = variable_new(type, va_arg(ap, void *))) == NULL)
+		{
+			appmessage_delete(message);
+			message = NULL;
 			break;
-		message->t.call.args = p;
+		}
 		message->t.call.args[i] = v;
 		message->t.call.args_cnt = i + 1;
 	}
 	va_end(ap);
+	return message;
+}
+
+
+/* appmessage_new_call_variables */
+AppMessage * appmessage_new_call_variables(char const * method, ...)
+{
+	AppMessage * message;
+	va_list ap;
+	size_t i;
+	Variable * v;
+	Variable ** p;
+
+	if((message = object_new(sizeof(*message))) == NULL)
+		return NULL;
+	message->type = AMT_CALL;
+	message->t.call.method = string_new(method);
+	message->t.call.args = NULL;
+	message->t.call.args_cnt = 0;
 	/* check for errors */
-	if(message->t.call.method == NULL || type >= 0)
+	if(message->t.call.method == NULL)
 	{
 		appmessage_delete(message);
 		return NULL;
 	}
+	/* copy the arguments */
+	va_start(ap, method);
+	for(i = 0; (v = va_arg(ap, Variable *)) != NULL; i++)
+	{
+		if((p = realloc(message->t.call.args, sizeof(*p) * (i + 1)))
+				== NULL)
+			break;
+		message->t.call.args = p;
+		if((v = variable_new_copy(v)) == NULL)
+		{
+			appmessage_delete(message);
+			message = NULL;
+			break;
+		}
+		message->t.call.args[i] = v;
+		message->t.call.args_cnt = i + 1;
+	}
+	va_end(ap);
 	return message;
 }
 
