@@ -174,15 +174,49 @@ AppMessageType appmessage_get_type(AppMessage * message)
 
 /* useful */
 /* appmessage_serialize */
+static int _serialize_append(Buffer * buffer, Buffer * b);
+
 int appmessage_serialize(AppMessage * message, Buffer * buffer)
 {
 	int ret;
 	Variable * v;
+	Buffer * b;
 
+	if((b = buffer_new(0, NULL)) == NULL)
+		return -1;
+	/* reset the output buffer */
+	buffer_set_size(buffer, 0);
 	if((v = variable_new(VT_UINT8, &message->type)) == NULL)
 		return -1;
-	/* FIXME really implement */
-	ret = variable_serialize(v, buffer, 0);
+	ret = (variable_serialize(v, b, 0) == 0
+			&& _serialize_append(buffer, b) == 0) ? 0 : -1;
 	variable_delete(v);
+	if(ret != 0)
+		return ret;
+	switch(message->type)
+	{
+		case AMT_CALL:
+			if((v = variable_new(VT_STRING, message->t.call.method))
+					== NULL)
+				return -1;
+			ret = (variable_serialize(v, b, 0) == 0
+					&& _serialize_append(buffer, b) == 0)
+				? 0 : -1;
+			variable_delete(v);
+			if(ret != 0)
+				break;
+			/* FIXME append the arguments */
+			break;
+		default:
+			return -error_set_code(1, "%s%u",
+					"Unable to serialize message type ",
+					message->type);
+	}
 	return ret;
+}
+
+static int _serialize_append(Buffer * buffer, Buffer * b)
+{
+	return buffer_set_data(buffer, buffer_get_size(buffer),
+			buffer_get_data(b), buffer_get_size(b));
 }
