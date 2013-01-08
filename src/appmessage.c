@@ -17,6 +17,9 @@
 
 #include <stdarg.h>
 #include <stddef.h>
+#ifdef DEBUG
+# include <stdio.h>
+#endif
 #include <System.h>
 #include "App/appmessage.h"
 
@@ -82,6 +85,9 @@ AppMessage * appmessage_new_deserialize(Buffer * buffer)
 	Variable * v;
 	uint32_t u32;
 
+#ifdef DEBUG
+	fprintf(stderr, "DEBUG: %s()\n", __func__);
+#endif
 	if((message = object_new(sizeof(*message))) == NULL)
 		return NULL;
 	s = size;
@@ -96,12 +102,16 @@ AppMessage * appmessage_new_deserialize(Buffer * buffer)
 	switch((message->type = u32))
 	{
 		case AMT_CALL:
+#ifdef DEBUG
+			fprintf(stderr, "DEBUG: %s() AMT_CALL\n", __func__);
+#endif
 			/* FIXME really implement */
 			message->t.call.method = NULL;
 			message->t.call.var = NULL;
 			message->t.call.var_cnt = 0;
 			break;
 		default:
+			error_set_code(1, "%s%u", "Unknown message type ", u32);
 			/* XXX should not happen */
 			object_delete(message);
 			return NULL;
