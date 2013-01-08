@@ -675,7 +675,7 @@ static int _tcp_socket_callback_read(int fd, TCPSocket * tcpsocket)
 	size_t size;
 	Variable * variable;
 	Buffer * buffer;
-	AppMessage * message;
+	AppMessage * message = NULL;
 
 #ifdef DEBUG
 	fprintf(stderr, "DEBUG: %s(%d)\n", __func__, fd);
@@ -719,8 +719,12 @@ static int _tcp_socket_callback_read(int fd, TCPSocket * tcpsocket)
 	tcpsocket->bufin_cnt -= size;
 	memmove(tcpsocket->bufin, &tcpsocket->bufin[size],
 			tcpsocket->bufin_cnt);
-	variable_get_as(variable, VT_BUFFER, &buffer);
-	if((message = appmessage_new_deserialize(buffer)) != NULL)
+	if((variable_get_as(variable, VT_BUFFER, &buffer)) == 0)
+	{
+		message = appmessage_new_deserialize(buffer);
+		buffer_delete(buffer);
+	}
+	if(message != NULL)
 	{
 		/* FIXME report the message */
 		appmessage_delete(message);
