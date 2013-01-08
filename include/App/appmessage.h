@@ -33,6 +33,7 @@ typedef enum _AppMessageType
 
 /* functions */
 AppMessage * appmessage_new_call(char const * method, ...);
+AppMessage * appmessage_new_call_variables(char const * method, ...);
 AppMessage * appmessage_new_deserialize(Buffer * buffer);
 void appmessage_delete(AppMessage * appmessage);
 

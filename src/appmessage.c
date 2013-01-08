@@ -51,19 +51,34 @@ AppMessage * appmessage_new_call(char const * method, ...)
 {
 	AppMessage * message;
 	va_list ap;
+	size_t i;
+	int type;
 	Variable * v;
+	Variable ** p;
 
 	if((message = object_new(sizeof(*message))) == NULL)
 		return NULL;
 	message->type = AMT_CALL;
 	message->t.call.method = string_new(method);
+	message->t.call.args = NULL;
+	message->t.call.args_cnt = 0;
 	/* copy the arguments */
 	va_start(ap, method);
-	while((v = va_arg(ap, Variable *)) != NULL)
-		;
+	for(i = 0; (type = va_arg(ap, int)) >= 0; i++)
+	{
+		if((p = realloc(message->t.call.args, sizeof(*p) * (i + 1)))
+				== NULL)
+			break;
+		message->t.call.args = p;
+		if((v = variable_new(type, va_arg(ap, void *))) == NULL)
+			break;
+		message->t.call.args = p;
+		message->t.call.args[i] = v;
+		message->t.call.args_cnt = i + 1;
+	}
 	va_end(ap);
 	/* check for errors */
-	if(message->t.call.method == NULL)
+	if(message->t.call.method == NULL || type >= 0)
 	{
 		appmessage_delete(message);
 		return NULL;

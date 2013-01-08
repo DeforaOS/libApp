@@ -100,7 +100,7 @@ static int _transport(char const * protocol, char const * name)
 		plugin_delete(plugin);
 		return error_print("transport");
 	}
-	transport.message = appmessage_new_call("hello");
+	transport.message = appmessage_new_call("hello", -1);
 	tv.tv_sec = 1;
 	tv.tv_usec = 0;
 	/* enter the main loop */
