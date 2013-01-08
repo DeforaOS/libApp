@@ -1,5 +1,5 @@
 /* $Id$ */
-/* Copyright (c) 2012 Pierre Pronchery <khorben@defora.org> */
+/* Copyright (c) 2012-2013 Pierre Pronchery <khorben@defora.org> */
 /* This file is part of DeforaOS System libApp */
 /* This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -33,7 +33,7 @@ struct _AppMessage
 		struct
 		{
 			char * method;
-			Variable * var;
+			Variable ** var;
 			size_t var_cnt;
 		} call;
 	} t;
@@ -67,6 +67,44 @@ AppMessage * appmessage_new_call(char const * method, ...)
 	{
 		appmessage_delete(message);
 		return NULL;
+	}
+	return message;
+}
+
+
+/* appmessage_new_deserialize */
+AppMessage * appmessage_new_deserialize(Buffer * buffer)
+{
+	AppMessage * message;
+	char const * data = buffer_get_data(buffer);
+	size_t size = buffer_get_size(buffer);
+	size_t s;
+	Variable * v;
+	uint32_t u32;
+
+	if((message = object_new(sizeof(*message))) == NULL)
+		return NULL;
+	s = size;
+	if((v = variable_new_deserialize_type(VT_UINT32, &s, data)) == NULL)
+	{
+		object_delete(message);
+		return NULL;
+	}
+	/* XXX may fail */
+	variable_get_as(v, VT_UINT32, &u32);
+	variable_delete(v);
+	switch((message->type = u32))
+	{
+		case AMT_CALL:
+			/* FIXME really implement */
+			message->t.call.method = NULL;
+			message->t.call.var = NULL;
+			message->t.call.var_cnt = 0;
+			break;
+		default:
+			/* XXX should not happen */
+			object_delete(message);
+			return NULL;
 	}
 	return message;
 }

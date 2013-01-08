@@ -673,7 +673,9 @@ static int _tcp_socket_callback_read(int fd, TCPSocket * tcpsocket)
 	ssize_t ssize;
 	char * p;
 	size_t size;
-	Variable * v;
+	Variable * variable;
+	Buffer * buffer;
+	AppMessage * message;
 
 #ifdef DEBUG
 	fprintf(stderr, "DEBUG: %s(%d)\n", __func__, fd);
@@ -709,11 +711,25 @@ static int _tcp_socket_callback_read(int fd, TCPSocket * tcpsocket)
 	fprintf(stderr, "DEBUG: %s() read() => %ld\n", __func__, ssize);
 #endif
 	size = tcpsocket->bufin_cnt;
-	v = variable_new_deserialize_type(VT_BUFFER, &size, tcpsocket->bufin);
-	/* FIXME parse the incoming data:
-	 * - deserialize the buffer as a message */
-	if(v != NULL)
-		variable_delete(v);
+	/* deserialize the data as a buffer (containing a message) */
+	if((variable = variable_new_deserialize_type(VT_BUFFER, &size,
+					tcpsocket->bufin)) == NULL)
+		/* XXX assumes not enough data was available */
+		return 0;
+	tcpsocket->bufin_cnt -= size;
+	memmove(tcpsocket->bufin, &tcpsocket->bufin[size],
+			tcpsocket->bufin_cnt);
+	variable_get_as(variable, VT_BUFFER, &buffer);
+	if((message = appmessage_new_deserialize(buffer)) != NULL)
+	{
+		/* FIXME report the message */
+		appmessage_delete(message);
+	}
+	else
+	{
+		/* FIXME report the error */
+	}
+	variable_delete(variable);
 	return 0;
 }
 
