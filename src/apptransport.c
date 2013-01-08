@@ -37,7 +37,10 @@
 /* types */
 struct _AppTransport
 {
-	AppTransportPluginHelper helper;
+	AppTransportHelper helper;
+
+	/* plug-in */
+	AppTransportPluginHelper thelper;
 	Plugin * plugin;
 	AppTransportPlugin * tplugin;
 	AppTransportPluginDefinition * definition;
@@ -55,7 +58,8 @@ static int _apptransport_helper_client_receive(AppTransport * transport,
 /* apptransport_new */
 static void _new_helper(AppTransport * transport);
 
-AppTransport * apptransport_new(AppTransportMode mode, char const * plugin,
+AppTransport * apptransport_new(AppTransportMode mode,
+		AppTransportHelper * helper, char const * plugin,
 		char const * name)
 {
 	AppTransport * transport;
@@ -64,7 +68,8 @@ AppTransport * apptransport_new(AppTransportMode mode, char const * plugin,
 	if((transport = object_new(sizeof(*transport))) == NULL)
 		return NULL;
 	memset(transport, 0, sizeof(*transport));
-	/* initialize the helper */
+	transport->helper = *helper;
+	/* initialize the plug-in helper */
 	_new_helper(transport);
 	/* load the transport plug-in */
 	if((transport->plugin = plugin_new(LIBDIR, "App", "transport", plugin))
@@ -74,7 +79,7 @@ AppTransport * apptransport_new(AppTransportMode mode, char const * plugin,
 			|| transport->definition->init == NULL
 			|| transport->definition->destroy == NULL
 			|| (transport->tplugin = transport->definition->init(
-					&transport->helper, mode, name))
+					&transport->thelper, mode, name))
 			== NULL)
 	{
 		apptransport_delete(transport);
@@ -85,8 +90,8 @@ AppTransport * apptransport_new(AppTransportMode mode, char const * plugin,
 
 static void _new_helper(AppTransport * transport)
 {
-	transport->helper.transport = transport;
-	transport->helper.client_receive = _apptransport_helper_client_receive;
+	transport->thelper.transport = transport;
+	transport->thelper.client_receive = _apptransport_helper_client_receive;
 	/* FIXME really implement */
 }
 
@@ -114,6 +119,7 @@ static int _apptransport_helper_client_receive(AppTransport * transport,
 			appmessage_get_type(message),
 			appmessage_get_method(message));
 #endif
-	/* FIXME implement */
+	transport->helper.message(transport->helper.data, transport, client,
+			message);
 	return 0;
 }

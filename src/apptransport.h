@@ -23,8 +23,18 @@
 
 /* AppTransport */
 /* protected */
+/* types */
+typedef struct _AppTransportHelper
+{
+	void * data;
+	void (*message)(void * data, AppTransport * transport,
+			AppTransportClient * client, AppMessage * message);
+} AppTransportHelper;
+
+
 /* functions */
-AppTransport * apptransport_new(AppTransportMode mode, char const * plugin,
+AppTransport * apptransport_new(AppTransportMode mode,
+		AppTransportHelper * helper, char const * plugin,
 		char const * name);
 void apptransport_delete(AppTransport * transport);
 
