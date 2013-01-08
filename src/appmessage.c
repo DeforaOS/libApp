@@ -84,7 +84,7 @@ AppMessage * appmessage_new_deserialize(Buffer * buffer)
 	size_t pos = 0;
 	size_t s;
 	Variable * v;
-	uint32_t u32;
+	uint8_t u8;
 
 #ifdef DEBUG
 	fprintf(stderr, "DEBUG: %s()\n", __func__);
@@ -92,7 +92,7 @@ AppMessage * appmessage_new_deserialize(Buffer * buffer)
 	if((message = object_new(sizeof(*message))) == NULL)
 		return NULL;
 	s = size;
-	if((v = variable_new_deserialize_type(VT_UINT32, &s, &data[pos]))
+	if((v = variable_new_deserialize_type(VT_UINT8, &s, &data[pos]))
 			== NULL)
 	{
 		object_delete(message);
@@ -101,9 +101,9 @@ AppMessage * appmessage_new_deserialize(Buffer * buffer)
 	pos += s;
 	size -= s;
 	/* XXX may fail */
-	variable_get_as(v, VT_UINT32, &u32);
+	variable_get_as(v, VT_UINT8, &u8);
 	variable_delete(v);
-	switch((message->type = u32))
+	switch((message->type = u8))
 	{
 		case AMT_CALL:
 #ifdef DEBUG
@@ -126,7 +126,7 @@ AppMessage * appmessage_new_deserialize(Buffer * buffer)
 			message->t.call.var_cnt = 0;
 			break;
 		default:
-			error_set_code(1, "%s%u", "Unknown message type ", u32);
+			error_set_code(1, "%s%u", "Unknown message type ", u8);
 			/* XXX should not happen */
 			object_delete(message);
 			return NULL;
