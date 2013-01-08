@@ -44,10 +44,6 @@ struct _AppMessage
 };
 
 
-/* private */
-/* prototypes */
-
-
 /* public */
 /* functions */
 /* appmessage_new_call */
