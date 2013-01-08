@@ -155,6 +155,23 @@ static void _delete_call(AppMessage * message)
 }
 
 
+/* accessors */
+/* appmessage_get_method */
+String const * appmessage_get_method(AppMessage * message)
+{
+	if(message->type == AMT_CALL)
+		return message->t.call.method;
+	return NULL;
+}
+
+
+/* appmessage_get_type */
+AppMessageType appmessage_get_type(AppMessage * message)
+{
+	return message->type;
+}
+
+
 /* useful */
 /* appmessage_serialize */
 int appmessage_serialize(AppMessage * message, Buffer * buffer)
