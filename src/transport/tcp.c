@@ -282,6 +282,7 @@ static int _init_client(TCP * tcp, char const * name)
 					tcp);
 		}
 		else
+			/* listen for any incoming message */
 			event_register_io_read(tcp->helper->event,
 					tcp->u.client.fd,
 					(EventIOFunc)_tcp_socket_callback_read,
@@ -565,31 +566,21 @@ static int _accept_client(TCP * tcp, int fd, struct sockaddr * sa,
 		socklen_t sa_size)
 {
 	TCPSocket * tcpsocket;
-	Buffer * buf;
-	char const banner[4] = "App!";
 
 #ifdef DEBUG
 	fprintf(stderr, "DEBUG: %s(%d)\n", __func__, fd);
 #endif
 	if((tcpsocket = _tcp_socket_new_fd(tcp, fd, sa, sa_size)) == NULL)
 		return -1;
-	/* send the banner */
-	if((buf = buffer_new(sizeof(banner), banner)) == NULL
-			|| _tcp_socket_queue(tcpsocket, buf) != 0)
-	{
-		buffer_delete(buf);
-		return -1;
-	}
-	buffer_delete(buf);
 	if(_tcp_server_add_client(tcp, tcpsocket) != 0)
 	{
 		/* XXX workaround for a double-close() */
-		event_unregister_io_read(tcp->helper->event, tcpsocket->fd);
-		event_unregister_io_write(tcp->helper->event, tcpsocket->fd);
 		tcpsocket->fd = -1;
 		_tcp_socket_delete(tcpsocket);
 		return -1;
 	}
+	event_register_io_read(tcp->helper->event, tcpsocket->fd,
+			(EventIOFunc)_tcp_socket_callback_read, tcpsocket);
 #ifdef DEBUG
 	fprintf(stderr, "DEBUG: %s(%d) => 0\n", __func__, fd);
 #endif
@@ -662,6 +653,14 @@ static int _tcp_callback_connect(int fd, TCP * tcp)
 	event_register_io_read(tcp->helper->event, fd,
 			(EventIOFunc)_tcp_socket_callback_read,
 			&tcp->u.client);
+	/* write pending messages if any */
+	if(tcp->u.client.bufout_cnt > 0)
+	{
+		event_register_io_write(tcp->helper->event, fd,
+				(EventIOFunc)_tcp_socket_callback_write,
+				&tcp->u.client);
+		return 0;
+	}
 	return 1;
 }
 
