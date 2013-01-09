@@ -443,6 +443,11 @@ static int _tcp_socket_init(TCPSocket * tcpsocket, int domain, TCP * tcp)
 	if((flags & O_NONBLOCK) == 0)
 		if(fcntl(tcpsocket->fd, F_SETFL, flags | O_NONBLOCK) == -1)
 			return -_tcp_error("fcntl", 1);
+#ifdef TCP_NODELAY
+	/* do not wait before sending any traffic */
+	flags = 1;
+	setsockopt(fd, SOL_SOCKET, TCP_NODELAY, &flags, sizeof(flags));
+#endif
 	return 0;
 }
 
