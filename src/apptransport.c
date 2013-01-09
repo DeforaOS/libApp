@@ -46,6 +46,11 @@ struct _AppTransport
 	AppTransportPluginDefinition * definition;
 };
 
+struct _AppTransportClient
+{
+	AppTransport * transport;
+};
+
 
 /* prototypes */
 /* helpers */
@@ -150,11 +155,15 @@ static int _apptransport_helper_status(AppTransport * transport,
 static AppTransportClient * _apptransport_helper_client_new(
 		AppTransport * transport)
 {
+	AppTransportClient * client;
+
 #ifdef DEBUG
 	fprintf(stderr, "DEBUG: %s()\n", __func__);
 #endif
-	/* FIXME really implement */
-	return NULL;
+	if((client = object_new(sizeof(*client))) == NULL)
+		return NULL;
+	client->transport = transport;
+	return client;
 }
 
 
@@ -165,7 +174,7 @@ static void _apptransport_helper_client_delete(AppTransport * transport,
 #ifdef DEBUG
 	fprintf(stderr, "DEBUG: %s()\n", __func__);
 #endif
-	/* FIXME really implement */
+	object_delete(client);
 }
 
 

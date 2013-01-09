@@ -37,7 +37,7 @@ struct _AppMessage
 		struct
 		{
 			char * method;
-			Variable ** args;
+			AppMessageCallArgument * args;
 			size_t args_cnt;
 		} call;
 	} t;
@@ -47,14 +47,45 @@ struct _AppMessage
 /* public */
 /* functions */
 /* appmessage_new_call */
-AppMessage * appmessage_new_call(char const * method, ...)
+AppMessage * appmessage_new_call(char const * method,
+		AppMessageCallArgument * args, size_t args_cnt)
+{
+	AppMessage * message;
+	size_t i;
+
+#ifdef DEBUG
+	fprintf(stderr, "DEBUG: %s(\"%s\")\n", __func__, method);
+#endif
+	if((message = object_new(sizeof(*message))) == NULL)
+		return NULL;
+	message->type = AMT_CALL;
+	message->t.call.method = string_new(method);
+	message->t.call.args = malloc(sizeof(*args) * args_cnt);
+	message->t.call.args_cnt = args_cnt;
+	if(message->t.call.args == NULL)
+	{
+		appmessage_delete(message);
+		return NULL;
+	}
+	for(i = 0; i < args_cnt; i++)
+	{
+		/* FIXME check for errors */
+		message->t.call.args[i].direction = args[i].direction;
+		message->t.call.args[i].arg = variable_new_copy(args[i].arg);
+	}
+	return message;
+}
+
+
+/* appmessage_new_callv */
+AppMessage * appmessage_new_callv(char const * method, ...)
 {
 	AppMessage * message;
 	va_list ap;
 	size_t i;
 	int type;
 	Variable * v;
-	Variable ** p;
+	AppMessageCallArgument * p;
 
 	if((message = object_new(sizeof(*message))) == NULL)
 		return NULL;
@@ -86,7 +117,8 @@ AppMessage * appmessage_new_call(char const * method, ...)
 			message = NULL;
 			break;
 		}
-		message->t.call.args[i] = v;
+		message->t.call.args[i].direction = AMCD_IN; /* XXX */
+		message->t.call.args[i].arg = v;
 		message->t.call.args_cnt = i + 1;
 	}
 	va_end(ap);
@@ -94,14 +126,14 @@ AppMessage * appmessage_new_call(char const * method, ...)
 }
 
 
-/* appmessage_new_call_variables */
-AppMessage * appmessage_new_call_variables(char const * method, ...)
+/* appmessage_new_callv_variables */
+AppMessage * appmessage_new_callv_variables(char const * method, ...)
 {
 	AppMessage * message;
 	va_list ap;
 	size_t i;
 	Variable * v;
-	Variable ** p;
+	AppMessageCallArgument * p;
 
 	if((message = object_new(sizeof(*message))) == NULL)
 		return NULL;
@@ -129,7 +161,8 @@ AppMessage * appmessage_new_call_variables(char const * method, ...)
 			message = NULL;
 			break;
 		}
-		message->t.call.args[i] = v;
+		message->t.call.args[i].direction = AMCD_IN; /* XXX */
+		message->t.call.args[i].arg = v;
 		message->t.call.args_cnt = i + 1;
 	}
 	va_end(ap);
@@ -186,7 +219,7 @@ static AppMessage * _new_deserialize_call(AppMessage * message,
 	size_t s;
 	Variable * v;
 	size_t i;
-	Variable ** p;
+	AppMessageCallArgument * p;
 
 #ifdef DEBUG
 	fprintf(stderr, "DEBUG: %s()\n", __func__);
@@ -232,7 +265,8 @@ static AppMessage * _new_deserialize_call(AppMessage * message,
 #endif
 		pos += s;
 		size -= s;
-		message->t.call.args[i] = v;
+		message->t.call.args[i].direction = AMCD_IN; /* XXX */
+		message->t.call.args[i].arg = v;
 		message->t.call.args_cnt = i + 1;
 	}
 	return message;
@@ -329,9 +363,13 @@ static int _serialize_call(AppMessage * message, Buffer * buffer, Buffer * b)
 	if(ret != 0)
 		return ret;
 	for(i = 0; i < message->t.call.args_cnt; i++)
-		if(variable_serialize(message->t.call.args[i], b, 1) != 0
+	{
+		if(message->t.call.args[i].direction == AMCD_OUT)
+			continue;
+		if(variable_serialize(message->t.call.args[i].arg, b, 1) != 0
 				|| _serialize_append(buffer, b) != 0)
 			break;
+	}
 	buffer_delete(b);
 	return (i == message->t.call.args_cnt) ? 0 : -1;
 }

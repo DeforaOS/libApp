@@ -1,5 +1,5 @@
 /* $Id$ */
-/* Copyright (c) 2012 Pierre Pronchery <khorben@defora.org> */
+/* Copyright (c) 2012-2013 Pierre Pronchery <khorben@defora.org> */
 /* This file is part of DeforaOS System libApp */
 /* This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -20,20 +20,41 @@
 
 # include <System/buffer.h>
 # include <System/string.h>
+# include <System/variable.h>
 # include "app.h"
 
 
 /* AppMessage */
-/* type */
+/* types */
 typedef enum _AppMessageType
 {
 	AMT_CALL = 0
 } AppMessageType;
 
+typedef enum _AppMessageCallDirection
+{
+	AMCD_IN = 0,
+	AMCD_OUT,
+	AMCD_IN_OUT
+} AppMessageCallDirection;
+
+typedef struct _AppMessageCallArgument
+{
+	AppMessageCallDirection direction;
+	Variable * arg;
+} AppMessageCallArgument;
+
+
+/* macros */
+# define AMCA(type, direction, variable) \
+	(type | (direction) << 8), (variable)
+
 
 /* functions */
-AppMessage * appmessage_new_call(char const * method, ...);
-AppMessage * appmessage_new_call_variables(char const * method, ...);
+AppMessage * appmessage_new_call(String const * method,
+		AppMessageCallArgument * args, size_t args_cnt);
+AppMessage * appmessage_new_callv(String const * method, ...);
+AppMessage * appmessage_new_callv_variables(String const * method, ...);
 AppMessage * appmessage_new_deserialize(Buffer * buffer);
 void appmessage_delete(AppMessage * appmessage);
 
