@@ -35,7 +35,7 @@ typedef struct _AppTransportHelper
 /* functions */
 AppTransport * apptransport_new(AppTransportMode mode,
 		AppTransportHelper * helper, char const * plugin,
-		char const * name);
+		char const * name, Event * event);
 void apptransport_delete(AppTransport * transport);
 
 #endif /* !LIBAPP_APPTRANSPORT_H */

@@ -49,6 +49,15 @@ struct _AppTransport
 
 /* prototypes */
 /* helpers */
+static int _apptransport_helper_status(AppTransport * transport,
+		AppTransportStatus status, unsigned int code,
+		char const * message);
+
+static AppTransportClient * _apptransport_helper_client_new(
+		AppTransport * transport);
+static void _apptransport_helper_client_delete(AppTransport * transport,
+		AppTransportClient * client);
+
 static int _apptransport_helper_client_receive(AppTransport * transport,
 		AppTransportClient * client, AppMessage * message);
 
@@ -56,11 +65,11 @@ static int _apptransport_helper_client_receive(AppTransport * transport,
 /* protected */
 /* functions */
 /* apptransport_new */
-static void _new_helper(AppTransport * transport);
+static void _new_helper(AppTransport * transport, Event * event);
 
 AppTransport * apptransport_new(AppTransportMode mode,
 		AppTransportHelper * helper, char const * plugin,
-		char const * name)
+		char const * name, Event * event)
 {
 	AppTransport * transport;
 
@@ -70,7 +79,7 @@ AppTransport * apptransport_new(AppTransportMode mode,
 	memset(transport, 0, sizeof(*transport));
 	transport->helper = *helper;
 	/* initialize the plug-in helper */
-	_new_helper(transport);
+	_new_helper(transport, event);
 	/* load the transport plug-in */
 	if((transport->plugin = plugin_new(LIBDIR, "App", "transport", plugin))
 			== NULL
@@ -88,11 +97,14 @@ AppTransport * apptransport_new(AppTransportMode mode,
 	return transport;
 }
 
-static void _new_helper(AppTransport * transport)
+static void _new_helper(AppTransport * transport, Event * event)
 {
 	transport->thelper.transport = transport;
+	transport->thelper.event = event;
+	transport->thelper.status = _apptransport_helper_status;
+	transport->thelper.client_new = _apptransport_helper_client_new;
+	transport->thelper.client_delete = _apptransport_helper_client_delete;
 	transport->thelper.client_receive = _apptransport_helper_client_receive;
-	/* FIXME really implement */
 }
 
 
@@ -110,6 +122,43 @@ void apptransport_delete(AppTransport * transport)
 /* private */
 /* functions */
 /* helpers */
+/* apptransport_helper_status */
+static int _apptransport_helper_status(AppTransport * transport,
+		AppTransportStatus status, unsigned int code,
+		char const * message)
+{
+#ifdef DEBUG
+	fprintf(stderr, "DEBUG: %s(%u, %u, \"%s\")\n", __func__, status, code,
+			message);
+#endif
+	/* FIXME really implement */
+	return 0;
+}
+
+
+/* apptransport_helper_client_new */
+static AppTransportClient * _apptransport_helper_client_new(
+		AppTransport * transport)
+{
+#ifdef DEBUG
+	fprintf(stderr, "DEBUG: %s()\n", __func__);
+#endif
+	/* FIXME really implement */
+	return NULL;
+}
+
+
+/* apptransport_helper_client_delete */
+static void _apptransport_helper_client_delete(AppTransport * transport,
+		AppTransportClient * client)
+{
+#ifdef DEBUG
+	fprintf(stderr, "DEBUG: %s()\n", __func__);
+#endif
+	/* FIXME really implement */
+}
+
+
 /* apptransport_helper_client_receive */
 static int _apptransport_helper_client_receive(AppTransport * transport,
 		AppTransportClient * client, AppMessage * message)
