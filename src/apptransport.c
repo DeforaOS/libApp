@@ -119,6 +119,16 @@ void apptransport_delete(AppTransport * transport)
 }
 
 
+/* useful */
+/* apptransport_send */
+int apptransport_send(AppTransport * transport, AppMessage * message,
+		int acknowledge)
+{
+	return transport->definition->send(transport->tplugin, message,
+			acknowledge);
+}
+
+
 /* private */
 /* functions */
 /* helpers */

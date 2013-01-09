@@ -38,4 +38,8 @@ AppTransport * apptransport_new(AppTransportMode mode,
 		char const * name, Event * event);
 void apptransport_delete(AppTransport * transport);
 
+/* useful */
+int apptransport_send(AppTransport * transport, AppMessage * message,
+		int acknowledge);
+
 #endif /* !LIBAPP_APPTRANSPORT_H */
