@@ -28,7 +28,8 @@
 /* types */
 typedef enum _AppMessageType
 {
-	AMT_CALL = 0
+	AMT_CALL = 0,
+	AMT_CALL_RESPONSE
 } AppMessageType;
 
 typedef enum _AppMessageCallDirection
@@ -48,13 +49,14 @@ typedef struct _AppMessageCallArgument
 /* macros */
 # define AMCA(type, direction, variable) \
 	(type | (direction) << 8), (variable)
+# define AMCA_TYPE(v)		(v & 0xff)
+# define AMCA_DIRECTION(v)	(((v) >> 8) & 0xff)
 
 
 /* functions */
 AppMessage * appmessage_new_call(String const * method,
 		AppMessageCallArgument * args, size_t args_cnt);
 AppMessage * appmessage_new_callv(String const * method, ...);
-AppMessage * appmessage_new_callv_variables(String const * method, ...);
 AppMessage * appmessage_new_deserialize(Buffer * buffer);
 void appmessage_delete(AppMessage * appmessage);
 

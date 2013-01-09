@@ -52,6 +52,7 @@ AppMessage * appmessage_new_call(char const * method,
 {
 	AppMessage * message;
 	size_t i;
+	Variable * v;
 
 #ifdef DEBUG
 	fprintf(stderr, "DEBUG: %s(\"%s\")\n", __func__, method);
@@ -69,9 +70,21 @@ AppMessage * appmessage_new_call(char const * method,
 	}
 	for(i = 0; i < args_cnt; i++)
 	{
-		/* FIXME check for errors */
+		v = NULL;
 		message->t.call.args[i].direction = args[i].direction;
-		message->t.call.args[i].arg = variable_new_copy(args[i].arg);
+		if(args[i].arg != NULL
+				&& (v = variable_new_copy(args[i].arg)) == NULL)
+		{
+			message->t.call.args_cnt = i;
+			break;
+		}
+		message->t.call.args[i].arg = v;
+	}
+	/* check for errors */
+	if(i != args_cnt)
+	{
+		appmessage_delete(message);
+		return NULL;
 	}
 	return message;
 }
@@ -111,57 +124,14 @@ AppMessage * appmessage_new_callv(char const * method, ...)
 			break;
 		}
 		message->t.call.args = p;
-		if((v = variable_new(type, va_arg(ap, void *))) == NULL)
-		{
-			appmessage_delete(message);
-			message = NULL;
-			break;
-		}
-		message->t.call.args[i].direction = AMCD_IN; /* XXX */
-		message->t.call.args[i].arg = v;
-		message->t.call.args_cnt = i + 1;
-	}
-	va_end(ap);
-	return message;
-}
-
-
-/* appmessage_new_callv_variables */
-AppMessage * appmessage_new_callv_variables(char const * method, ...)
-{
-	AppMessage * message;
-	va_list ap;
-	size_t i;
-	Variable * v;
-	AppMessageCallArgument * p;
-
-	if((message = object_new(sizeof(*message))) == NULL)
-		return NULL;
-	message->type = AMT_CALL;
-	message->t.call.method = string_new(method);
-	message->t.call.args = NULL;
-	message->t.call.args_cnt = 0;
-	/* check for errors */
-	if(message->t.call.method == NULL)
-	{
-		appmessage_delete(message);
-		return NULL;
-	}
-	/* copy the arguments */
-	va_start(ap, method);
-	for(i = 0; (v = va_arg(ap, Variable *)) != NULL; i++)
-	{
-		if((p = realloc(message->t.call.args, sizeof(*p) * (i + 1)))
+		if((v = variable_new(AMCA_TYPE(type), va_arg(ap, void *)))
 				== NULL)
-			break;
-		message->t.call.args = p;
-		if((v = variable_new_copy(v)) == NULL)
 		{
 			appmessage_delete(message);
 			message = NULL;
 			break;
 		}
-		message->t.call.args[i].direction = AMCD_IN; /* XXX */
+		message->t.call.args[i].direction = AMCA_DIRECTION(type);
 		message->t.call.args[i].arg = v;
 		message->t.call.args_cnt = i + 1;
 	}
@@ -205,12 +175,10 @@ AppMessage * appmessage_new_deserialize(Buffer * buffer)
 	{
 		case AMT_CALL:
 			return _new_deserialize_call(message, data, size, pos);
-		default:
-			error_set_code(1, "%s%u", "Unknown message type ", u8);
-			/* XXX should not happen */
-			object_delete(message);
-			return NULL;
 	}
+	error_set_code(1, "%s%u", "Unknown message type ", u8);
+	object_delete(message);
+	return NULL;
 }
 
 static AppMessage * _new_deserialize_call(AppMessage * message,
@@ -289,7 +257,15 @@ void appmessage_delete(AppMessage * message)
 
 static void _delete_call(AppMessage * message)
 {
+	size_t i;
+	Variable * v;
+
 	string_delete(message->t.call.method);
+	if(message->t.call.args != NULL)
+		for(i = 0; i < message->t.call.args_cnt; i++)
+			if((v = message->t.call.args[i].arg) != NULL)
+				variable_delete(v);
+	free(message->t.call.args);
 }
 
 

@@ -1,5 +1,5 @@
 /* $Id$ */
-/* Copyright (c) 2011 Pierre Pronchery <khorben@defora.org> */
+/* Copyright (c) 2012-2013 Pierre Pronchery <khorben@defora.org> */
 /* This file is part of DeforaOS System libApp */
 /* This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -33,7 +33,7 @@ AppClient * appclient_new_event(char const * service, Event * event);
 void appclient_delete(AppClient * appclient);
 
 /* useful */
-int appclient_call(AppClient * appclient, int32_t * ret, char const * function,
+int appclient_call(AppClient * appclient, int32_t * ret, char const * call,
 		...);
 
 #endif /* !LIBAPP_APP_APPCLIENT_H */

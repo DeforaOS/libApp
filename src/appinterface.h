@@ -1,5 +1,5 @@
 /* $Id$ */
-/* Copyright (c) 2011 Pierre Pronchery <khorben@defora.org> */
+/* Copyright (c) 2012-2013 Pierre Pronchery <khorben@defora.org> */
 /* This file is part of DeforaOS System libApp */
 /* This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -15,10 +15,11 @@
 
 
 
-#ifndef LIBAPP_APPINTERFACE_H
-# define LIBAPP_APPINTERFACE_H
+#ifndef LIBAPP_APPINTERFACE2_H
+# define LIBAPP_APPINTERFACE2_H
 
 # include <stdarg.h>
+# include "App/app.h"
 
 
 /* AppInterface */
@@ -26,22 +27,18 @@
 typedef struct _AppInterface AppInterface;
 
 
-/* functions */
-AppInterface * appinterface_new(char const * app);
-AppInterface * appinterface_new_server(char const * app);
-void appinterface_delete(AppInterface * appinterface);
+/* constants */
+# define APPINTERFACE_MAX_ARGUMENTS	4
 
-/* accessors */
-int appinterface_get_port(AppInterface * appinterface);
-int appinterface_get_args_count(AppInterface * appinterface, size_t * count,
-		char const * function);
+
+/* functions */
+AppInterface * appinterface2_new_client(char const * app);
+AppInterface * appinterface2_new_server(char const * app);
+void appinterface2_delete(AppInterface * interface);
 
 /* useful */
-int appinterface_call(AppInterface * appinterface, char buf[], size_t buflen,
-		char const * function, void ** args, va_list arg);
-int appinterface_call_receive(AppInterface * appinterface, int32_t * ret,
-		char buf[], size_t buflen, char const * function, void ** args);
-int appinterface_receive(AppInterface * appinterface, int * ret, char buf[],
-		size_t buflen, char bufw[], size_t bufwlen, size_t * bufwpos);
+AppMessage * appinterface2_call(AppInterface * interface, char const * call,
+		va_list args);
+int appinterface2_call_process(AppInterface * interface, AppMessage * message);
 
-#endif /* !LIBAPP_APPINTERFACE_H */
+#endif /* !LIBAPP_APPINTERFACE2_H */

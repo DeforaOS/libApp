@@ -20,6 +20,7 @@
 #include <string.h>
 #include <errno.h>
 #include <System.h>
+#include "../src/appinterface.h"
 #include "App.h"
 
 #define APPBROKER_PROGNAME "AppBroker"
@@ -112,7 +113,7 @@ static int _appbroker_foreach_call(char const * key, Hash * value, void * data)
 		p = "void";
 	fprintf(appbroker->fp, "%s%s%s%s%s%s", p, " ", appbroker->prefix, "_",
 			key, "(");
-	for(i = 0; i < APPSERVER_MAX_ARGUMENTS; i++)
+	for(i = 0; i < APPINTERFACE_MAX_ARGUMENTS; i++)
 	{
 		snprintf(buf, sizeof(buf), "arg%d", i + 1);
 		if((p = hash_get(value, buf)) == NULL)
