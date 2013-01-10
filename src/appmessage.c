@@ -283,6 +283,17 @@ AppMessageType appmessage_get_type(AppMessage * message)
 }
 
 
+/* calls */
+/* appmessage_get_call_argument */
+AppMessageCallArgument * appmessage_get_call_argument(AppMessage * message,
+		size_t i)
+{
+	if(message->type != AMT_CALL)
+		return NULL;
+	return &message->t.call.args[i];
+}
+
+
 /* useful */
 /* appmessage_serialize */
 static int _serialize_append(Buffer * buffer, Buffer * b);

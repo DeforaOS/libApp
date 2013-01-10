@@ -297,6 +297,7 @@ int appinterface_call_process(AppInterface * interface, AppMessage * message)
 	int32_t ret = 0;
 	void ** args;
 	size_t i;
+	AppMessageCallArgument * arg;
 
 #ifdef DEBUG
 	fprintf(stderr, "DEBUG: %s(\"%s\")\n", __func__,
@@ -309,20 +310,27 @@ int appinterface_call_process(AppInterface * interface, AppMessage * message)
 		return -error_set_code(1, "%s", strerror(errno));
 	for(i = 0; i < call->args_cnt; i++)
 	{
-		switch(call->args[i].type)
-		{
-			/* FIXME really implement */
-			default:
-				args[i] = NULL;
-				break;
-		}
+		arg = appmessage_get_call_argument(message, i);
+		if(arg->arg == NULL)
+			/* XXX may be an AMCD_OUT or AMCD_IN_OUT */
+			args[i] = NULL;
+		else
+			/* XXX may fail */
+			variable_get_as(arg->arg, call->args[i].type, &args[i]);
 	}
 	_call_process_exec(call, &ret, args);
 	for(i = 0; i < call->args_cnt; i++)
-	{
-		/* FIXME really implement */
-		free(args[i]);
-	}
+		switch(call->args[i].type)
+		{
+			case VT_STRING:
+				string_delete(args[i]);
+				break;
+			case VT_BUFFER:
+				buffer_delete(args[i]);
+				break;
+			default:
+				break;
+		}
 	free(args);
 	return 0;
 }
@@ -336,6 +344,9 @@ static int _call_process_exec(AppInterfaceCall * call, int32_t * ret,
 	int (*func3)(void *, void *, void *);
 	int (*func4)(void *, void *, void *, void *);
 
+#ifdef DEBUG
+	fprintf(stderr, "DEBUG: %s() %lu\n", __func__, call->args_cnt);
+#endif
 	switch(call->args_cnt)
 	{
 		case 0:

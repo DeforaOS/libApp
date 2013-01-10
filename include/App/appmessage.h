@@ -63,6 +63,9 @@ void appmessage_delete(AppMessage * appmessage);
 /* accessors */
 String const * appmessage_get_method(AppMessage * message);
 AppMessageType appmessage_get_type(AppMessage * message);
+/* calls */
+AppMessageCallArgument * appmessage_get_call_argument(AppMessage * message,
+		size_t i);
 
 /* useful */
 int appmessage_serialize(AppMessage * message, Buffer * buffer);
