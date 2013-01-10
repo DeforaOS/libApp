@@ -112,7 +112,7 @@ int appclient_call(AppClient * client, int32_t * ret, char const * call, ...)
 	int res;
 
 #ifdef DEBUG
-	fprintf(stderr, "%s(\"%s\")\n", __func__, call);
+	fprintf(stderr, "DEBUG: %s(\"%s\")\n", __func__, call);
 #endif
 	va_start(ap, call);
 	message = appinterface_call(client->interface, call, ap);
