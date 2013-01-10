@@ -288,6 +288,12 @@ AppMessage * appinterface_call(AppInterface * interface, char const * method,
 
 
 /* appinterface_call_process */
+static void * _call_process_arg_in(AppInterfaceCallArg * iarg,
+		AppMessageCallArgument * marg);
+static void * _call_process_arg_in_out(AppInterfaceCallArg * iarg,
+		AppMessageCallArgument * marg);
+static void * _call_process_arg_out(AppInterfaceCallArg * iarg,
+		AppMessageCallArgument * marg);
 static int _call_process_exec(AppInterfaceCall * call, int32_t * ret,
 		void ** args);
 
@@ -311,12 +317,21 @@ int appinterface_call_process(AppInterface * interface, AppMessage * message)
 	for(i = 0; i < call->args_cnt; i++)
 	{
 		arg = appmessage_get_call_argument(message, i);
-		if(arg->arg == NULL)
-			/* XXX may be an AMCD_OUT or AMCD_IN_OUT */
-			args[i] = NULL;
-		else
-			/* XXX may fail */
-			variable_get_as(arg->arg, call->args[i].type, &args[i]);
+		switch(call->args[i].direction)
+		{
+			case AMCD_IN:
+				args[i] = _call_process_arg_in(&call->args[i],
+						arg);
+				break;
+			case AMCD_IN_OUT:
+				args[i] = _call_process_arg_in_out(
+						&call->args[i], arg);
+				break;
+			case AMCD_OUT:
+				args[i] = _call_process_arg_out(&call->args[i],
+						arg);
+				break;
+		}
 	}
 	_call_process_exec(call, &ret, args);
 	for(i = 0; i < call->args_cnt; i++)
@@ -333,6 +348,34 @@ int appinterface_call_process(AppInterface * interface, AppMessage * message)
 		}
 	free(args);
 	return 0;
+}
+
+static void * _call_process_arg_in(AppInterfaceCallArg * iarg,
+		AppMessageCallArgument * marg)
+{
+	void * ret;
+
+	if(marg->arg == NULL)
+		return NULL;
+	/* XXX may fail */
+	variable_get_as(marg->arg, iarg->type, &ret);
+	return ret;
+}
+
+static void * _call_process_arg_in_out(AppInterfaceCallArg * iarg,
+		AppMessageCallArgument * marg)
+{
+	if(marg->arg == NULL)
+		return NULL;
+	/* FIXME implement */
+	return NULL;
+}
+
+static void * _call_process_arg_out(AppInterfaceCallArg * iarg,
+		AppMessageCallArgument * marg)
+{
+	/* FIXME implement */
+	return NULL;
 }
 
 static int _call_process_exec(AppInterfaceCall * call, int32_t * ret,
