@@ -338,11 +338,11 @@ int appinterface_call_process(AppInterface * interface, AppMessage * message)
 static int _call_process_exec(AppInterfaceCall * call, int32_t * ret,
 		void ** args)
 {
-	int (*func0)(void);
-	int (*func1)(void *);
-	int (*func2)(void *, void *);
-	int (*func3)(void *, void *, void *);
-	int (*func4)(void *, void *, void *, void *);
+	int32_t (*func0)(void);
+	int32_t (*func1)(void *);
+	int32_t (*func2)(void *, void *);
+	int32_t (*func3)(void *, void *, void *);
+	int32_t (*func4)(void *, void *, void *, void *);
 
 #ifdef DEBUG
 	fprintf(stderr, "DEBUG: %s() %lu\n", __func__, call->args_cnt);
