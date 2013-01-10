@@ -77,7 +77,7 @@ AppClient * appclient_new_event(char const * app, Event * event)
 #endif
 	if((appclient = object_new(sizeof(AppClient))) == NULL)
 		return NULL;
-	appclient->interface = appinterface2_new_client(app);
+	appclient->interface = appinterface_new_client(app);
 	appclient->event = event;
 	appclient->helper.data = appclient;
 	appclient->helper.message = _appclient_helper_message;
@@ -96,7 +96,7 @@ AppClient * appclient_new_event(char const * app, Event * event)
 void appclient_delete(AppClient * appclient)
 {
 	if(appclient->interface != NULL)
-		appinterface2_delete(appclient->interface);
+		appinterface_delete(appclient->interface);
 	if(appclient->transport != NULL)
 		apptransport_delete(appclient->transport);
 	object_delete(appclient);
@@ -115,7 +115,7 @@ int appclient_call(AppClient * client, int32_t * ret, char const * call, ...)
 	fprintf(stderr, "%s(\"%s\")\n", __func__, call);
 #endif
 	va_start(ap, call);
-	message = appinterface2_call(client->interface, call, ap);
+	message = appinterface_call(client->interface, call, ap);
 	va_end(ap);
 	if(message == NULL)
 		return -1;

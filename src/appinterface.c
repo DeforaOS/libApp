@@ -111,7 +111,7 @@ static int _string_enum(StringEnum * se, String const * string,
 /* public */
 /* functions */
 /* appinterface_new_client */
-AppInterface * appinterface2_new_client(char const * app)
+AppInterface * appinterface_new_client(char const * app)
 {
 	/* FIXME also lookup the callbacks */
 	return _appinterface_new(app, "call");
@@ -119,7 +119,7 @@ AppInterface * appinterface2_new_client(char const * app)
 
 
 /* appinterface_new_server */
-AppInterface * appinterface2_new_server(char const * app)
+AppInterface * appinterface_new_server(char const * app)
 {
 	AppInterface * ai;
 	Plugin * handle;
@@ -130,7 +130,7 @@ AppInterface * appinterface2_new_server(char const * app)
 		return NULL;
 	if((handle = plugin_new_self()) == NULL)
 	{
-		appinterface2_delete(ai);
+		appinterface_delete(ai);
 		return NULL;
 	}
 	for(i = 0; i < ai->calls_cnt; i++)
@@ -141,7 +141,7 @@ AppInterface * appinterface2_new_server(char const * app)
 		string_delete(name);
 		if(ai->calls[i].func == NULL)
 		{
-			appinterface2_delete(ai);
+			appinterface_delete(ai);
 			plugin_delete(handle);
 			return NULL;
 		}
@@ -152,7 +152,7 @@ AppInterface * appinterface2_new_server(char const * app)
 
 
 /* appinterface_delete */
-void appinterface2_delete(AppInterface * appinterface)
+void appinterface_delete(AppInterface * appinterface)
 {
 	size_t i;
 
@@ -170,7 +170,7 @@ void appinterface2_delete(AppInterface * appinterface)
 
 /* useful */
 /* appinterface_call */
-AppMessage * appinterface2_call(AppInterface * interface, char const * method,
+AppMessage * appinterface_call(AppInterface * interface, char const * method,
 		va_list args)
 {
 	AppInterfaceCall * call;
@@ -291,7 +291,7 @@ AppMessage * appinterface2_call(AppInterface * interface, char const * method,
 static int _call_process_exec(AppInterfaceCall * call, int32_t * ret,
 		void ** args);
 
-int appinterface2_call_process(AppInterface * interface, AppMessage * message)
+int appinterface_call_process(AppInterface * interface, AppMessage * message)
 {
 	AppInterfaceCall * call;
 	int32_t ret = 0;
@@ -404,14 +404,14 @@ static AppInterface * _appinterface_new(char const * app, char const * prefix)
 		if(config != NULL)
 			config_delete(config);
 		string_delete(pathname);
-		appinterface2_delete(appinterface);
+		appinterface_delete(appinterface);
 		return NULL;
 	}
 	appinterface->error = 0;
 	hash_foreach(config, (HashForeach)_new_foreach, appinterface);
 	if(appinterface->error != 0)
 	{
-		appinterface2_delete(appinterface);
+		appinterface_delete(appinterface);
 		return NULL;
 	}
 	config_delete(config);

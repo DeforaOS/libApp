@@ -393,6 +393,9 @@ static int _tcp_send(TCP * tcp, AppMessage * message, int acknowledge)
 		return -1;
 	}
 	buffer_delete(buffer);
+	/* FIXME really implement */
+	if(acknowledge != 0)
+		event_loop(tcp->helper->event);
 	return 0;
 }
 
@@ -523,7 +526,8 @@ static int _tcp_socket_queue(TCPSocket * tcpsocket, Buffer * buffer)
 	tcpsocket->bufout_cnt += len;
 	buffer_delete(b);
 #ifdef DEBUG
-	fprintf(stderr, "DEBUG: %s(%d) => %d\n", __func__, tcpsocket->fd, 0);
+	fprintf(stderr, "DEBUG: %s(%d) %u => %d\n", __func__, tcpsocket->fd,
+			len, 0);
 #endif
 	return 0;
 }

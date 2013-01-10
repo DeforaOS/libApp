@@ -15,8 +15,8 @@
 
 
 
-#ifndef LIBAPP_APPINTERFACE2_H
-# define LIBAPP_APPINTERFACE2_H
+#ifndef LIBAPP_APPINTERFACE_H
+# define LIBAPP_APPINTERFACE_H
 
 # include <stdarg.h>
 # include "App/app.h"
@@ -32,13 +32,13 @@ typedef struct _AppInterface AppInterface;
 
 
 /* functions */
-AppInterface * appinterface2_new_client(char const * app);
-AppInterface * appinterface2_new_server(char const * app);
-void appinterface2_delete(AppInterface * interface);
+AppInterface * appinterface_new_client(char const * app);
+AppInterface * appinterface_new_server(char const * app);
+void appinterface_delete(AppInterface * interface);
 
 /* useful */
-AppMessage * appinterface2_call(AppInterface * interface, char const * call,
+AppMessage * appinterface_call(AppInterface * interface, char const * call,
 		va_list args);
-int appinterface2_call_process(AppInterface * interface, AppMessage * message);
+int appinterface_call_process(AppInterface * interface, AppMessage * message);
 
-#endif /* !LIBAPP_APPINTERFACE2_H */
+#endif /* !LIBAPP_APPINTERFACE_H */

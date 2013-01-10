@@ -97,7 +97,7 @@ AppServer * appserver_new_event(char const * app, Event * event)
 
 static int _new_server(AppServer * appserver, char const * app)
 {
-	if((appserver->interface = appinterface2_new_server(app)) == NULL)
+	if((appserver->interface = appinterface_new_server(app)) == NULL)
 		return -1;
 	appserver->helper.data = appserver;
 	appserver->helper.message = _appserver_helper_message;
@@ -118,7 +118,7 @@ void appserver_delete(AppServer * appserver)
 	fprintf(stderr, "DEBUG: %s()\n", __func__);
 #endif
 	if(appserver->interface != NULL)
-		appinterface2_delete(appserver->interface);
+		appinterface_delete(appserver->interface);
 	if(appserver->event_free != 0)
 		event_delete(appserver->event);
 	object_delete(appserver);
@@ -158,7 +158,7 @@ static int _appserver_helper_message(AppServer * appserver,
 	switch(appmessage_get_type(message))
 	{
 		case AMT_CALL:
-			appinterface2_call_process(appserver->interface,
+			appinterface_call_process(appserver->interface,
 					message);
 			break;
 		case AMT_CALL_RESPONSE:
