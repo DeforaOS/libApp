@@ -518,7 +518,7 @@ static int _tcp_socket_queue(TCPSocket * tcpsocket, Buffer * buffer)
 	tcpsocket->bufout = p;
 	memcpy(&p[tcpsocket->bufout_cnt], buffer_get_data(b), len);
 	/* register the callback if necessary */
-	if(tcpsocket->bufout_cnt == 0)
+	if(tcpsocket->fd >= 0 && tcpsocket->bufout_cnt == 0)
 		event_register_io_write(tcpsocket->tcp->helper->event,
 				tcpsocket->fd,
 				(EventIOFunc)_tcp_socket_callback_write,
