@@ -54,12 +54,13 @@ static int _appbroker(char const * outfile, char const * filename)
 
 	if((appbroker.config = config_new()) == NULL)
 		return error_print(APPBROKER_PROGNAME);
-	if(config_load(appbroker.config, filename) != 0)
+	if(config_load(appbroker.config, filename) != 0
+			|| (appbroker.prefix = config_get(appbroker.config,
+					NULL, "service")) == NULL)
 	{
 		config_delete(appbroker.config);
 		return error_print(APPBROKER_PROGNAME);
 	}
-	appbroker.prefix = config_get(appbroker.config, NULL, "service");
 	if((appbroker.outfile = outfile) == NULL)
 		appbroker.fp = stdout;
 	else if((appbroker.fp = fopen(outfile, "w")) == NULL)
