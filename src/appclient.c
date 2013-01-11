@@ -349,7 +349,7 @@ static int _new_connect(AppClient * appclient, char const * app)
 	fprintf(stderr, "DEBUG: %s(%p, \"%s\")\n", __func__, (void *)appclient,
 			app);
 #endif
-	if((appclient->fd = socket(AF_INET, SOCK_STREAM, 0)) == -1)
+	if((appclient->fd = socket(AF_INET, SOCK_STREAM, 0)) < 0)
 		return 1;
 	sa.sin_family = AF_INET;
 	sa.sin_port = htons(appinterface_get_port(appclient->interface));
@@ -463,7 +463,8 @@ static int _connect_addr(String const * service, uint32_t * addr)
 /* appclient_delete */
 void appclient_delete(AppClient * appclient)
 {
-	appinterface_delete(appclient->interface);
+	if(appclient->interface != NULL)
+		appinterface_delete(appclient->interface);
 	if(appclient->fd != -1)
 		close(appclient->fd);
 #ifdef WITH_SSL
