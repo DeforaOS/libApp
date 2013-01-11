@@ -17,7 +17,7 @@ INSTALL	= install
 
 all: $(TARGETS)
 
-AppBroker_OBJS = ../tools/appbroker.o
+AppBroker_OBJS = appbroker.o
 AppBroker_CFLAGS = $(CPPFLAGSF) $(CPPFLAGS) $(CFLAGSF) $(CFLAGS)
 AppBroker_LDFLAGS = $(LDFLAGSF) $(LDFLAGS) ../src/libApp.a
 
@@ -34,8 +34,8 @@ transport_LDFLAGS = $(LDFLAGSF) $(LDFLAGS) -lApp -L../src -Wl,-rpath,../src
 transport: $(transport_OBJS)
 	$(CC) -o transport $(transport_OBJS) $(transport_LDFLAGS)
 
-../tools/appbroker.o: ../tools/appbroker.c ../src/libApp.a
-	$(CC) $(AppBroker_CFLAGS) -o ../tools/appbroker.o -c ../tools/appbroker.c
+appbroker.o: appbroker.c ../src/libApp.a ../tools/appbroker.c
+	$(CC) $(AppBroker_CFLAGS) -c appbroker.c
 
 transport.o: transport.c ../src/libApp.a
 	$(CC) $(transport_CFLAGS) -c transport.c

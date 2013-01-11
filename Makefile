@@ -61,7 +61,7 @@ dist:
 		$(PACKAGE)-$(VERSION)/src/transport/udp6.c \
 		$(PACKAGE)-$(VERSION)/src/transport/Makefile \
 		$(PACKAGE)-$(VERSION)/src/transport/project.conf \
-		$(PACKAGE)-$(VERSION)/tests/../tools/appbroker.c \
+		$(PACKAGE)-$(VERSION)/tests/appbroker.c \
 		$(PACKAGE)-$(VERSION)/tests/transport.c \
 		$(PACKAGE)-$(VERSION)/tests/Makefile \
 		$(PACKAGE)-$(VERSION)/tests/AppBroker.interface \
