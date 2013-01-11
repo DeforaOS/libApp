@@ -16,6 +16,17 @@
 
 
 #functions
+#AppBroker
+_appbroker()
+{
+	[ $# -eq 1 ]						|| return 1
+	service="$1"
+
+	echo "AppBroker: Testing $service" 1<&2
+	./AppBroker -o "$service.h" "$service.interface"
+}
+
+
 #transport
 _transport()
 {
@@ -63,6 +74,7 @@ target="$1"
 
 > "$target"
 FAILED=
+_appbroker AppBroker		>> "$target" || FAILED="$FAILED appbroker"
 _transport tcp4 127.0.0.1:4242	>> "$target" || FAILED="$FAILED tcp4(error $?)"
 _transport tcp6 ::1.4242	>> "$target" || FAILED="$FAILED tcp6(error $?)"
 _transport tcp6 ::1:4242	>> "$target"
