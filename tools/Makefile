@@ -12,7 +12,7 @@ LDFLAGSF= -L../src `pkg-config --libs libSystem` -lApp
 LDFLAGS	= -L$(PREFIX)/lib -Wl,-rpath,$(PREFIX)/lib
 RM	= rm -f
 LN	= ln -f
-MKDIR	= mkdir -p
+MKDIR	= mkdir -m 0755 -p
 INSTALL	= install
 
 
