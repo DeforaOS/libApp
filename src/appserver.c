@@ -97,15 +97,38 @@ AppServer * appserver_new_event(char const * app, Event * event)
 
 static int _new_server(AppServer * appserver, char const * app)
 {
-	if((appserver->interface = appinterface_new_server(app)) == NULL)
+	String * var;
+	char const * p;
+	String * q;
+	/* FIXME hard-coded default value */
+	char const * transport = "tcp";
+	char * address = "127.0.0.1:4250";
+
+	if((var = string_new_append("APPSERVER_", app, NULL)) == NULL)
 		return -1;
+	/* obtain the desired transport and address from the environment */
+	if((p = getenv(var)) != NULL)
+	{
+		if((q = string_new(p)) == NULL)
+		{
+			string_delete(var);
+			return -1;
+		}
+		transport = q;
+		if((address = strchr(q, ':')) != NULL)
+			*(address++) = '\0';
+	}
+	if((appserver->interface = appinterface_new_server(app)) == NULL)
+	{
+		string_delete(q);
+		string_delete(var);
+		return -1;
+	}
 	appserver->helper.data = appserver;
 	appserver->helper.message = _appserver_helper_message;
-	/* FIXME hard-coded */
 	if((appserver->transport = apptransport_new(ATM_SERVER,
-					&appserver->helper, "tcp",
-					"127.0.0.1:4250", appserver->event))
-			== NULL)
+					&appserver->helper, transport,
+					address, appserver->event)) == NULL)
 		return -1;
 	return 0;
 }
