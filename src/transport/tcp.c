@@ -45,7 +45,7 @@
 
 /* for tcp4 and tcp6 */
 #ifndef TCP_FAMILY
-# define TCP_FAMILY PF_UNSPEC
+# define TCP_FAMILY AF_UNSPEC
 #endif
 
 
@@ -255,7 +255,7 @@ static int _init_client(TCP * tcp, char const * name)
 		if(_tcp_socket_init(&tcp->u.client, aip->ai_family, tcp) != 0)
 			continue;
 #ifdef DEBUG
-		if(aip->ai_family == PF_INET)
+		if(aip->ai_family == AF_INET)
 		{
 			sa = (struct sockaddr_in *)aip->ai_addr;
 			fprintf(stderr, "DEBUG: %s() %s (%s:%u)\n", __func__,
@@ -316,7 +316,7 @@ static int _init_server(TCP * tcp, char const * name)
 		tcp->u.server.fd = tcpsocket.fd;
 		/* accept incoming connections */
 #ifdef DEBUG
-		if(aip->ai_family == PF_INET)
+		if(aip->ai_family == AF_INET)
 		{
 			sa = (struct sockaddr_in *)aip->ai_addr;
 			fprintf(stderr, "DEBUG: %s() %s (%s:%u)\n", __func__,

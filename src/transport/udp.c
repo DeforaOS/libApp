@@ -1,5 +1,5 @@
 /* $Id$ */
-/* Copyright (c) 2012 Pierre Pronchery <khorben@defora.org> */
+/* Copyright (c) 2012-2013 Pierre Pronchery <khorben@defora.org> */
 /* This file is part of DeforaOS System libApp */
 /* This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -276,7 +276,7 @@ static int _udp_send(UDP * udp, AppMessage * message, int acknowledge)
 #endif
 
 #ifdef DEBUG
-	if(udp->aip->ai_family == PF_INET)
+	if(udp->aip->ai_family == AF_INET)
 	{
 		sa = (struct sockaddr_in *)udp->aip->ai_addr;
 		fprintf(stderr, "DEBUG: %s() %s (%s:%u)\n", __func__,
