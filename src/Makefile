@@ -59,8 +59,8 @@ distclean: clean
 
 install: $(TARGETS)
 	$(MKDIR) $(DESTDIR)$(LIBDIR)
-	$(INSTALL) -m 0644 -- libApp.a $(DESTDIR)$(LIBDIR)/libApp.a
-	$(INSTALL) -m 0755 -- libApp.so.0.0 $(DESTDIR)$(LIBDIR)/libApp.so.0.0
+	$(INSTALL) -m 0644 libApp.a $(DESTDIR)$(LIBDIR)/libApp.a
+	$(INSTALL) -m 0755 libApp.so.0.0 $(DESTDIR)$(LIBDIR)/libApp.so.0.0
 	$(LN) -s -- libApp.so.0.0 $(DESTDIR)$(LIBDIR)/libApp.so.0
 	$(LN) -s -- libApp.so.0.0 $(DESTDIR)$(LIBDIR)/libApp.so
 

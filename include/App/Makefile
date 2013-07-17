@@ -15,15 +15,15 @@ distclean: clean
 
 install:
 	$(MKDIR) $(DESTDIR)$(INCLUDEDIR)/System/App
-	$(INSTALL) -m 0644 -- app.h $(DESTDIR)$(INCLUDEDIR)/System/App/app.h
+	$(INSTALL) -m 0644 app.h $(DESTDIR)$(INCLUDEDIR)/System/App/app.h
 	$(MKDIR) $(DESTDIR)$(INCLUDEDIR)/System/App
-	$(INSTALL) -m 0644 -- appclient.h $(DESTDIR)$(INCLUDEDIR)/System/App/appclient.h
+	$(INSTALL) -m 0644 appclient.h $(DESTDIR)$(INCLUDEDIR)/System/App/appclient.h
 	$(MKDIR) $(DESTDIR)$(INCLUDEDIR)/System/App
-	$(INSTALL) -m 0644 -- appmessage.h $(DESTDIR)$(INCLUDEDIR)/System/App/appmessage.h
+	$(INSTALL) -m 0644 appmessage.h $(DESTDIR)$(INCLUDEDIR)/System/App/appmessage.h
 	$(MKDIR) $(DESTDIR)$(INCLUDEDIR)/System/App
-	$(INSTALL) -m 0644 -- appserver.h $(DESTDIR)$(INCLUDEDIR)/System/App/appserver.h
+	$(INSTALL) -m 0644 appserver.h $(DESTDIR)$(INCLUDEDIR)/System/App/appserver.h
 	$(MKDIR) $(DESTDIR)$(INCLUDEDIR)/System/App
-	$(INSTALL) -m 0644 -- apptransport.h $(DESTDIR)$(INCLUDEDIR)/System/App/apptransport.h
+	$(INSTALL) -m 0644 apptransport.h $(DESTDIR)$(INCLUDEDIR)/System/App/apptransport.h
 
 uninstall:
 	$(RM) -- $(DESTDIR)$(INCLUDEDIR)/System/App/app.h

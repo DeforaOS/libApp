@@ -97,17 +97,17 @@ distclean: clean
 
 install: $(TARGETS)
 	$(MKDIR) $(DESTDIR)$(LIBDIR)/App/transport
-	$(INSTALL) -m 0644 -- tcp.so $(DESTDIR)$(LIBDIR)/App/transport/tcp.so
+	$(INSTALL) -m 0644 tcp.so $(DESTDIR)$(LIBDIR)/App/transport/tcp.so
 	$(MKDIR) $(DESTDIR)$(LIBDIR)/App/transport
-	$(INSTALL) -m 0644 -- tcp4.so $(DESTDIR)$(LIBDIR)/App/transport/tcp4.so
+	$(INSTALL) -m 0644 tcp4.so $(DESTDIR)$(LIBDIR)/App/transport/tcp4.so
 	$(MKDIR) $(DESTDIR)$(LIBDIR)/App/transport
-	$(INSTALL) -m 0644 -- tcp6.so $(DESTDIR)$(LIBDIR)/App/transport/tcp6.so
+	$(INSTALL) -m 0644 tcp6.so $(DESTDIR)$(LIBDIR)/App/transport/tcp6.so
 	$(MKDIR) $(DESTDIR)$(LIBDIR)/App/transport
-	$(INSTALL) -m 0644 -- udp.so $(DESTDIR)$(LIBDIR)/App/transport/udp.so
+	$(INSTALL) -m 0644 udp.so $(DESTDIR)$(LIBDIR)/App/transport/udp.so
 	$(MKDIR) $(DESTDIR)$(LIBDIR)/App/transport
-	$(INSTALL) -m 0644 -- udp4.so $(DESTDIR)$(LIBDIR)/App/transport/udp4.so
+	$(INSTALL) -m 0644 udp4.so $(DESTDIR)$(LIBDIR)/App/transport/udp4.so
 	$(MKDIR) $(DESTDIR)$(LIBDIR)/App/transport
-	$(INSTALL) -m 0644 -- udp6.so $(DESTDIR)$(LIBDIR)/App/transport/udp6.so
+	$(INSTALL) -m 0644 udp6.so $(DESTDIR)$(LIBDIR)/App/transport/udp6.so
 
 uninstall:
 	$(RM) -- $(DESTDIR)$(LIBDIR)/App/transport/tcp.so

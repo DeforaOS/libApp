@@ -46,7 +46,7 @@ distclean: clean
 
 install: $(TARGETS)
 	$(MKDIR) $(DESTDIR)$(BINDIR)
-	$(INSTALL) -m 0755 -- AppBroker $(DESTDIR)$(BINDIR)/AppBroker
+	$(INSTALL) -m 0755 AppBroker $(DESTDIR)$(BINDIR)/AppBroker
 
 uninstall:
 	$(RM) -- $(DESTDIR)$(BINDIR)/AppBroker

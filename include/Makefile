@@ -22,7 +22,7 @@ distclean:
 install:
 	@for i in $(SUBDIRS); do (cd "$$i" && $(MAKE) install) || exit; done
 	$(MKDIR) $(DESTDIR)$(INCLUDEDIR)/System
-	$(INSTALL) -m 0644 -- App.h $(DESTDIR)$(INCLUDEDIR)/System/App.h
+	$(INSTALL) -m 0644 App.h $(DESTDIR)$(INCLUDEDIR)/System/App.h
 
 uninstall:
 	@for i in $(SUBDIRS); do (cd "$$i" && $(MAKE) uninstall) || exit; done
