@@ -42,7 +42,7 @@
 
 /* for udp4 and udp6 */
 #ifndef UDP_FAMILY
-# define UDP_FAMILY PF_UNSPEC
+# define UDP_FAMILY AF_UNSPEC
 #endif
 
 
