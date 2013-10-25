@@ -31,7 +31,7 @@ _fail()
 
 	shift
 	echo -n "$test:" 1>&2
-	(echo ""
+	(echo
 	echo "Testing: ./$test" "$@"
 	"./$test" "$@") >> "$target" 2>&1
 	res=$?
@@ -53,7 +53,7 @@ _test()
 
 	shift
 	echo -n "$test:" 1>&2
-	(echo ""
+	(echo
 	echo "Testing: ./$test" "$@"
 	"./$test" "$@") >> "$target" 2>&1
 	res=$?
