@@ -18,7 +18,7 @@ INSTALL	= install
 
 all: $(TARGETS)
 
-tests.log: transport ../src/transport/tcp.c ../src/transport/udp.c
+tests.log: tests.sh transport ../src/transport/tcp.c ../src/transport/udp.c
 	./tests.sh -P "$(PREFIX)" -- "tests.log"
 
 transport_OBJS = transport.o

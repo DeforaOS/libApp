@@ -15,23 +15,63 @@
 #along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 
-#functions
-#transport
-_transport()
-{
-	[ $# -eq 2 ]						|| return 1
-	transport="$1"
-	name="$2"
+#variables
+#executables
+DATE="date"
 
-	echo "transport: Testing $transport ($name)" 1<&2
-	./transport -p "$transport" "$name"
+
+#functions
+#fail
+_fail()
+{
+	test="$1"
+	#XXX
+	protocol="$3"
+	name="$4"
+
+	shift
+	echo -n "$test:" 1>&2
+	(echo ""
+	echo "Testing: ./$test" "$@"
+	"./$test" "$@") >> "$target" 2>&1
+	res=$?
+	if [ $res -ne 0 ]; then
+		echo " FAILED ($protocol $name, error $res)" 1>&2
+	else
+		echo " PASS" 1>&2
+	fi
+}
+
+
+#test
+_test()
+{
+	test="$1"
+	#XXX
+	protocol="$3"
+	name="$4"
+
+	shift
+	echo -n "$test:" 1>&2
+	(echo ""
+	echo "Testing: ./$test" "$@"
+	"./$test" "$@") >> "$target" 2>&1
+	res=$?
+	if [ $res -ne 0 ]; then
+		echo " FAILED" 1>&2
+		FAILED="$FAILED $test($protocol $name, error $res)"
+		return 2
+	else
+		echo " PASS" 1>&2
+		return 0
+	fi
 }
 
 
 #usage
 _usage()
 {
-	echo "Usage: tests.sh target" 1>&2
+	echo "Usage: tests.sh [-c][-P prefix] target" 1>&2
 	return 1
 }
 
@@ -61,25 +101,25 @@ target="$1"
 
 [ "$clean" -ne 0 ]			&& exit 0
 
-> "$target"
+$DATE > "$target"
 FAILED=
-_transport tcp4 127.0.0.1:4242	>> "$target" || FAILED="$FAILED tcp4(error $?)"
-_transport tcp6 ::1.4242	>> "$target" || FAILED="$FAILED tcp6(error $?)"
-_transport tcp6 ::1:4242	>> "$target"
-[ $? -eq 2 ]			             || FAILED="$FAILED tcp6(error $?)"
-_transport tcp  127.0.0.1:4242	>> "$target" || FAILED="$FAILED tcp(error $?)"
-_transport tcp  ::1.4242	>> "$target" || FAILED="$FAILED tcp(error $?)"
-_transport tcp  ::1:4242	>> "$target"
-[ $? -eq 2 ]			             || FAILED="$FAILED tcp(error $?)"
-_transport udp4 127.0.0.1:4242	>> "$target" || FAILED="$FAILED udp4(error $?)"
-_transport udp6 ::1.4242	>> "$target" || FAILED="$FAILED udp6(error $?)"
-_transport udp6 ::1:4242	>> "$target"
-[ $? -eq 2 ]			             || FAILED="$FAILED udp6(error $?)"
-_transport udp  127.0.0.1:4242	>> "$target" || FAILED="$FAILED udp(error $?)"
-_transport udp  ::1.4242	>> "$target" || FAILED="$FAILED udp(error $?)"
-_transport udp  ::1:4242	>> "$target"
-[ $? -eq 2 ]			             || FAILED="$FAILED udp(error $?)"
-[ -z "$FAILED" ]			&& exit 0
-echo "Failed tests:$FAILED" 1>&2
-#XXX ignore errors for now
-#exit 2
+echo "Performing tests:" 1>&2
+_test "transport" -p tcp4 127.0.0.1:4242
+_test "transport" -p tcp6 ::1.4242
+_test "transport" -p tcp 127.0.0.1:4242
+_test "transport" -p tcp ::1.4242
+echo "Expected failures:" 1>&2
+#XXX next four should pass instead
+_fail "transport" -p udp4 127.0.0.1:4242
+_fail "transport" -p udp6 ::1.4242
+_fail "transport" -p udp 127.0.0.1:4242
+_fail "transport" -p udp ::1.4242
+_fail "transport" -p tcp6 ::1:4242
+_fail "transport" -p tcp ::1:4242
+_fail "transport" -p udp6 ::1:4242
+_fail "transport" -p udp ::1:4242
+if [ -n "$FAILED" ]; then
+	echo "Failed tests:$FAILED" 1>&2
+	exit 2
+fi
+echo "All tests completed" 1>&2
