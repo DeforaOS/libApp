@@ -3,7 +3,7 @@ includedir=${prefix}/include
 exec_prefix=${prefix}
 libdir=${exec_prefix}/lib
 
-Name: libApp
+Name: @PACKAGE@
 Description: DeforaOS System essential library
 Version: @VERSION@
 Requires: libSystem
