@@ -499,6 +499,35 @@ static TCPSocket * _tcp_socket_new_fd(TCP * tcp, int fd, struct sockaddr * sa,
 }
 
 
+/* tcp_socket_delete */
+static void _tcp_socket_delete(TCPSocket * tcpsocket)
+{
+	_tcp_socket_destroy(tcpsocket);
+	object_delete(tcpsocket);
+}
+
+
+/* tcp_socket_destroy */
+static void _tcp_socket_destroy(TCPSocket * tcpsocket)
+{
+	TCP * tcp = tcpsocket->tcp;
+	AppTransportPluginHelper * helper = tcp->helper;
+
+	helper->client_delete(helper->transport, tcpsocket->client);
+	free(tcpsocket->sa);
+	if(tcpsocket->fd >= 0)
+	{
+		event_unregister_io_read(tcpsocket->tcp->helper->event,
+				tcpsocket->fd);
+		event_unregister_io_write(tcpsocket->tcp->helper->event,
+				tcpsocket->fd);
+		close(tcpsocket->fd);
+	}
+	free(tcpsocket->bufin);
+	free(tcpsocket->bufout);
+}
+
+
 /* tcp_socket_queue */
 static int _tcp_socket_queue(TCPSocket * tcpsocket, Buffer * buffer)
 {
@@ -608,31 +637,6 @@ static int _accept_client(TCP * tcp, int fd, struct sockaddr * sa,
 	fprintf(stderr, "DEBUG: %s(%d) => 0\n", __func__, fd);
 #endif
 	return 0;
-}
-
-
-/* tcp_socket_delete */
-static void _tcp_socket_delete(TCPSocket * tcpsocket)
-{
-	_tcp_socket_destroy(tcpsocket);
-	object_delete(tcpsocket);
-}
-
-
-/* tcp_socket_destroy */
-static void _tcp_socket_destroy(TCPSocket * tcpsocket)
-{
-	free(tcpsocket->sa);
-	if(tcpsocket->fd >= 0)
-	{
-		event_unregister_io_read(tcpsocket->tcp->helper->event,
-				tcpsocket->fd);
-		event_unregister_io_write(tcpsocket->tcp->helper->event,
-				tcpsocket->fd);
-		close(tcpsocket->fd);
-	}
-	free(tcpsocket->bufin);
-	free(tcpsocket->bufout);
 }
 
 
