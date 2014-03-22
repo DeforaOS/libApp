@@ -262,12 +262,12 @@ static int _init_server(TCP * tcp, char const * name)
 	struct sockaddr_in * sa;
 #endif
 
+	tcp->u.server.fd = -1;
 	/* obtain the local address */
 	if(_init_address(tcp, name, TCP_FAMILY) != 0)
 		return -1;
 	for(aip = tcp->ai; aip != NULL; aip = aip->ai_next)
 	{
-		tcp->u.server.fd = -1;
 		/* create the socket */
 		if(_tcp_socket_init(&tcpsocket, aip->ai_family, tcp) != 0)
 			continue;
