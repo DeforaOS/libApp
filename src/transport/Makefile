@@ -68,25 +68,25 @@ udp6_LDFLAGS = $(LDFLAGSF) $(LDFLAGS)
 udp6.so: $(udp6_OBJS)
 	$(CCSHARED) -o udp6.so $(udp6_OBJS) $(udp6_LDFLAGS)
 
-tcp.o: tcp.c
+tcp.o: tcp.c common.c
 	$(CC) $(tcp_CFLAGS) -c tcp.c
 
-tcp4.o: tcp4.c tcp.c
+tcp4.o: tcp4.c tcp.c common.c
 	$(CC) $(tcp4_CFLAGS) -c tcp4.c
 
-tcp6.o: tcp6.c tcp.c
+tcp6.o: tcp6.c tcp.c common.c
 	$(CC) $(tcp6_CFLAGS) -c tcp6.c
 
 template.o: template.c
 	$(CC) $(template_CFLAGS) -c template.c
 
-udp.o: udp.c
+udp.o: udp.c common.c
 	$(CC) $(udp_CFLAGS) -c udp.c
 
-udp4.o: udp4.c udp.c
+udp4.o: udp4.c udp.c common.c
 	$(CC) $(udp4_CFLAGS) -c udp4.c
 
-udp6.o: udp6.c udp.c
+udp6.o: udp6.c udp.c common.c
 	$(CC) $(udp6_CFLAGS) -c udp6.c
 
 clean:

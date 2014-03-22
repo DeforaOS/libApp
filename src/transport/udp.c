@@ -33,6 +33,7 @@
 # include <netdb.h>
 #endif
 #include <System.h>
+#include "App/appmessage.h"
 #include "App/apptransport.h"
 
 /* portability */
@@ -51,6 +52,14 @@
 /* types */
 typedef struct _AppTransportPlugin UDP;
 
+typedef struct _UDPClient
+{
+	AppTransportClient * client;
+
+	struct sockaddr * sa;
+	socklen_t sa_len;
+} UDPClient;
+
 typedef struct _UDPMessage
 {
 	char * buffer;
@@ -66,10 +75,23 @@ struct _AppTransportPlugin
 	struct addrinfo * ai;
 	struct addrinfo * aip;
 
+	union
+	{
+		struct
+		{
+			/* for servers */
+			UDPClient ** clients;
+			size_t clients_cnt;
+		} server;
+	} u;
+
 	/* output queue */
 	UDPMessage * messages;
 	size_t messages_cnt;
 };
+
+#define Class UDP
+#include "common.c"
 
 
 /* protected */
@@ -83,6 +105,10 @@ static int _udp_send(UDP * udp, AppMessage * message, int acknowledge);
 
 /* useful */
 static int _udp_error(char const * message, int code);
+
+/* clients */
+static int _udp_client_init(UDPClient * client, struct sockaddr * sa,
+		socklen_t sa_len, UDP * udp);
 
 /* callbacks */
 static int _udp_callback_read(int fd, UDP * udp);
@@ -145,53 +171,9 @@ static UDP * _udp_init(AppTransportPluginHelper * helper,
 	return udp;
 }
 
-static int _init_address(UDP * udp, char const * name, int domain)
-{
-	char sep = ':';
-	char * p;
-	char * q;
-	char * r;
-	long l;
-	struct addrinfo hints;
-	int res = 0;
-
-	/* guess the port separator */
-	if((q = strchr(name, ':')) != NULL && strchr(++q, ':') != NULL)
-		sep = '.';
-	/* obtain the name */
-	if((p = strdup(name)) == NULL)
-		return -error_set_code(1, "%s", strerror(errno));
-	/* obtain the port number */
-	if((q = strrchr(p, sep)) == NULL)
-		l = -error_set_code(1, "%s", strerror(EINVAL));
-	else
-	{
-		*(q++) = '\0';
-		l = strtol(q, &r, 10);
-		if(q[0] == '\0' || *r != '\0')
-			l = -error_set_code(1, "%s", strerror(EINVAL));
-	}
-	/* FIXME perform this asynchronously */
-	memset(&hints, 0, sizeof(hints));
-	hints.ai_family = domain;
-	hints.ai_socktype = SOCK_DGRAM;
-	if(l >= 0)
-		res = getaddrinfo(p, q, &hints, &udp->ai);
-	free(p);
-	/* check for errors */
-	if(res != 0)
-	{
-		error_set_code(1, "%s", gai_strerror(res));
-		if(udp->ai != NULL)
-			freeaddrinfo(udp->ai);
-		udp->ai = NULL;
-		return -1;
-	}
-	return (udp->ai != NULL) ? 0 : -1;
-}
-
 static int _init_client(UDP * udp, char const * name)
 {
+	memset(&udp->u, 0, sizeof(udp->u));
 	/* obtain the remote address */
 	if(_init_address(udp, name, UDP_FAMILY) != 0)
 		return -1;
@@ -200,14 +182,6 @@ static int _init_client(UDP * udp, char const * name)
 		/* create the socket */
 		if(_init_socket(udp, udp->aip->ai_family) != 0)
 			continue;
-		/* accept incoming messages */
-		if(bind(udp->fd, udp->aip->ai_addr, udp->aip->ai_addrlen) != 0)
-		{
-			_udp_error("bind", 1);
-			close(udp->fd);
-			udp->fd = -1;
-			continue;
-		}
 		/* listen for incoming messages */
 		event_register_io_read(udp->helper->event, udp->fd,
 				(EventIOFunc)_udp_callback_read, udp);
@@ -224,6 +198,8 @@ static int _init_client(UDP * udp, char const * name)
 
 static int _init_server(UDP * udp, char const * name)
 {
+	udp->u.server.clients = NULL;
+	udp->u.server.clients_cnt = 0;
 	/* obtain the local address */
 	if(_init_address(udp, name, UDP_FAMILY) != 0)
 		return -1;
@@ -232,6 +208,14 @@ static int _init_server(UDP * udp, char const * name)
 		/* create the socket */
 		if(_init_socket(udp, udp->aip->ai_family) != 0)
 			continue;
+		/* accept incoming messages */
+		if(bind(udp->fd, udp->aip->ai_addr, udp->aip->ai_addrlen) != 0)
+		{
+			_udp_error("bind", 1);
+			close(udp->fd);
+			udp->fd = -1;
+			continue;
+		}
 		/* listen for incoming messages */
 		event_register_io_read(udp->helper->event, udp->fd,
 				(EventIOFunc)_udp_callback_read, udp);
@@ -266,8 +250,18 @@ static int _init_socket(UDP * udp, int domain)
 
 
 /* udp_destroy */
+static void _destroy_server(UDP * udp);
+
 static void _udp_destroy(UDP * udp)
 {
+	switch(udp->mode)
+	{
+		case ATM_CLIENT:
+			break;
+		case ATM_SERVER:
+			_destroy_server(udp);
+			break;
+	}
 	if(udp->fd >= 0)
 		close(udp->fd);
 	free(udp->messages);
@@ -276,31 +270,57 @@ static void _udp_destroy(UDP * udp)
 	object_delete(udp);
 }
 
+static void _destroy_server(UDP * udp)
+{
+	AppTransportPluginHelper * helper = udp->helper;
+	size_t i;
+
+	for(i = 0; i < udp->u.server.clients_cnt; i++)
+	{
+		helper->client_delete(helper->transport,
+				udp->u.server.clients[i]->client);
+		free(udp->u.server.clients[i]->sa);
+		free(udp->u.server.clients[i]);
+	}
+}
+
 
 /* udp_send */
 static int _udp_send(UDP * udp, AppMessage * message, int acknowledge)
 {
+	int ret;
+	Buffer * buffer;
 #ifdef DEBUG
 	struct sockaddr_in * sa;
 #endif
 
 	if(udp->mode != ATM_CLIENT)
 		return -error_set_code(1, "%s", "Not a client");
+	/* FIXME confirm the message will be consistent and readable */
+	if((buffer = buffer_new(0, NULL)) == NULL)
+		return -1;
+	if(appmessage_serialize(message, buffer) != 0)
+	{
+		buffer_delete(buffer);
+		return -1;
+	}
 #ifdef DEBUG
 	if(udp->aip->ai_family == AF_INET)
 	{
 		sa = (struct sockaddr_in *)udp->aip->ai_addr;
-		fprintf(stderr, "DEBUG: %s() %s (%s:%u)\n", __func__,
+		fprintf(stderr, "DEBUG: %s() %s (%s:%u) size=%lu\n", __func__,
 				"sendto()", inet_ntoa(sa->sin_addr),
-				ntohs(sa->sin_port));
+				ntohs(sa->sin_port), buffer_get_size(buffer));
 	}
 	else
-		fprintf(stderr, "DEBUG: %s() %s %d\n", __func__,
-				"sendto()", udp->aip->ai_family);
+		fprintf(stderr, "DEBUG: %s() %s family=%d size=%lu\n", __func__,
+				"sendto()", udp->aip->ai_family,
+				buffer_get_size(buffer));
 #endif
-	/* FIXME really implement */
-	return sendto(udp->fd, NULL, 0, 0, udp->aip->ai_addr,
-			udp->aip->ai_addrlen);
+	ret = sendto(udp->fd, buffer_get_data(buffer), buffer_get_size(buffer),
+			0, udp->aip->ai_addr, udp->aip->ai_addrlen);
+	buffer_delete(buffer);
+	return ret;
 }
 
 
@@ -313,14 +333,42 @@ static int _udp_error(char const * message, int code)
 }
 
 
+/* clients */
+/* udp_client_init */
+static int _udp_client_init(UDPClient * client, struct sockaddr * sa,
+		socklen_t sa_len, UDP * udp)
+{
+	AppTransportPluginHelper * helper = udp->helper;
+
+	if((client->sa = malloc(sa_len)) == NULL)
+		return -1;
+	if((client->client = helper->client_new(helper->transport)) == NULL)
+	{
+		free(client->sa);
+		return -1;
+	}
+	memcpy(client->sa, sa, sa_len);
+	client->sa_len = sa_len;
+	return 0;
+}
+
+
 /* callbacks */
 /* udp_callback_read */
+static void _callback_read_client(UDP * udp, struct sockaddr * sa,
+		socklen_t sa_len, AppMessage * message);
+static void _callback_read_server(UDP * udp, struct sockaddr * sa,
+		socklen_t sa_len, AppMessage * message);
+
 static int _udp_callback_read(int fd, UDP * udp)
 {
 	char buf[65536];
 	ssize_t ssize;
 	struct sockaddr * sa;
 	socklen_t sa_len = udp->aip->ai_addrlen;
+	size_t size;
+	Buffer * buffer;
+	AppMessage * message = NULL;
 
 #ifdef DEBUG
 	fprintf(stderr, "DEBUG: %s(%d)\n", __func__, fd);
@@ -339,18 +387,81 @@ static int _udp_callback_read(int fd, UDP * udp)
 		udp->fd = -1;
 		return -1;
 	}
-	else if(ssize == 0)
-	{
-		/* FIXME really implement */
-	}
-	else
-	{
-		/* FIXME really implement */
-	}
 #ifdef DEBUG
-	fprintf(stderr, "DEBUG: %s() received message (%ld)\n", __func__,
-			ssize);
+	fprintf(stderr, "DEBUG: %s() ssize=%ld\n", __func__, ssize);
 #endif
+	size = ssize;
+	if((buffer = buffer_new(ssize, buf)) == NULL)
+	{
+		free(sa);
+		return 0;
+	}
+	message = appmessage_new_deserialize(buffer);
+	buffer_delete(buffer);
+	if(message == NULL)
+	{
+		/* FIXME report error */
+		free(sa);
+		return 0;
+	}
+	switch(udp->mode)
+	{
+		case ATM_CLIENT:
+			_callback_read_client(udp, sa, sa_len, message);
+			break;
+		case ATM_SERVER:
+			_callback_read_server(udp, sa, sa_len, message);
+			break;
+	}
+	appmessage_delete(message);
 	free(sa);
 	return 0;
+}
+
+static void _callback_read_client(UDP * udp, struct sockaddr * sa,
+		socklen_t sa_len, AppMessage * message)
+{
+	/* FIXME implement */
+}
+
+static void _callback_read_server(UDP * udp, struct sockaddr * sa,
+		socklen_t sa_len, AppMessage * message)
+{
+	AppTransportPluginHelper * helper = udp->helper;
+	size_t i;
+	UDPClient ** p;
+	AppTransportClient * client;
+
+#ifdef DEBUG
+	fprintf(stderr, "DEBUG: %s()\n", __func__);
+#endif
+	for(i = 0; i < udp->u.server.clients_cnt; i++)
+		if(udp->u.server.clients[i]->sa_len == sa_len
+				&& memcmp(udp->u.server.clients[i]->sa, sa,
+					sa_len) == 0)
+			break;
+	if(i == udp->u.server.clients_cnt)
+	{
+		if((p = realloc(udp->u.server.clients, sizeof(*p) * (i + 1)))
+				== NULL)
+			/* FIXME report error */
+			return;
+		udp->u.server.clients = p;
+		if((udp->u.server.clients[i] = malloc(sizeof(*p))) == NULL)
+			/* FIXME report error */
+			return;
+		if(_udp_client_init(udp->u.server.clients[i], sa, sa_len, udp)
+				!= 0)
+		{
+			/* FIXME report error */
+			free(p[i]);
+			return;
+		}
+		udp->u.server.clients_cnt++;
+	}
+	client = udp->u.server.clients[i]->client;
+	helper->client_receive(helper->transport, client, message);
+#ifdef DEBUG
+	fprintf(stderr, "DEBUG: %s() received message\n", __func__);
+#endif
 }

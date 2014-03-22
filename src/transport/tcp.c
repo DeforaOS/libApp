@@ -98,6 +98,9 @@ struct _AppTransportPlugin
 /* constants */
 #define INC 1024
 
+#define Class TCP
+#include "common.c"
+
 
 /* protected */
 /* prototypes */
@@ -189,51 +192,6 @@ static TCP * _tcp_init(AppTransportPluginHelper * helper,
 		return NULL;
 	}
 	return tcp;
-}
-
-static int _init_address(TCP * tcp, char const * name, int domain)
-{
-	char sep = ':';
-	char * p;
-	char * q;
-	char * r;
-	long l;
-	struct addrinfo hints;
-	int res = 0;
-
-	/* guess the port separator */
-	if((q = strchr(name, ':')) != NULL && strchr(++q, ':') != NULL)
-		sep = '.';
-	/* obtain the name */
-	if((p = strdup(name)) == NULL)
-		return -error_set_code(1, "%s", strerror(errno));
-	/* obtain the port number */
-	if((q = strrchr(p, sep)) == NULL)
-		l = -error_set_code(1, "%s", strerror(EINVAL));
-	else
-	{
-		*(q++) = '\0';
-		l = strtol(q, &r, 10);
-		if(q[0] == '\0' || *r != '\0')
-			l = -error_set_code(1, "%s", strerror(EINVAL));
-	}
-	/* FIXME perform this asynchronously */
-	memset(&hints, 0, sizeof(hints));
-	hints.ai_family = domain;
-	hints.ai_socktype = SOCK_STREAM;
-	if(l >= 0)
-		res = getaddrinfo(p, q, &hints, &tcp->ai);
-	free(p);
-	/* check for errors */
-	if(res != 0)
-	{
-		error_set_code(1, "%s", gai_strerror(res));
-		if(tcp->ai != NULL)
-			freeaddrinfo(tcp->ai);
-		tcp->ai = NULL;
-		return -1;
-	}
-	return (tcp->ai != NULL) ? 0 : -1;
 }
 
 static int _init_client(TCP * tcp, char const * name)
