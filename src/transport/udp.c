@@ -101,7 +101,9 @@ static UDP * _udp_init(AppTransportPluginHelper * helper,
 		AppTransportMode mode, char const * name);
 static void _udp_destroy(UDP * udp);
 
-static int _udp_send(UDP * udp, AppMessage * message, int acknowledge);
+static int _udp_client_send(UDP * udp, AppTransportClient * client,
+		AppMessage * message);
+static int _udp_send(UDP * udp, AppMessage * message);
 
 /* useful */
 static int _udp_error(char const * message, int code);
@@ -123,7 +125,8 @@ AppTransportPluginDefinition transport =
 	NULL,
 	_udp_init,
 	_udp_destroy,
-	_udp_send
+	_udp_send,
+	_udp_client_send
 };
 
 
@@ -285,8 +288,17 @@ static void _destroy_server(UDP * udp)
 }
 
 
+/* udp_client_send */
+static int _udp_client_send(UDP * udp, AppTransportClient * client,
+		AppMessage * message)
+{
+	/* FIXME implement */
+	return -1;
+}
+
+
 /* udp_send */
-static int _udp_send(UDP * udp, AppMessage * message, int acknowledge)
+static int _udp_send(UDP * udp, AppMessage * message)
 {
 	int ret;
 	Buffer * buffer;

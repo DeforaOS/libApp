@@ -109,7 +109,9 @@ static TCP * _tcp_init(AppTransportPluginHelper * helper, AppTransportMode mode,
 		char const * name);
 static void _tcp_destroy(TCP * tcp);
 
-static int _tcp_send(TCP * tcp, AppMessage * message, int acknowledge);
+static int _tcp_client_send(TCP * tcp, AppTransportClient * client,
+		AppMessage * message);
+static int _tcp_send(TCP * tcp, AppMessage * message);
 
 /* useful */
 static int _tcp_error(char const * message, int code);
@@ -144,7 +146,8 @@ AppTransportPluginDefinition transport =
 	NULL,
 	_tcp_init,
 	_tcp_destroy,
-	_tcp_send
+	_tcp_send,
+	_tcp_client_send
 };
 
 
@@ -354,8 +357,17 @@ static void _destroy_server(TCP * tcp)
 }
 
 
+/* tcp_client_send */
+static int _tcp_client_send(TCP * tcp, AppTransportClient * client,
+		AppMessage * message)
+{
+	/* FIXME implement */
+	return -1;
+}
+
+
 /* tcp_send */
-static int _tcp_send(TCP * tcp, AppMessage * message, int acknowledge)
+static int _tcp_send(TCP * tcp, AppMessage * message)
 {
 	Buffer * buffer;
 

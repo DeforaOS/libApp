@@ -45,6 +45,9 @@ struct _AppTransport
 	Plugin * plugin;
 	AppTransportPlugin * tplugin;
 	AppTransportPluginDefinition * definition;
+
+	/* acknowledgements */
+	AppMessageID id;
 };
 
 struct _AppTransportClient
@@ -129,12 +132,31 @@ void apptransport_delete(AppTransport * transport)
 
 
 /* useful */
+/* apptransport_client_send */
+int apptransport_client_send(AppTransport * transport,
+		AppTransportClient * client, AppMessage * message)
+{
+	if(transport->mode != ATM_SERVER)
+		return -error_set_code(1, "%s",
+				"Only servers can reply to clients");
+	if(transport->definition->client_send == NULL)
+		return -error_set_code(1, "%s",
+				"This transport does not support replies");
+	return transport->definition->client_send(transport->tplugin, client,
+			message);
+}
+
+
 /* apptransport_send */
 int apptransport_send(AppTransport * transport, AppMessage * message,
 		int acknowledge)
 {
-	return transport->definition->send(transport->tplugin, message,
-			acknowledge);
+	if(transport->mode == ATM_CLIENT
+			&& appmessage_get_type(message) == AMT_CALL
+			&& acknowledge != 0)
+		/* FIXME will wrap around after 2^32-1 acknowledgements */
+		appmessage_set_id(message, ++transport->id);
+	return transport->definition->send(transport->tplugin, message);
 }
 
 
@@ -204,7 +226,7 @@ static int _apptransport_helper_client_receive(AppTransport * transport,
 		/* XXX we can ignore errors */
 		if((message = appmessage_new_acknowledgement(id)) != NULL)
 		{
-			apptransport_send(transport, message, 0);
+			apptransport_client_send(transport, client, message);
 			appmessage_delete(message);
 		}
 	return 0;

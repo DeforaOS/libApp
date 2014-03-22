@@ -73,8 +73,9 @@ struct _AppTransportPluginDefinition
 	AppTransportPlugin * (*init)(AppTransportPluginHelper * helper,
 			AppTransportMode mode, char const * name);
 	void (*destroy)(AppTransportPlugin * transport);
-	int (*send)(AppTransportPlugin * transport, AppMessage * message,
-			int acknowledge);
+	int (*send)(AppTransportPlugin * transport, AppMessage * message);
+	int (*client_send)(AppTransportPlugin * transport,
+			AppTransportClient * client, AppMessage * message);
 };
 
 #endif /* !LIBAPP_APP_APPTRANSPORT_H */

@@ -48,6 +48,7 @@ AppTransportPluginDefinition transport =
 	NULL,
 	_template_init,
 	_template_destroy,
+	NULL,
 	NULL
 };
 

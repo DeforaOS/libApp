@@ -207,7 +207,7 @@ static int _transport_callback_idle(void * data)
 #ifdef DEBUG
 	fprintf(stderr, "DEBUG: %s()\n", __func__);
 #endif
-	transport->plugind->send(transport->client, transport->message, 0);
+	transport->plugind->send(transport->client, transport->message);
 	return 1;
 }
 
