@@ -28,10 +28,14 @@
 /* types */
 typedef enum _AppMessageType
 {
-	AMT_CALL = 0
+	AMT_CALL = 0,
+	AMT_ACKNOWLEDGEMENT
 } AppMessageType;
 # define AMT_CALLBACK	AMT_CALL
 
+typedef uint32_t AppMessageID;
+
+/* calls */
 typedef enum _AppMessageCallDirection
 {
 	AMCD_IN = 0,
@@ -52,10 +56,14 @@ typedef struct _AppMessageCallArgument
 
 
 /* functions */
+/* calls */
 AppMessage * appmessage_new_call(String const * method,
 		AppMessageCallArgument * args, size_t args_cnt);
 AppMessage * appmessage_new_callv(String const * method, ...);
 AppMessage * appmessage_new_callv_variables(String const * method, ...);
+/* acknowledgement */
+AppMessage * appmessage_new_acknowledgement(AppMessageID id);
+/* generic */
 AppMessage * appmessage_new_deserialize(Buffer * buffer);
 void appmessage_delete(AppMessage * appmessage);
 

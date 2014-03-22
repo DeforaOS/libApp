@@ -49,6 +49,7 @@ dist:
 		$(PACKAGE)-$(VERSION)/src/common.c \
 		$(PACKAGE)-$(VERSION)/src/Makefile \
 		$(PACKAGE)-$(VERSION)/src/appinterface.h \
+		$(PACKAGE)-$(VERSION)/src/appmessage.h \
 		$(PACKAGE)-$(VERSION)/src/apptransport.h \
 		$(PACKAGE)-$(VERSION)/src/common.h \
 		$(PACKAGE)-$(VERSION)/src/project.conf \

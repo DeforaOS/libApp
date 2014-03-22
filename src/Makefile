@@ -39,7 +39,7 @@ appclient.o: appclient.c appinterface.h ../include/App/appclient.h common.h
 appinterface.o: appinterface.c ../include/App/appserver.h ../config.h
 	$(CC) $(libApp_CFLAGS) -c appinterface.c
 
-appmessage.o: appmessage.c
+appmessage.o: appmessage.c ../include/App/appmessage.h appmessage.h
 	$(CC) $(libApp_CFLAGS) -c appmessage.c
 
 appserver.o: appserver.c appinterface.h ../include/App/appserver.h ../config.h
