@@ -118,6 +118,7 @@ static int _transport(char const * protocol, char const * name)
 	}
 	else if(transport.ret != 0)
 		error_print("transport");
+	appmessage_delete(transport.message);
 	transport.plugind->destroy(transport.client);
 	transport.plugind->destroy(transport.server);
 	event_delete(helper->event);
