@@ -16,6 +16,7 @@
 
 
 #include <stddef.h>
+#include <System.h>
 #include "App/appmessage.h"
 
 
@@ -23,9 +24,26 @@
 /* main */
 int main(int argc, char * argv[])
 {
+	int ret = 0;
 	AppMessage * message;
+	Buffer * buffer;
 
-	message = appmessage_new_call("test", NULL, 0);
-	appmessage_delete(message);
-	return 0;
+	if((message = appmessage_new_call("test", NULL, 0)) == NULL)
+		return 2;
+	if((buffer = buffer_new(0, NULL)) == NULL)
+	{
+		appmessage_delete(message);
+	}
+	if(appmessage_serialize(message, buffer) != 0)
+		ret = 3;
+	else
+	{
+		appmessage_delete(message);
+		if((message = appmessage_new_deserialize(buffer)) == NULL)
+			ret = 4;
+	}
+	buffer_delete(buffer);
+	if(message != NULL)
+		appmessage_delete(message);
+	return ret;
 }
