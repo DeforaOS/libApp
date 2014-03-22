@@ -1,5 +1,5 @@
 /* $Id$ */
-/* Copyright (c) 2012-2013 Pierre Pronchery <khorben@defora.org> */
+/* Copyright (c) 2012-2014 Pierre Pronchery <khorben@defora.org> */
 /* This file is part of DeforaOS System libApp */
 /* This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -356,6 +356,9 @@ static int _init_server(TCP * tcp, char const * name)
 
 
 /* tcp_destroy */
+static void _destroy_client(TCP * tcp);
+static void _destroy_server(TCP * tcp);
+
 static void _tcp_destroy(TCP * tcp)
 {
 #ifdef DEBUG
@@ -364,16 +367,31 @@ static void _tcp_destroy(TCP * tcp)
 	switch(tcp->mode)
 	{
 		case ATM_CLIENT:
-			_tcp_socket_destroy(&tcp->u.client);
+			_destroy_client(tcp);
 			break;
 		case ATM_SERVER:
-			if(tcp->u.server.fd >= 0)
-				close(tcp->u.server.fd);
+			_destroy_server(tcp);
 			break;
 	}
 	if(tcp->ai != NULL)
 		freeaddrinfo(tcp->ai);
 	object_delete(tcp);
+}
+
+static void _destroy_client(TCP * tcp)
+{
+	_tcp_socket_destroy(&tcp->u.client);
+}
+
+static void _destroy_server(TCP * tcp)
+{
+	size_t i;
+
+	for(i = 0; i < tcp->u.server.clients_cnt; i++)
+		_tcp_socket_delete(tcp->u.server.clients[i]);
+	free(tcp->u.server.clients);
+	if(tcp->u.server.fd >= 0)
+		close(tcp->u.server.fd);
 }
 
 
