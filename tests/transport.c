@@ -1,5 +1,5 @@
 /* $Id$ */
-/* Copyright (c) 2012-2013 Pierre Pronchery <khorben@defora.org> */
+/* Copyright (c) 2012-2014 Pierre Pronchery <khorben@defora.org> */
 /* This file is part of DeforaOS System libApp */
 /* This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -43,6 +43,8 @@ static int _transport(char const * protocol, char const * name);
 /* helpers */
 static AppTransportClient * _transport_helper_client_new(
 		AppTransport * transport);
+static void _transport_helper_client_delete(AppTransport * transport,
+		AppTransportClient * client);
 static int _transport_helper_client_receive(AppTransport * transport,
 		AppTransportClient * client, AppMessage * message);
 
@@ -82,6 +84,7 @@ static int _transport(char const * protocol, char const * name)
 	helper->transport = &transport;
 	helper->event = event_new();
 	helper->client_new = _transport_helper_client_new;
+	helper->client_delete = _transport_helper_client_delete;
 	helper->client_receive = _transport_helper_client_receive;
 	/* create a server and a client */
 	transport.server = (helper->event != NULL)
@@ -132,7 +135,14 @@ static AppTransportClient * _transport_helper_client_new(
 	fprintf(stderr, "DEBUG: %s()\n", __func__);
 #endif
 	/* FIXME really implement */
-	return (AppTransportClient*)transport;
+	return (AppTransportClient *)transport;
+}
+
+
+/* transport_helper_client_delete */
+static void _transport_helper_client_delete(AppTransport * transport,
+		AppTransportClient * client)
+{
 }
 
 
