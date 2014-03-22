@@ -1,5 +1,5 @@
 /* $Id$ */
-/* Copyright (c) 2012-2013 Pierre Pronchery <khorben@defora.org> */
+/* Copyright (c) 2012-2014 Pierre Pronchery <khorben@defora.org> */
 /* This file is part of DeforaOS System libApp */
 /* This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -240,6 +240,10 @@ static AppMessage * _new_deserialize_call(AppMessage * message,
 	/* XXX may fail */
 	variable_get_as(v, VT_STRING, &message->t.call.method);
 	variable_delete(v);
+#ifdef DEBUG
+	fprintf(stderr, "DEBUG: %s() \"%s\"\n", __func__,
+			message->t.call.method);
+#endif
 	/* deserialize the arguments */
 	for(i = 0; pos < size; i++)
 	{
