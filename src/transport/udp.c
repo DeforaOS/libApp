@@ -1,5 +1,5 @@
 /* $Id$ */
-/* Copyright (c) 2012-2013 Pierre Pronchery <khorben@defora.org> */
+/* Copyright (c) 2012-2014 Pierre Pronchery <khorben@defora.org> */
 /* This file is part of DeforaOS System libApp */
 /* This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -199,6 +199,14 @@ static int _init_client(UDP * udp, char const * name)
 		/* create the socket */
 		if(_init_socket(udp, udp->aip->ai_family) != 0)
 			continue;
+		/* accept incoming messages */
+		if(bind(udp->fd, udp->aip->ai_addr, udp->aip->ai_addrlen) != 0)
+		{
+			_udp_error("bind", 1);
+			close(udp->fd);
+			udp->fd = -1;
+			continue;
+		}
 		/* listen for incoming messages */
 		event_register_io_read(udp->helper->event, udp->fd,
 				(EventIOFunc)_udp_callback_read, udp);
