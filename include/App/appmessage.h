@@ -61,8 +61,6 @@ AppMessage * appmessage_new_call(String const * method,
 		AppMessageCallArgument * args, size_t args_cnt);
 AppMessage * appmessage_new_callv(String const * method, ...);
 AppMessage * appmessage_new_callv_variables(String const * method, ...);
-/* acknowledgement */
-AppMessage * appmessage_new_acknowledgement(AppMessageID id);
 /* generic */
 AppMessage * appmessage_new_deserialize(Buffer * buffer);
 void appmessage_delete(AppMessage * appmessage);

@@ -24,6 +24,9 @@
 
 /* AppMessage */
 /* functions */
+/* acknowledgement */
+AppMessage * appmessage_new_acknowledgement(AppMessageID id);
+
 /* accessors */
 AppMessageID appmessage_get_id(AppMessage * message);
 void appmessage_set_id(AppMessage * message, AppMessageID id);
