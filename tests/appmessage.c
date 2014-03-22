@@ -43,10 +43,12 @@ int main(int argc, char * argv[])
 		appmessage_delete(message);
 		if((message = appmessage_new_deserialize(buffer)) == NULL)
 			ret = 5;
-		else if((call = appmessage_get_method(message)) == NULL)
+		else if(appmessage_get_type(message) != AMT_CALL)
 			ret = 6;
-		else if(strcmp(call, "test") != 0)
+		else if((call = appmessage_get_method(message)) == NULL)
 			ret = 7;
+		else if(strcmp(call, "test") != 0)
+			ret = 8;
 	}
 	buffer_delete(buffer);
 	if(message != NULL)
