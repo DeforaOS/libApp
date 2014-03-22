@@ -60,6 +60,7 @@ typedef struct _UDPMessage
 struct _AppTransportPlugin
 {
 	AppTransportPluginHelper * helper;
+	AppTransportMode mode;
 	int fd;
 
 	struct addrinfo * ai;
@@ -123,7 +124,7 @@ static UDP * _udp_init(AppTransportPluginHelper * helper,
 	udp->aip = NULL;
 	udp->messages = NULL;
 	udp->messages_cnt = 0;
-	switch(mode)
+	switch((udp->mode) = mode)
 	{
 		case ATM_CLIENT:
 			res = _init_client(udp, name);
@@ -283,6 +284,8 @@ static int _udp_send(UDP * udp, AppMessage * message, int acknowledge)
 	struct sockaddr_in * sa;
 #endif
 
+	if(udp->mode != ATM_CLIENT)
+		return -error_set_code(1, "%s", "Not a client");
 #ifdef DEBUG
 	if(udp->aip->ai_family == AF_INET)
 	{
