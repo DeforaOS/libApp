@@ -104,6 +104,7 @@ target="$1"
 $DATE > "$target"
 FAILED=
 echo "Performing tests:" 1>&2
+_test "appmessage"
 _test "transport" -p tcp4 127.0.0.1:4242
 _test "transport" -p tcp6 ::1.4242
 _test "transport" -p tcp 127.0.0.1:4242

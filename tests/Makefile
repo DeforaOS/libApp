@@ -1,4 +1,4 @@
-TARGETS	= tests.log transport
+TARGETS	= appmessage tests.log transport
 PREFIX	= /usr/local
 DESTDIR	=
 BINDIR	= $(PREFIX)/bin
@@ -18,7 +18,14 @@ INSTALL	= install
 
 all: $(TARGETS)
 
-tests.log: tests.sh transport ../src/transport/tcp.c ../src/transport/udp.c
+appmessage_OBJS = appmessage.o
+appmessage_CFLAGS = $(CPPFLAGSF) $(CPPFLAGS) $(CFLAGSF) $(CFLAGS)
+appmessage_LDFLAGS = $(LDFLAGSF) $(LDFLAGS) ../src/libApp.a
+
+appmessage: $(appmessage_OBJS)
+	$(CC) -o appmessage $(appmessage_OBJS) $(appmessage_LDFLAGS)
+
+tests.log: appmessage tests.sh transport ../src/transport/tcp.c ../src/transport/udp.c
 	./tests.sh -P "$(PREFIX)" -- "tests.log"
 
 transport_OBJS = transport.o
@@ -28,11 +35,14 @@ transport_LDFLAGS = $(LDFLAGSF) $(LDFLAGS)
 transport: $(transport_OBJS)
 	$(CC) -o transport $(transport_OBJS) $(transport_LDFLAGS)
 
+appmessage.o: appmessage.c ../src/libApp.a
+	$(CC) $(appmessage_CFLAGS) -c appmessage.c
+
 transport.o: transport.c ../src/libApp.a
 	$(CC) $(transport_CFLAGS) -c transport.c
 
 clean:
-	$(RM) -- $(tests.log_OBJS) $(transport_OBJS)
+	$(RM) -- $(appmessage_OBJS) $(tests.log_OBJS) $(transport_OBJS)
 
 distclean: clean
 	$(RM) -- $(TARGETS)
