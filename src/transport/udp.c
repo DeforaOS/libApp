@@ -447,7 +447,7 @@ static void _callback_read_server(UDP * udp, struct sockaddr * sa,
 			/* FIXME report error */
 			return;
 		udp->u.server.clients = p;
-		if((udp->u.server.clients[i] = malloc(sizeof(*p))) == NULL)
+		if((udp->u.server.clients[i] = malloc(sizeof(**p))) == NULL)
 			/* FIXME report error */
 			return;
 		if(_udp_client_init(udp->u.server.clients[i], sa, sa_len, udp)
