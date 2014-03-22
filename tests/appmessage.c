@@ -15,7 +15,7 @@
 
 
 
-#include <stddef.h>
+#include <string.h>
 #include <System.h>
 #include "App/appmessage.h"
 
