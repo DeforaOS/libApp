@@ -361,8 +361,31 @@ static void _destroy_server(TCP * tcp)
 static int _tcp_client_send(TCP * tcp, AppTransportClient * client,
 		AppMessage * message)
 {
-	/* FIXME implement */
-	return -1;
+	size_t i;
+	TCPSocket * s;
+	Buffer * buffer;
+
+	if(tcp->mode != ATM_SERVER)
+		return -error_set_code(1, "%s", "Not a server");
+	/* lookup the client */
+	for(i = 0; i < tcp->u.server.clients_cnt; i++)
+	{
+		s = tcp->u.server.clients[i];
+		if(s->client == client)
+			break;
+	}
+	if(i == tcp->u.server.clients_cnt)
+		return -error_set_code(1, "%s", "Unknown client");
+	/* send the message */
+	if((buffer = buffer_new(0, NULL)) == NULL)
+		return -1;
+	if(appmessage_serialize(message, buffer) != 0
+			|| _tcp_socket_queue(s, buffer) != 0)
+	{
+		buffer_delete(buffer);
+		return -1;
+	}
+	return 0;
 }
 
 
@@ -373,6 +396,7 @@ static int _tcp_send(TCP * tcp, AppMessage * message)
 
 	if(tcp->mode != ATM_CLIENT)
 		return -error_set_code(1, "%s", "Not a client");
+	/* send the message */
 	if((buffer = buffer_new(0, NULL)) == NULL)
 		return -1;
 	if(appmessage_serialize(message, buffer) != 0

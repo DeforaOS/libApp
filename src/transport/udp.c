@@ -162,7 +162,8 @@ static UDP * _udp_init(AppTransportPluginHelper * helper,
 			res = _init_server(udp, name);
 			break;
 		default:
-			res = -error_set_code(1, "Unknown transport mode");
+			res = -error_set_code(1, "%s",
+					"Unknown transport mode");
 			break;
 	}
 	/* check for errors */
@@ -292,8 +293,45 @@ static void _destroy_server(UDP * udp)
 static int _udp_client_send(UDP * udp, AppTransportClient * client,
 		AppMessage * message)
 {
-	/* FIXME implement */
-	return -1;
+	int ret;
+	size_t i;
+	UDPClient * c;
+	Buffer * buffer;
+
+	/* lookup the client */
+	for(i = 0; i < udp->u.server.clients_cnt; i++)
+	{
+		c = udp->u.server.clients[i];
+		if(c->client == client)
+			break;
+	}
+	if(i == udp->u.server.clients_cnt)
+		return -error_set_code(1, "%s", "Unknown client");
+	/* send the message */
+	if((buffer = buffer_new(0, NULL)) == NULL)
+		return -1;
+	if(appmessage_serialize(message, buffer) != 0)
+	{
+		buffer_delete(buffer);
+		return -1;
+	}
+#ifdef DEBUG
+	if(udp->aip->ai_family == AF_INET)
+	{
+		sa = (struct sockaddr_in *)udp->aip->ai_addr;
+		fprintf(stderr, "DEBUG: %s() %s (%s:%u) size=%lu\n", __func__,
+				"sendto()", inet_ntoa(sa->sin_addr),
+				ntohs(sa->sin_port), buffer_get_size(buffer));
+	}
+	else
+		fprintf(stderr, "DEBUG: %s() %s family=%d size=%lu\n", __func__,
+				"sendto()", udp->aip->ai_family,
+				buffer_get_size(buffer));
+#endif
+	ret = sendto(udp->fd, buffer_get_data(buffer), buffer_get_size(buffer),
+			0, c->sa, c->sa_len);
+	buffer_delete(buffer);
+	return ret;
 }
 
 
@@ -308,7 +346,7 @@ static int _udp_send(UDP * udp, AppMessage * message)
 
 	if(udp->mode != ATM_CLIENT)
 		return -error_set_code(1, "%s", "Not a client");
-	/* FIXME confirm the message will be consistent and readable */
+	/* send the message */
 	if((buffer = buffer_new(0, NULL)) == NULL)
 		return -1;
 	if(appmessage_serialize(message, buffer) != 0)
