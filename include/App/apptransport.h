@@ -1,5 +1,5 @@
 /* $Id$ */
-/* Copyright (c) 2012-2013 Pierre Pronchery <khorben@defora.org> */
+/* Copyright (c) 2012-2014 Pierre Pronchery <khorben@defora.org> */
 /* This file is part of DeforaOS System libApp */
 /* This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -54,8 +54,10 @@ typedef struct _AppTransportPluginHelper
 	Event * event;
 
 	/* callbacks */
+	int (*receive)(AppTransport * transport, AppMessage * message);
 	int (*status)(AppTransport * transport, AppTransportStatus status,
 			unsigned int code, char const * message);
+
 	/* clients */
 	AppTransportClient * (*client_new)(AppTransport * transport);
 	void (*client_delete)(AppTransport * transport,

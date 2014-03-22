@@ -41,6 +41,12 @@ typedef struct _AppTransport
 static int _transport(char const * protocol, char const * name);
 
 /* helpers */
+static int _transport_helper_receive(AppTransport * transport,
+		AppMessage * message);
+static int _transport_helper_status(AppTransport * transport,
+		AppTransportStatus status, unsigned int code,
+		char const * message);
+
 static AppTransportClient * _transport_helper_client_new(
 		AppTransport * transport);
 static void _transport_helper_client_delete(AppTransport * transport,
@@ -83,6 +89,8 @@ static int _transport(char const * protocol, char const * name)
 	memset(helper, 0, sizeof(*helper));
 	helper->transport = &transport;
 	helper->event = event_new();
+	helper->receive = _transport_helper_receive;
+	helper->status = _transport_helper_status;
 	helper->client_new = _transport_helper_client_new;
 	helper->client_delete = _transport_helper_client_delete;
 	helper->client_receive = _transport_helper_client_receive;
@@ -162,6 +170,30 @@ static int _transport_helper_client_receive(AppTransport * transport,
 			&& (method = appmessage_get_method(message)) != NULL
 			&& strcmp(method, "hello") == 0)
 		event_loop_quit(transport->helper.event);
+	return 0;
+}
+
+
+/* transport_helper_receive */
+static int _transport_helper_receive(AppTransport * transport,
+		AppMessage * message)
+{
+#ifdef DEBUG
+	fprintf(stderr, "DEBUG: %s()\n", __func__);
+#endif
+	return 0;
+}
+
+
+/* transport_helper_status */
+static int _transport_helper_status(AppTransport * transport,
+		AppTransportStatus status, unsigned int code,
+		char const * message)
+{
+#ifdef DEBUG
+	fprintf(stderr, "DEBUG: %s(%u, %u, \"%s\")\n", __func__, status, code,
+			message);
+#endif
 	return 0;
 }
 

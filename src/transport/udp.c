@@ -421,7 +421,17 @@ static int _udp_callback_read(int fd, UDP * udp)
 static void _callback_read_client(UDP * udp, struct sockaddr * sa,
 		socklen_t sa_len, AppMessage * message)
 {
-	/* FIXME implement */
+	AppTransportPluginHelper * helper = udp->helper;
+
+#ifdef DEBUG
+	fprintf(stderr, "DEBUG: %s(%u)\n", __func__,
+			appmessage_get_type(message));
+#endif
+	if(sa_len != udp->aip->ai_addrlen
+			|| memcmp(udp->aip->ai_addr, sa, sa_len) != 0)
+		/* the message is not for us */
+		return;
+	helper->receive(helper->transport, message);
 }
 
 static void _callback_read_server(UDP * udp, struct sockaddr * sa,

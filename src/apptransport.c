@@ -1,5 +1,5 @@
 /* $Id$ */
-/* Copyright (c) 2012-2013 Pierre Pronchery <khorben@defora.org> */
+/* Copyright (c) 2012-2014 Pierre Pronchery <khorben@defora.org> */
 /* This file is part of DeforaOS System libApp */
 /* This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -20,7 +20,7 @@
 #endif
 #include <string.h>
 #include <System.h>
-#include "App/appmessage.h"
+#include "appmessage.h"
 #include "apptransport.h"
 #include "../config.h"
 
@@ -37,6 +37,7 @@
 /* types */
 struct _AppTransport
 {
+	AppTransportMode mode;
 	AppTransportHelper helper;
 
 	/* plug-in */
@@ -70,7 +71,8 @@ static int _apptransport_helper_client_receive(AppTransport * transport,
 /* protected */
 /* functions */
 /* apptransport_new */
-static void _new_helper(AppTransport * transport, Event * event);
+static void _new_helper(AppTransport * transport, AppTransportMode mode,
+		Event * event);
 
 AppTransport * apptransport_new(AppTransportMode mode,
 		AppTransportHelper * helper, char const * plugin,
@@ -82,9 +84,10 @@ AppTransport * apptransport_new(AppTransportMode mode,
 	if((transport = object_new(sizeof(*transport))) == NULL)
 		return NULL;
 	memset(transport, 0, sizeof(*transport));
+	transport->mode = mode;
 	transport->helper = *helper;
 	/* initialize the plug-in helper */
-	_new_helper(transport, event);
+	_new_helper(transport, mode, event);
 	/* load the transport plug-in */
 	if((transport->plugin = plugin_new(LIBDIR, "App", "transport", plugin))
 			== NULL
@@ -102,7 +105,8 @@ AppTransport * apptransport_new(AppTransportMode mode,
 	return transport;
 }
 
-static void _new_helper(AppTransport * transport, Event * event)
+static void _new_helper(AppTransport * transport, AppTransportMode mode,
+		Event * event)
 {
 	transport->thelper.transport = transport;
 	transport->thelper.event = event;
@@ -182,12 +186,26 @@ static void _apptransport_helper_client_delete(AppTransport * transport,
 static int _apptransport_helper_client_receive(AppTransport * transport,
 		AppTransportClient * client, AppMessage * message)
 {
+	AppMessageID id;
+
 #ifdef DEBUG
-	fprintf(stderr, "DEBUG: %s() %u \"%s\"\n", __func__,
+	fprintf(stderr, "DEBUG: %s() %u %u \"%s\"\n", __func__,
 			appmessage_get_type(message),
+			appmessage_get_id(message),
 			appmessage_get_method(message));
 #endif
+	if(transport->mode != ATM_SERVER)
+		/* XXX improve the error message */
+		return -error_set_code(1, "Not a server");
 	transport->helper.message(transport->helper.data, transport, client,
 			message);
+	/* check if an acknowledgement is requested */
+	if((id = appmessage_get_id(message)) != 0)
+		/* XXX we can ignore errors */
+		if((message = appmessage_new_acknowledgement(id)) != NULL)
+		{
+			apptransport_send(transport, message, 0);
+			appmessage_delete(message);
+		}
 	return 0;
 }

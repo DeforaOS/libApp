@@ -73,8 +73,8 @@ typedef struct _TCPSocket
 
 struct _AppTransportPlugin
 {
-	AppTransportPluginHelper * helper;
 	AppTransportMode mode;
+	AppTransportPluginHelper * helper;
 
 	struct addrinfo * ai;
 	socklen_t ai_addrlen;
@@ -105,8 +105,8 @@ struct _AppTransportPlugin
 /* protected */
 /* prototypes */
 /* plug-in */
-static TCP * _tcp_init(AppTransportPluginHelper * helper,
-		AppTransportMode mode, char const * name);
+static TCP * _tcp_init(AppTransportPluginHelper * helper, AppTransportMode mode,
+		char const * name);
 static void _tcp_destroy(TCP * tcp);
 
 static int _tcp_send(TCP * tcp, AppMessage * message, int acknowledge);
@@ -156,8 +156,8 @@ static int _init_address(TCP * tcp, char const * name, int domain);
 static int _init_client(TCP * tcp, char const * name);
 static int _init_server(TCP * tcp, char const * name);
 
-static TCP * _tcp_init(AppTransportPluginHelper * helper,
-		AppTransportMode mode, char const * name)
+static TCP * _tcp_init(AppTransportPluginHelper * helper, AppTransportMode mode,
+		char const * name)
 {
 	TCP * tcp;
 	int res;
@@ -652,11 +652,14 @@ static int _tcp_callback_connect(int fd, TCP * tcp)
 
 
 /* tcp_socket_callback_read */
+static void _socket_callback_read_client(TCPSocket * tcpsocket,
+		AppMessage * message);
+static void _socket_callback_read_server(TCPSocket * tcpsocket,
+		AppMessage * message);
+
 static int _tcp_socket_callback_read(int fd, TCPSocket * tcpsocket)
 {
 	const size_t inc = INC;
-	TCP * tcp = tcpsocket->tcp;
-	AppTransportPluginHelper * helper = tcp->helper;
 	ssize_t ssize;
 	char * p;
 	size_t size;
@@ -713,8 +716,17 @@ static int _tcp_socket_callback_read(int fd, TCPSocket * tcpsocket)
 	}
 	if(message != NULL)
 	{
-		helper->client_receive(helper->transport, tcpsocket->client,
-				message);
+		switch(tcpsocket->tcp->mode)
+		{
+			case ATM_CLIENT:
+				_socket_callback_read_client(tcpsocket,
+						message);
+				break;
+			case ATM_SERVER:
+				_socket_callback_read_server(tcpsocket,
+						message);
+				break;
+		}
 		appmessage_delete(message);
 	}
 	else
@@ -723,6 +735,23 @@ static int _tcp_socket_callback_read(int fd, TCPSocket * tcpsocket)
 	}
 	variable_delete(variable);
 	return 0;
+}
+
+static void _socket_callback_read_client(TCPSocket * tcpsocket,
+		AppMessage * message)
+{
+	AppTransportPluginHelper * helper = tcpsocket->tcp->helper;
+
+	helper->receive(helper->transport, message);
+}
+
+static void _socket_callback_read_server(TCPSocket * tcpsocket,
+		AppMessage * message)
+{
+	AppTransportPluginHelper * helper = tcpsocket->tcp->helper;
+
+	helper->client_receive(helper->transport, tcpsocket->client,
+			message);
 }
 
 
