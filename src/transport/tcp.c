@@ -201,6 +201,7 @@ static int _init_client(TCP * tcp, char const * name)
 	struct sockaddr_in * sa;
 #endif
 
+	tcp->u.client.tcp = tcp;
 	tcp->u.client.fd = -1;
 	/* obtain the remote address */
 	if(_init_address(tcp, name, TCP_FAMILY) != 0)
