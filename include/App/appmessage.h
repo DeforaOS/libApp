@@ -1,5 +1,5 @@
 /* $Id$ */
-/* Copyright (c) 2012-2013 Pierre Pronchery <khorben@defora.org> */
+/* Copyright (c) 2012-2014 Pierre Pronchery <khorben@defora.org> */
 /* This file is part of DeforaOS System libApp */
 /* This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -30,6 +30,7 @@ typedef enum _AppMessageType
 {
 	AMT_CALL = 0
 } AppMessageType;
+# define AMT_CALLBACK	AMT_CALL
 
 typedef enum _AppMessageCallDirection
 {
