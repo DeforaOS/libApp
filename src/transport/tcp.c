@@ -688,6 +688,7 @@ static int _tcp_callback_connect(int fd, TCP * tcp)
 
 
 /* tcp_socket_callback_read */
+static AppMessage * _socket_callback_message(TCPSocket * tcpsocket);
 static void _socket_callback_read_client(TCPSocket * tcpsocket,
 		AppMessage * message);
 static void _socket_callback_read_server(TCPSocket * tcpsocket,
@@ -696,10 +697,7 @@ static int _socket_callback_recv(TCPSocket * tcpsocket);
 
 static int _tcp_socket_callback_read(int fd, TCPSocket * tcpsocket)
 {
-	size_t size;
-	Variable * variable;
-	Buffer * buffer;
-	AppMessage * message = NULL;
+	AppMessage * message;
 
 #ifdef DEBUG
 	fprintf(stderr, "DEBUG: %s(%d)\n", __func__, fd);
@@ -712,22 +710,7 @@ static int _tcp_socket_callback_read(int fd, TCPSocket * tcpsocket)
 #ifdef DEBUG
 	fprintf(stderr, "DEBUG: %s() read() => %ld\n", __func__, ssize);
 #endif
-	/* FIXME run this code in a loop? */
-	size = tcpsocket->bufin_cnt;
-	/* deserialize the data as a buffer (containing a message) */
-	if((variable = variable_new_deserialize_type(VT_BUFFER, &size,
-					tcpsocket->bufin)) == NULL)
-		/* XXX assumes not enough data was available */
-		return 0;
-	tcpsocket->bufin_cnt -= size;
-	memmove(tcpsocket->bufin, &tcpsocket->bufin[size],
-			tcpsocket->bufin_cnt);
-	if((variable_get_as(variable, VT_BUFFER, &buffer)) == 0)
-	{
-		message = appmessage_new_deserialize(buffer);
-		buffer_delete(buffer);
-	}
-	if(message != NULL)
+	while((message = _socket_callback_message(tcpsocket)) != NULL)
 	{
 		switch(tcpsocket->tcp->mode)
 		{
@@ -742,12 +725,32 @@ static int _tcp_socket_callback_read(int fd, TCPSocket * tcpsocket)
 		}
 		appmessage_delete(message);
 	}
-	else
+	return 0;
+}
+
+static AppMessage * _socket_callback_message(TCPSocket * tcpsocket)
+{
+	AppMessage * message = NULL;
+	size_t size;
+	Variable * variable;
+	Buffer * buffer;
+
+	size = tcpsocket->bufin_cnt;
+	/* deserialize the data as a buffer (containing a message) */
+	if((variable = variable_new_deserialize_type(VT_BUFFER, &size,
+					tcpsocket->bufin)) == NULL)
+		/* XXX assumes not enough data was available */
+		return NULL;
+	tcpsocket->bufin_cnt -= size;
+	memmove(tcpsocket->bufin, &tcpsocket->bufin[size],
+			tcpsocket->bufin_cnt);
+	if((variable_get_as(variable, VT_BUFFER, &buffer)) == 0)
 	{
-		/* FIXME report the error */
+		message = appmessage_new_deserialize(buffer);
+		buffer_delete(buffer);
 	}
 	variable_delete(variable);
-	return 0;
+	return message;
 }
 
 static void _socket_callback_read_client(TCPSocket * tcpsocket,
