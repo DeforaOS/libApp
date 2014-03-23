@@ -64,6 +64,7 @@ dist:
 		$(PACKAGE)-$(VERSION)/src/transport/common.c \
 		$(PACKAGE)-$(VERSION)/src/transport/project.conf \
 		$(PACKAGE)-$(VERSION)/tests/appmessage.c \
+		$(PACKAGE)-$(VERSION)/tests/appserver.c \
 		$(PACKAGE)-$(VERSION)/tests/transport.c \
 		$(PACKAGE)-$(VERSION)/tests/Makefile \
 		$(PACKAGE)-$(VERSION)/tests/tests.sh \

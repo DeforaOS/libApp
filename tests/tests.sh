@@ -112,6 +112,7 @@ FAILED=
 (echo "Performing tests:" 1>&2
 $DATE
 _test "appmessage"
+_test "appserver"
 _test "transport" -p tcp4 127.0.0.1:4242
 _test "transport" -p tcp4 localhost:4242
 _test "transport" -p tcp6 ::1.4242
