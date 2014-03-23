@@ -692,12 +692,10 @@ static void _socket_callback_read_client(TCPSocket * tcpsocket,
 		AppMessage * message);
 static void _socket_callback_read_server(TCPSocket * tcpsocket,
 		AppMessage * message);
+static int _socket_callback_recv(TCPSocket * tcpsocket);
 
 static int _tcp_socket_callback_read(int fd, TCPSocket * tcpsocket)
 {
-	const size_t inc = INC;
-	ssize_t ssize;
-	char * p;
 	size_t size;
 	Variable * variable;
 	Buffer * buffer;
@@ -709,33 +707,12 @@ static int _tcp_socket_callback_read(int fd, TCPSocket * tcpsocket)
 	/* check parameters */
 	if(tcpsocket->fd != fd)
 		return -1;
-	if((p = realloc(tcpsocket->bufin, tcpsocket->bufin_cnt + inc)) == NULL)
+	if(_socket_callback_recv(tcpsocket) != 0)
 		return -1;
-	tcpsocket->bufin = p;
-	if((ssize = recv(tcpsocket->fd, &tcpsocket->bufin[tcpsocket->bufin_cnt],
-					inc, 0)) < 0)
-	{
-		error_set_code(1, "%s", strerror(errno));
-		close(tcpsocket->fd);
-		tcpsocket->fd = -1;
-		/* FIXME report error */
-		return -1;
-	}
-	else if(ssize == 0)
-	{
-#ifdef DEBUG
-		fprintf(stderr, "DEBUG: %s() read() => %ld\n", __func__, ssize);
-#endif
-		close(tcpsocket->fd);
-		tcpsocket->fd = -1;
-		/* FIXME report transfer clean shutdown */
-		return -1;
-	}
-	else
-		tcpsocket->bufin_cnt += ssize;
 #ifdef DEBUG
 	fprintf(stderr, "DEBUG: %s() read() => %ld\n", __func__, ssize);
 #endif
+	/* FIXME run this code in a loop? */
 	size = tcpsocket->bufin_cnt;
 	/* deserialize the data as a buffer (containing a message) */
 	if((variable = variable_new_deserialize_type(VT_BUFFER, &size,
@@ -788,6 +765,38 @@ static void _socket_callback_read_server(TCPSocket * tcpsocket,
 
 	helper->client_receive(helper->transport, tcpsocket->client,
 			message);
+}
+
+static int _socket_callback_recv(TCPSocket * tcpsocket)
+{
+	const size_t inc = INC;
+	ssize_t ssize;
+	char * p;
+
+	if((p = realloc(tcpsocket->bufin, tcpsocket->bufin_cnt + inc)) == NULL)
+		return -1;
+	tcpsocket->bufin = p;
+	if((ssize = recv(tcpsocket->fd, &tcpsocket->bufin[tcpsocket->bufin_cnt],
+					inc, 0)) < 0)
+	{
+		error_set_code(1, "%s", strerror(errno));
+		close(tcpsocket->fd);
+		tcpsocket->fd = -1;
+		/* FIXME report error */
+		return -1;
+	}
+	else if(ssize == 0)
+	{
+#ifdef DEBUG
+		fprintf(stderr, "DEBUG: %s() read() => %ld\n", __func__, ssize);
+#endif
+		close(tcpsocket->fd);
+		tcpsocket->fd = -1;
+		/* FIXME report transfer clean shutdown */
+		return -1;
+	}
+	tcpsocket->bufin_cnt += ssize;
+	return 0;
 }
 
 
