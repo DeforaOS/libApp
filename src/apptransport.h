@@ -39,10 +39,12 @@ AppTransport * apptransport_new(AppTransportMode mode,
 void apptransport_delete(AppTransport * transport);
 
 /* useful */
-int apptransport_client_send(AppTransport * transport,
-		AppTransportClient * client, AppMessage * message);
-
-int apptransport_send(AppTransport * transport, AppMessage * message,
+/* ATM_CLIENT */
+int apptransport_client_send(AppTransport * transport, AppMessage * message,
 		int acknowledge);
+
+/* ATM_SERVER */
+int apptransport_server_send(AppTransport * transport,
+		AppTransportClient * client, AppMessage * message);
 
 #endif /* !LIBAPP_APPTRANSPORT_H */

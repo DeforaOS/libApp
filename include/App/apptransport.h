@@ -73,8 +73,13 @@ struct _AppTransportPluginDefinition
 	AppTransportPlugin * (*init)(AppTransportPluginHelper * helper,
 			AppTransportMode mode, char const * name);
 	void (*destroy)(AppTransportPlugin * transport);
-	int (*send)(AppTransportPlugin * transport, AppMessage * message);
+
+	/* ATM_CLIENT */
 	int (*client_send)(AppTransportPlugin * transport,
+			AppMessage * message);
+
+	/* ATM_SERVER */
+	int (*server_send)(AppTransportPlugin * transport,
 			AppTransportClient * client, AppMessage * message);
 };
 
