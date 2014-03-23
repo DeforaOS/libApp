@@ -34,18 +34,17 @@ _debug()
 _fail()
 {
 	test="$1"
-	#XXX
-	protocol="$3"
-	name="$4"
+	name="$2"
 
+	shift
 	shift
 	echo -n "$test:" 1>&2
 	echo
-	echo "Testing: $test $protocol $name"
+	echo "Testing: $test $name"
 	$DEBUG "./$test" "$@" 2>&1
 	res=$?
 	if [ $res -ne 0 ]; then
-		echo " FAILED ($protocol $name, error $res)" 1>&2
+		echo " FAILED ($name, error $res)" 1>&2
 	else
 		echo " PASS" 1>&2
 	fi
@@ -56,14 +55,13 @@ _fail()
 _test()
 {
 	test="$1"
-	#XXX
-	protocol="$3"
-	name="$4"
+	name="$2"
 
+	shift
 	shift
 	echo -n "$test:" 1>&2
 	echo
-	echo "Testing: $test $protocol $name"
+	echo "Testing: $test $name"
 	$DEBUG "./$test" "$@" 2>&1
 	res=$?
 	if [ $res -ne 0 ]; then
@@ -106,32 +104,32 @@ if [ $# -ne 1 ]; then
 fi
 target="$1"
 
-[ "$clean" -ne 0 ]			&& exit 0
+[ "$clean" -ne 0 ] && exit 0
 
 FAILED=
 (echo "Performing tests:" 1>&2
 $DATE
-_test "appmessage"
-_test "transport" -p tcp4 127.0.0.1:4242
-_test "transport" -p tcp4 localhost:4242
-_test "transport" -p tcp6 ::1.4242
-_test "transport" -p tcp6 localhost:4242
-_test "transport" -p tcp 127.0.0.1:4242
-_test "transport" -p tcp ::1.4242
-_test "transport" -p tcp localhost:4242
-_test "transport" -p udp4 127.0.0.1:4242
-_test "transport" -p udp4 localhost:4242
-_test "transport" -p udp6 ::1.4242
-_test "transport" -p udp6 localhost:4242
-_test "transport" -p udp 127.0.0.1:4242
-_test "transport" -p udp ::1.4242
-_test "transport" -p udp localhost:4242
+_test "appmessage" "appmessage"
+_test "transport" "tcp4 127.0.0.1:4242" -p tcp4 127.0.0.1:4242
+_test "transport" "tcp4 localhost:4242" -p tcp4 localhost:4242
+_test "transport" "tcp6 ::1.4242" -p tcp6 ::1.4242
+_test "transport" "tcp6 localhost:4242" -p tcp6 localhost:4242
+_test "transport" "tcp 127.0.0.1:4242" -p tcp 127.0.0.1:4242
+_test "transport" "tcp ::1.4242" -p tcp ::1.4242
+_test "transport" "tcp localhost:4242" -p tcp localhost:4242
+_test "transport" "udp4 127.0.0.1:4242" -p udp4 127.0.0.1:4242
+_test "transport" "udp4 localhost:4242" -p udp4 localhost:4242
+_test "transport" "udp6 ::1.4242" -p udp6 ::1.4242
+_test "transport" "udp6 localhost:4242" -p udp6 localhost:4242
+_test "transport" "udp 127.0.0.1:4242" -p udp 127.0.0.1:4242
+_test "transport" "udp ::1.4242" -p udp ::1.4242
+_test "transport" "udp localhost:4242" -p udp localhost:4242
 echo "Expected failures:" 1>&2
-_fail "appserver"
-_fail "transport" -p tcp6 ::1:4242
-_fail "transport" -p tcp ::1:4242
-_fail "transport" -p udp6 ::1:4242
-_fail "transport" -p udp ::1:4242) > "$target"
+_fail "appserver" "appserver"
+_fail "transport" "tcp6 ::1:4242" -p tcp6 ::1:4242
+_fail "transport" "tcp6 ::1:4242" -p tcp ::1:4242
+_fail "transport" "udp6 ::1:4242" -p udp6 ::1:4242
+_fail "transport" "udp ::1:4242" -p udp ::1:4242) > "$target"
 if [ -n "$FAILED" ]; then
 	echo "Failed tests:$FAILED" 1>&2
 	exit 2
