@@ -18,9 +18,18 @@
 #variables
 #executables
 DATE="date"
+DEBUG="_debug"
 
 
 #functions
+#debug
+_debug()
+{
+	echo "$@" 1>&2
+	"$@"
+}
+
+
 #fail
 _fail()
 {
@@ -31,9 +40,9 @@ _fail()
 
 	shift
 	echo -n "$test:" 1>&2
-	(echo
-	echo "Testing: ./$test" "$@"
-	"./$test" "$@") >> "$target" 2>&1
+	echo
+	echo "Testing: $test $protocol $name"
+	$DEBUG "./$test" "$@" 2>&1
 	res=$?
 	if [ $res -ne 0 ]; then
 		echo " FAILED ($protocol $name, error $res)" 1>&2
@@ -53,18 +62,16 @@ _test()
 
 	shift
 	echo -n "$test:" 1>&2
-	(echo
-	echo "Testing: ./$test" "$@"
-	"./$test" "$@") >> "$target" 2>&1
+	echo
+	echo "Testing: $test $protocol $name"
+	$DEBUG "./$test" "$@" 2>&1
 	res=$?
 	if [ $res -ne 0 ]; then
 		echo " FAILED" 1>&2
 		FAILED="$FAILED $test($protocol $name, error $res)"
 		return 2
-	else
-		echo " PASS" 1>&2
-		return 0
 	fi
+	echo " PASS" 1>&2
 }
 
 
@@ -101,9 +108,9 @@ target="$1"
 
 [ "$clean" -ne 0 ]			&& exit 0
 
-$DATE > "$target"
 FAILED=
-echo "Performing tests:" 1>&2
+(echo "Performing tests:" 1>&2
+$DATE
 _test "appmessage"
 _test "transport" -p tcp4 127.0.0.1:4242
 _test "transport" -p tcp6 ::1.4242
@@ -117,7 +124,7 @@ echo "Expected failures:" 1>&2
 _fail "transport" -p tcp6 ::1:4242
 _fail "transport" -p tcp ::1:4242
 _fail "transport" -p udp6 ::1:4242
-_fail "transport" -p udp ::1:4242
+_fail "transport" -p udp ::1:4242) > "$target"
 if [ -n "$FAILED" ]; then
 	echo "Failed tests:$FAILED" 1>&2
 	exit 2
