@@ -112,7 +112,6 @@ FAILED=
 (echo "Performing tests:" 1>&2
 $DATE
 _test "appmessage"
-_test "appserver"
 _test "transport" -p tcp4 127.0.0.1:4242
 _test "transport" -p tcp4 localhost:4242
 _test "transport" -p tcp6 ::1.4242
@@ -128,6 +127,7 @@ _test "transport" -p udp 127.0.0.1:4242
 _test "transport" -p udp ::1.4242
 _test "transport" -p udp localhost:4242
 echo "Expected failures:" 1>&2
+_fail "appserver"
 _fail "transport" -p tcp6 ::1:4242
 _fail "transport" -p tcp ::1:4242
 _fail "transport" -p udp6 ::1:4242
