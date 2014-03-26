@@ -39,11 +39,12 @@ _fail()
 	shift
 	shift
 	echo -n "$test:" 1>&2
-	echo
+	(echo
 	echo "Testing: $test $name"
-	$DEBUG "./$test" "$@" 2>&1
+	$DEBUG "./$test" "$@" 2>&1) >> "$target"
 	res=$?
 	if [ $res -ne 0 ]; then
+		echo "./$test: $name: Failed with error code $res" >> "$target"
 		echo " FAILED ($name, error $res)" 1>&2
 	else
 		echo " PASS" 1>&2
@@ -60,11 +61,12 @@ _test()
 	shift
 	shift
 	echo -n "$test:" 1>&2
-	echo
+	(echo
 	echo "Testing: $test $name"
-	$DEBUG "./$test" "$@" 2>&1
+	$DEBUG "./$test" "$@" 2>&1) >> "$target"
 	res=$?
 	if [ $res -ne 0 ]; then
+		echo "./$test: $name: Failed with error code $res" >> "$target"
 		echo " FAILED" 1>&2
 		FAILED="$FAILED $test($name, error $res)"
 		return 2
@@ -107,8 +109,8 @@ target="$1"
 [ "$clean" -ne 0 ] && exit 0
 
 FAILED=
-(echo "Performing tests:" 1>&2
-$DATE
+echo "Performing tests:" 1>&2
+$DATE > "$target"
 _test "appmessage" "appmessage"
 _test "transport" "tcp4 127.0.0.1:4242" -p tcp4 127.0.0.1:4242
 _test "transport" "tcp4 localhost:4242" -p tcp4 localhost:4242
@@ -129,7 +131,7 @@ _fail "appserver" "appserver"
 _fail "transport" "tcp6 ::1:4242" -p tcp6 ::1:4242
 _fail "transport" "tcp6 ::1:4242" -p tcp ::1:4242
 _fail "transport" "udp6 ::1:4242" -p udp6 ::1:4242
-_fail "transport" "udp ::1:4242" -p udp ::1:4242) > "$target"
+_fail "transport" "udp ::1:4242" -p udp ::1:4242
 if [ -n "$FAILED" ]; then
 	echo "Failed tests:$FAILED" 1>&2
 	exit 2
