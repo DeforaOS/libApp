@@ -66,7 +66,7 @@ _test()
 	res=$?
 	if [ $res -ne 0 ]; then
 		echo " FAILED" 1>&2
-		FAILED="$FAILED $test($protocol $name, error $res)"
+		FAILED="$FAILED $test($name, error $res)"
 		return 2
 	fi
 	echo " PASS" 1>&2
