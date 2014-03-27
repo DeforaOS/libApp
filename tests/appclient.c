@@ -1,5 +1,5 @@
 /* $Id$ */
-/* Copyright (c) 2012-2014 Pierre Pronchery <khorben@defora.org> */
+/* Copyright (c) 2014 Pierre Pronchery <khorben@defora.org> */
 /* This file is part of DeforaOS System libApp */
 /* This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -15,31 +15,21 @@
 
 
 
-#ifndef LIBAPP_APP_APPSERVER_H
-# define LIBAPP_APP_APPSERVER_H
-
-# include <System/event.h>
+#include <System/error.h>
+#include "App/appclient.h"
 
 
-/* AppServer */
-/* types */
-typedef struct _AppServer AppServer;
+/* public */
+/* main */
+int main(int argc, char * argv[])
+{
+	AppClient * appclient;
 
-
-/* constants */
-# define APPSERVER_MAX_ARGUMENTS	4
-
-
-/* functions */
-AppServer * appserver_new(char const * app, char const * name);
-AppServer * appserver_new_event(char const * app, char const * name,
-		Event * event);
-void appserver_delete(AppServer * appserver);
-
-/* accessors */
-char const * appserver_get_app(AppServer * appserver);
-
-/* useful */
-int appserver_loop(AppServer * appserver);
-
-#endif /* !LIBAPP_APP_APPSERVER_H */
+	if((appclient = appclient_new("VFS", "tcp")) == NULL)
+	{
+		error_print("appclient");
+		return 2;
+	}
+	appclient_delete(appclient);
+	return 0;
+}

@@ -1,5 +1,5 @@
 /* $Id$ */
-/* Copyright (c) 2011 Pierre Pronchery <khorben@defora.org> */
+/* Copyright (c) 2011-2014 Pierre Pronchery <khorben@defora.org> */
 /* This file is part of DeforaOS System libApp */
 /* This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -20,6 +20,7 @@
 
 # include <stdint.h>
 # include <System/event.h>
+# include <System/variable.h>
 
 
 /* AppClient */
@@ -28,12 +29,13 @@ typedef struct _AppClient AppClient;
 
 
 /* functions */
-AppClient * appclient_new(char const * service);
-AppClient * appclient_new_event(char const * service, Event * event);
+AppClient * appclient_new(char const * app, char const * name);
+AppClient * appclient_new_event(char const * app, char const * name,
+		Event * event);
 void appclient_delete(AppClient * appclient);
 
 /* useful */
-int appclient_call(AppClient * appclient, int32_t * ret, char const * function,
+int appclient_call(AppClient * appclient, Variable * ret, char const * function,
 		...);
 
 #endif /* !LIBAPP_APP_APPCLIENT_H */

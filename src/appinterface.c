@@ -1,5 +1,5 @@
 /* $Id$ */
-/* Copyright (c) 2011-2013 Pierre Pronchery <khorben@defora.org> */
+/* Copyright (c) 2011-2014 Pierre Pronchery <khorben@defora.org> */
 /* This file is part of DeforaOS System libApp */
 /* This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -28,9 +28,6 @@
 # include <arpa/inet.h>
 # include <netinet/in.h>
 #endif
-#ifdef WITH_SSL
-# include <openssl/ssl.h>
-#endif
 #include <errno.h>
 #include <System.h>
 #include "App/appserver.h"
@@ -38,10 +35,10 @@
 #include "../config.h"
 
 #ifndef PREFIX
-# define PREFIX	"/usr/local"
+# define PREFIX		"/usr/local"
 #endif
-#ifndef ETCDIR
-# define ETCDIR	PREFIX "/etc"
+#ifndef SYSCONFDIR
+# define SYSCONFDIR	PREFIX "/etc"
 #endif
 
 
@@ -197,22 +194,11 @@ static int _new_append_arg(AppInterface * ai, char const * arg);
 
 AppInterface * appinterface_new(char const * app)
 {
-#ifdef WITH_SSL
-	static int ssl_init = 0;
-#endif
 	AppInterface * appinterface;
 	String * pathname = NULL;
 	Config * config = NULL;
 	char const * p;
 
-#ifdef WITH_SSL
-	if(ssl_init == 0)
-	{
-		SSL_library_init();
-		SSL_load_error_strings();
-		ssl_init = 1;
-	}
-#endif
 	if(app == NULL)
 		return NULL; /* FIXME report error */
 	if((appinterface = object_new(sizeof(*appinterface))) == NULL)
@@ -224,7 +210,7 @@ AppInterface * appinterface_new(char const * app)
 	appinterface->error = 0;
 	if(appinterface->name == NULL
 			|| (pathname = string_new_append(
-					ETCDIR "/AppInterface/", app,
+					SYSCONFDIR "/AppInterface/", app,
 					".interface", NULL)) == NULL
 			|| (config = config_new()) == NULL
 			|| config_load(config, pathname) != 0)
@@ -380,7 +366,7 @@ void appinterface_delete(AppInterface * appinterface)
 
 	for(i = 0; i < appinterface->calls_cnt; i++)
 	{
-		free(appinterface->calls[i].name);
+		string_delete(appinterface->calls[i].name);
 		free(appinterface->calls[i].args);
 	}
 	free(appinterface->calls);
@@ -390,6 +376,13 @@ void appinterface_delete(AppInterface * appinterface)
 
 
 /* accessors */
+/* appinterface_get_name */
+char const * appinterface_get_app(AppInterface * appinterface)
+{
+	return appinterface->name;
+}
+
+
 /* appinterface_get_port */
 int appinterface_get_port(AppInterface * appinterface)
 {
@@ -791,6 +784,15 @@ int appinterface_call_receive(AppInterface * appinterface, int32_t * ret,
 		*ret = ntohl(*ret);
 	}
 	return pos + sizeof(*ret);
+}
+
+
+/* appinterface_callv */
+int appinterface_callv(AppInterface * appinterface, Variable * result,
+		char const * function, size_t argc, Variable ** argv)
+{
+	/* FIXME implement */
+	return -1;
 }
 
 

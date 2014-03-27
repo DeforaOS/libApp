@@ -127,6 +127,7 @@ _test "transport" "udp 127.0.0.1:4242" -p udp 127.0.0.1:4242
 _test "transport" "udp ::1.4242" -p udp ::1.4242
 _test "transport" "udp localhost:4242" -p udp localhost:4242
 echo "Expected failures:" 1>&2
+_fail "appclient" "appclient"
 _fail "appserver" "appserver"
 _fail "transport" "tcp6 ::1:4242" -p tcp6 ::1:4242
 _fail "transport" "tcp6 ::1:4242" -p tcp ::1:4242

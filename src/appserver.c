@@ -71,10 +71,7 @@ AppServer * appserver_new(const char * app, char const * name)
 
 
 /* appserver_new_event */
-static AppTransport * _new_event_transport(AppTransportHelper * helper,
-		Event * event, char const * app, char const * name);
-static String * _new_server_name(char const * app, char const * name);
-static String * _new_server_transport(String ** name);
+#include "common.h"
 
 AppServer * appserver_new_event(char const * app, char const * name,
 		Event * event)
@@ -99,58 +96,7 @@ AppServer * appserver_new_event(char const * app, char const * name,
 	return appserver;
 }
 
-static AppTransport * _new_event_transport(AppTransportHelper * helper,
-		Event * event, char const * app, char const * name)
-{
-	AppTransport * ret;
-	String * n;
-	String * transport;
-
-	if((n = _new_server_name(app, name)) == NULL)
-		return NULL;
-	if((transport = _new_server_transport(&n)) == NULL)
-	{
-		string_delete(n);
-		return NULL;
-	}
-	ret = apptransport_new(ATM_SERVER, helper, transport, n, event);
-	string_delete(transport);
-	string_delete(n);
-	return ret;
-}
-
-static String * _new_server_name(char const * app, char const * name)
-{
-	String * var;
-
-	if(name != NULL)
-		return string_new(name);
-	/* obtain the desired transport and name from the environment */
-	if((var = string_new_append("APPSERVER_", app, NULL)) == NULL)
-		return NULL;
-	name = getenv(var);
-	string_delete(var);
-	return string_new(name);
-}
-
-static String * _new_server_transport(String ** name)
-{
-	String * p;
-	String * transport;
-
-	if((p = strchr(*name, ':')) == NULL)
-		/* XXX hard-coded default value */
-		return string_new("tcp");
-	/* XXX */
-	*(p++) = '\0';
-	transport = *name;
-	if((*name = string_new(p)) == NULL)
-	{
-		string_delete(transport);
-		return NULL;
-	}
-	return transport;
-}
+#include "common.c"
 
 
 /* appserver_delete */
@@ -164,6 +110,14 @@ void appserver_delete(AppServer * appserver)
 	if(appserver->event_free != 0)
 		event_delete(appserver->event);
 	object_delete(appserver);
+}
+
+
+/* accessors */
+/* appserver_get_app */
+char const * appserver_get_app(AppServer * appserver)
+{
+	return appinterface_get_app(appserver->interface);
 }
 
 
@@ -185,6 +139,9 @@ static int _appserver_helper_message(void * data, AppTransport * transport,
 {
 	AppServer * appserver = data;
 
+	if(client == NULL)
+		/* XXX report error */
+		return -1;
 	/* FIXME implement */
 	return 0;
 }

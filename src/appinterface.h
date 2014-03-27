@@ -1,5 +1,5 @@
 /* $Id$ */
-/* Copyright (c) 2011 Pierre Pronchery <khorben@defora.org> */
+/* Copyright (c) 2011-2014 Pierre Pronchery <khorben@defora.org> */
 /* This file is part of DeforaOS System libApp */
 /* This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -19,6 +19,7 @@
 # define LIBAPP_APPINTERFACE_H
 
 # include <stdarg.h>
+# include <System/variable.h>
 
 
 /* AppInterface */
@@ -32,7 +33,7 @@ AppInterface * appinterface_new_server(char const * app);
 void appinterface_delete(AppInterface * appinterface);
 
 /* accessors */
-int appinterface_get_port(AppInterface * appinterface);
+char const * appinterface_get_app(AppInterface * appinterface);
 int appinterface_get_args_count(AppInterface * appinterface, size_t * count,
 		char const * function);
 
@@ -43,5 +44,8 @@ int appinterface_call_receive(AppInterface * appinterface, int32_t * ret,
 		char buf[], size_t buflen, char const * function, void ** args);
 int appinterface_receive(AppInterface * appinterface, int * ret, char buf[],
 		size_t buflen, char bufw[], size_t bufwlen, size_t * bufwpos);
+
+int appinterface_callv(AppInterface * appinterface, Variable * result,
+		char const * function, size_t argc, Variable ** argv);
 
 #endif /* !LIBAPP_APPINTERFACE_H */

@@ -46,11 +46,11 @@ dist:
 		$(PACKAGE)-$(VERSION)/src/appmessage.c \
 		$(PACKAGE)-$(VERSION)/src/appserver.c \
 		$(PACKAGE)-$(VERSION)/src/apptransport.c \
-		$(PACKAGE)-$(VERSION)/src/common.c \
 		$(PACKAGE)-$(VERSION)/src/Makefile \
 		$(PACKAGE)-$(VERSION)/src/appinterface.h \
 		$(PACKAGE)-$(VERSION)/src/appmessage.h \
 		$(PACKAGE)-$(VERSION)/src/apptransport.h \
+		$(PACKAGE)-$(VERSION)/src/common.c \
 		$(PACKAGE)-$(VERSION)/src/common.h \
 		$(PACKAGE)-$(VERSION)/src/project.conf \
 		$(PACKAGE)-$(VERSION)/src/transport/tcp.c \
@@ -63,6 +63,7 @@ dist:
 		$(PACKAGE)-$(VERSION)/src/transport/Makefile \
 		$(PACKAGE)-$(VERSION)/src/transport/common.c \
 		$(PACKAGE)-$(VERSION)/src/transport/project.conf \
+		$(PACKAGE)-$(VERSION)/tests/appclient.c \
 		$(PACKAGE)-$(VERSION)/tests/appmessage.c \
 		$(PACKAGE)-$(VERSION)/tests/appserver.c \
 		$(PACKAGE)-$(VERSION)/tests/transport.c \

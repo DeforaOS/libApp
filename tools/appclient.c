@@ -1,5 +1,5 @@
 /* $Id$ */
-/* Copyright (c) 2011-2012 Pierre Pronchery <khorben@defora.org> */
+/* Copyright (c) 2011-2014 Pierre Pronchery <khorben@defora.org> */
 /* This file is part of DeforaOS System libApp */
 /* This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -52,15 +52,16 @@ typedef struct _AppClientCall
 
 
 /* prototypes */
+static int _appclient(int verbose, char const * app, char const * name,
+		AppClientCall calls[], size_t calls_cnt);
+
 static int _error(char const * message, int ret);
 
 
 /* functions */
-static int _appclient_hostname(int verbose, char const * hostname,
-		char const * service);
 static int _appclient_call(int verbose, AppClient * ac, AppClientCall * call);
 
-static int _appclient(int verbose, char const * hostname, char const * service,
+static int _appclient(int verbose, char const * app, char const * name,
 		AppClientCall calls[], size_t calls_cnt)
 {
 	int ret = 0;
@@ -71,8 +72,7 @@ static int _appclient(int verbose, char const * hostname, char const * service,
 	fprintf(stderr, "DEBUG: %s(%d, %s, %s, %p, %zu)\n", __func__, verbose,
 			hostname, service, (void *)calls, calls_cnt);
 #endif
-	if(_appclient_hostname(verbose, hostname, service) != 0
-			|| (ac = appclient_new(service)) == NULL)
+	if((ac = appclient_new(app, name)) == NULL)
 		return _error(APPCLIENT_PROGNAME, 1);
 	if(verbose != 0)
 		puts("Connected.");
@@ -88,50 +88,17 @@ static int _appclient(int verbose, char const * hostname, char const * service,
 	return ret;
 }
 
-static int _appclient_hostname(int verbose, char const * hostname,
-		char const * service)
-{
-	char const prefix[] = "APPSERVER_";
-	char * buf;
-	size_t len;
-	char const * env;
-	int res;
-
-	len = sizeof(prefix) + strlen(service) + 1;
-	if((buf = malloc(len)) == NULL)
-		return error_set_code(1, "%s", strerror(errno));
-	snprintf(buf, len, "%s%s", prefix, service);
-	env = getenv(buf);
-#ifdef DEBUG
-	fprintf(stderr, "DEBUG: %s() \"%s\"=\"%s\"\n", __func__, buf, env);
-#endif
-	if(hostname == NULL)
-	{
-		if(verbose != 0)
-			printf("%s%s%s%s%s\n", "Connecting to service ",
-					service, " on ", (env != NULL) ? env
-					: "localhost", "...");
-		free(buf);
-		return 0;
-	}
-	res = setenv(buf, hostname, 1);
-	free(buf);
-	if(res != 0)
-		return error_set_code(1, "%s", strerror(errno));
-	if(verbose != 0)
-		printf("%s%s%s%s\n", "Connecting to service ", service, " on ",
-				hostname);
-	return 0;
-}
-
 static int _appclient_call(int verbose, AppClient * ac, AppClientCall * call)
 {
-	int ret = 1;
+	int ret = 0;
+	Variable * v;
 	int res = 0;
 
 #ifdef DEBUG
 	fprintf(stderr, "DEBUG: %s()\n", __func__);
 #endif
+	if((v = variable_new(VT_INT32, &res)) == NULL)
+		return -1;
 	if(verbose != 0)
 		printf("Calling %s() with %lu arguments\n", call->name,
 				(unsigned long)call->args_cnt);
@@ -143,7 +110,7 @@ static int _appclient_call(int verbose, AppClient * ac, AppClientCall * call)
 			fprintf(stderr, "DEBUG: %s() %s() res=%d\n", __func__,
 					call->name, res);
 #endif
-			ret = appclient_call(ac, &res, call->name, NULL);
+			ret = appclient_call(ac, v, call->name, NULL);
 			break;
 		case 1:
 #ifdef DEBUG
@@ -151,16 +118,16 @@ static int _appclient_call(int verbose, AppClient * ac, AppClientCall * call)
 					call->name, call->args[0].integer);
 #endif
 			if(call->args[0].type == ACCAT_DOUBLE)
-				ret = appclient_call(ac, &res, call->name,
+				ret = appclient_call(ac, v, call->name,
 						call->args[0]._double);
 			else if(call->args[0].type == ACCAT_FLOAT)
-				ret = appclient_call(ac, &res, call->name,
+				ret = appclient_call(ac, v, call->name,
 						call->args[0]._float);
 			else if(call->args[0].type == ACCAT_INTEGER)
-				ret = appclient_call(ac, &res, call->name,
+				ret = appclient_call(ac, v, call->name,
 						call->args[0].integer);
 			else if(call->args[0].type == ACCAT_STRING)
-				ret = appclient_call(ac, &res, call->name,
+				ret = appclient_call(ac, v, call->name,
 						call->args[0].string);
 			else
 				ret = error_set_code(1, "%s",
@@ -174,7 +141,7 @@ static int _appclient_call(int verbose, AppClient * ac, AppClientCall * call)
 					call->args[0].integer,
 					call->args[1].integer);
 #endif
-			ret = appclient_call(ac, &res, call->name,
+			ret = appclient_call(ac, v, call->name,
 					call->args[0].integer,
 					call->args[1].integer);
 			break;
@@ -189,7 +156,7 @@ static int _appclient_call(int verbose, AppClient * ac, AppClientCall * call)
 						call->args[1]._float,
 						call->args[2]._float);
 #endif
-				ret = appclient_call(ac, &res, call->name,
+				ret = appclient_call(ac, v, call->name,
 						call->args[0]._float,
 						call->args[1]._float,
 						call->args[2]._float);
@@ -203,7 +170,7 @@ static int _appclient_call(int verbose, AppClient * ac, AppClientCall * call)
 					call->args[1].integer,
 					call->args[2].integer);
 #endif
-			ret = appclient_call(ac, &res, call->name,
+			ret = appclient_call(ac, v, call->name,
 					call->args[0].integer,
 					call->args[1].integer,
 					call->args[2].integer);
@@ -217,7 +184,7 @@ static int _appclient_call(int verbose, AppClient * ac, AppClientCall * call)
 					call->args[2]._float,
 					call->args[3]._float);
 #endif
-			ret = appclient_call(ac, &res, call->name,
+			ret = appclient_call(ac, v, call->name,
 					call->args[0]._float,
 					call->args[1]._float,
 					call->args[2]._float,
@@ -229,6 +196,7 @@ static int _appclient_call(int verbose, AppClient * ac, AppClientCall * call)
 	}
 	if(ret == 0 && verbose)
 		printf("\"%s\"%s%d\n", call->name, " returned ", res);
+	variable_delete(v);
 	return ret;
 }
 
@@ -269,8 +237,8 @@ int main(int argc, char * argv[])
 	int o;
 	int res;
 	int verbose = 0;
-	char const * hostname = NULL;
-	char const * service = NULL;
+	char const * app = NULL;
+	char const * name = NULL;
 	AppClientCall * calls = NULL;
 	size_t calls_cnt = 0;
 
@@ -283,10 +251,10 @@ int main(int argc, char * argv[])
 				verbose = 1;
 				break;
 			case 'H':
-				hostname = optarg;
+				name = optarg;
 				break;
 			case 'S':
-				service = optarg;
+				app = optarg;
 				break;
 			case 'C':
 				res = _main_call(&calls, &calls_cnt, optarg);
@@ -313,10 +281,9 @@ int main(int argc, char * argv[])
 		if(res != 0)
 			return _error(APPCLIENT_PROGNAME, 2);
 	}
-	if(service == NULL)
+	if(app == NULL)
 		return _usage();
-	return (_appclient(verbose, hostname, service, calls, calls_cnt) == 0)
-		? 0 : 2;
+	return (_appclient(verbose, app, name, calls, calls_cnt) == 0) ? 0 : 2;
 }
 
 static int _main_call(AppClientCall ** calls, size_t * calls_cnt,

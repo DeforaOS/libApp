@@ -1,5 +1,5 @@
 /* $Id$ */
-/* Copyright (c) 2012 Pierre Pronchery <khorben@defora.org> */
+/* Copyright (c) 2012-2014 Pierre Pronchery <khorben@defora.org> */
 /* This file is part of DeforaOS System libApp */
 /* This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -20,6 +20,9 @@
 
 
 /* functions */
-int common_socket_set_nodelay(int fd, int nodelay);
+static AppTransport * _new_event_transport(AppTransportHelper * helper,
+		Event * event, char const * app, char const * name);
+static String * _new_server_name(char const * app, char const * name);
+static String * _new_server_transport(String ** name);
 
 #endif /* !LIBAPP_COMMON_H */

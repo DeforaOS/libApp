@@ -15,8 +15,8 @@
 
 
 
-#ifndef LIBAPP_SRC_APPMESSAGE_H
-# define LIBAPP_SRC_APPMESSAGE_H
+#ifndef LIBAPP_APPMESSAGE_H
+# define LIBAPP_APPMESSAGE_H
 
 # include <stdint.h>
 # include "App/appmessage.h"
@@ -31,4 +31,4 @@ AppMessage * appmessage_new_acknowledgement(AppMessageID id);
 AppMessageID appmessage_get_id(AppMessage * message);
 void appmessage_set_id(AppMessage * message, AppMessageID id);
 
-#endif /* !LIBAPP_SRC_APPMESSAGE_H */
+#endif /* !LIBAPP_APPMESSAGE_H */
