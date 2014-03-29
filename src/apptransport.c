@@ -15,10 +15,12 @@
 
 
 
+#include <stdlib.h>
 #ifdef DEBUG
 # include <stdio.h>
 #endif
 #include <string.h>
+#include <errno.h>
 #include <System.h>
 #include "appmessage.h"
 #include "apptransport.h"
@@ -39,6 +41,7 @@ struct _AppTransport
 {
 	AppTransportMode mode;
 	AppTransportHelper helper;
+	String * name;
 
 	/* plug-in */
 	AppTransportPluginHelper thelper;
@@ -83,17 +86,23 @@ AppTransport * apptransport_new(AppTransportMode mode,
 {
 	AppTransport * transport;
 
+#ifdef DEBUG
+	fprintf(stderr, "DEBUG: %s(\"%s\", \"%s\")\n", __func__, plugin, name);
+#endif
 	/* allocate the transport */
 	if((transport = object_new(sizeof(*transport))) == NULL)
 		return NULL;
 	memset(transport, 0, sizeof(*transport));
 	transport->mode = mode;
-	transport->helper = *helper;
+	if(helper != NULL)
+		transport->helper = *helper;
+	transport->name = string_new(name);
 	/* initialize the plug-in helper */
 	_new_helper(transport, mode, event);
 	/* load the transport plug-in */
-	if((transport->plugin = plugin_new(LIBDIR, "App", "transport", plugin))
-			== NULL
+	if(transport->name == NULL
+			|| (transport->plugin = plugin_new(LIBDIR, "App",
+					"transport", plugin)) == NULL
 			|| (transport->definition = plugin_lookup(
 					transport->plugin, "transport")) == NULL
 			|| transport->definition->init == NULL
@@ -120,6 +129,69 @@ static void _new_helper(AppTransport * transport, AppTransportMode mode,
 }
 
 
+/* apptransport_new_app */
+static String * _new_app_name(char const * app, char const * name);
+static String * _new_app_transport(String ** name);
+
+AppTransport * apptransport_new_app(AppTransportMode mode,
+		AppTransportHelper * helper, char const * app,
+		char const * name, Event * event)
+{
+	AppTransport * apptransport;
+	String * n;
+	String * transport;
+
+#ifdef DEBUG
+	fprintf(stderr, "DEBUG: %s(\"%s\", \"%s\")\n", __func__, app, name);
+#endif
+	if((n = _new_app_name(app, name)) == NULL)
+		return NULL;
+	if((transport = _new_app_transport(&n)) == NULL)
+	{
+		string_delete(n);
+		return NULL;
+	}
+	apptransport = apptransport_new(mode, helper, transport, n, event);
+	string_delete(transport);
+	string_delete(n);
+	return apptransport;
+}
+
+static String * _new_app_name(char const * app, char const * name)
+{
+	String * var;
+
+	if(name != NULL)
+		return string_new(name);
+	/* obtain the desired transport and name from the environment */
+	if((var = string_new_append("APPSERVER_", app, NULL)) == NULL)
+		return NULL;
+	if((name = getenv(var)) == NULL)
+		error_set_code(-errno, "%s", strerror(errno));
+	string_delete(var);
+	return (name != NULL) ? string_new(name) : NULL;
+}
+
+static String * _new_app_transport(String ** name)
+{
+	String * p;
+	String * transport;
+
+	if((p = strchr(*name, ':')) == NULL)
+		/* XXX hard-coded default value */
+		return string_new("tcp");
+	/* XXX */
+	*(p++) = '\0';
+	transport = *name;
+	if((*name = string_new(p)) == NULL)
+	{
+		string_delete(transport);
+		return NULL;
+	}
+	return transport;
+}
+
+
 /* apptransport_delete */
 void apptransport_delete(AppTransport * transport)
 {
@@ -127,7 +199,31 @@ void apptransport_delete(AppTransport * transport)
 		transport->definition->destroy(transport->tplugin);
 	if(transport->plugin != NULL)
 		plugin_delete(transport->plugin);
+	if(transport->name != NULL)
+		string_delete(transport->name);
 	object_delete(transport);
+}
+
+
+/* accessors */
+/* apptransport_get_mode */
+AppTransportMode apptransport_get_mode(AppTransport * transport)
+{
+	return transport->mode;
+}
+
+
+/* apptransport_get_name */
+String const * apptransport_get_name(AppTransport * transport)
+{
+	return transport->name;
+}
+
+
+/* apptransport_get_transport */
+String const * apptransport_get_transport(AppTransport * transport)
+{
+	return transport->definition->name;
 }
 
 

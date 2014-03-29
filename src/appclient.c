@@ -52,24 +52,11 @@ static int _appclient_helper_message(void * data, AppTransport * transport,
 /* appclient_new */
 AppClient * appclient_new(char const * app, char const * name)
 {
-	AppClient * appclient;
-	Event * event;
-
-	if((event = event_new()) == NULL)
-		return NULL;
-	if((appclient = appclient_new_event(app, name, event)) == NULL)
-	{
-		event_delete(event);
-		return NULL;
-	}
-	appclient->event_free = 1;
-	return appclient;
+	return appclient_new_event(app, name, NULL);
 }
 
 
 /* appclient_new_event */
-#include "lookup.h"
-
 AppClient * appclient_new_event(char const * app, char const * name,
 		Event * event)
 {
@@ -87,12 +74,13 @@ AppClient * appclient_new_event(char const * app, char const * name,
 	appclient->interface = appinterface_new_server(app);
 	appclient->helper.data = appclient;
 	appclient->helper.message = _appclient_helper_message;
-	appclient->transport = _new_event_transport(&appclient->helper,
-			ATM_CLIENT, event, app, name);
-	appclient->event = event;
-	appclient->event_free = 0;
+	appclient->transport = apptransport_new_app(ATM_CLIENT,
+			&appclient->helper, app, name, event);
+	appclient->event = (event != NULL) ? event : event_new();
+	appclient->event_free = (event != NULL) ? 0 : 1;
 	/* check for errors */
-	if(appclient->interface == NULL || appclient->transport == NULL)
+	if(appclient->interface == NULL || appclient->transport == NULL
+			|| appclient->event == NULL)
 	{
 		appclient_delete(appclient);
 		return NULL;
@@ -103,8 +91,6 @@ AppClient * appclient_new_event(char const * app, char const * name,
 #endif
 	return appclient;
 }
-
-#include "lookup.c"
 
 
 /* appclient_delete */

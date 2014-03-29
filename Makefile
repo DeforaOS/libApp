@@ -50,8 +50,6 @@ dist:
 		$(PACKAGE)-$(VERSION)/src/appinterface.h \
 		$(PACKAGE)-$(VERSION)/src/appmessage.h \
 		$(PACKAGE)-$(VERSION)/src/apptransport.h \
-		$(PACKAGE)-$(VERSION)/src/lookup.c \
-		$(PACKAGE)-$(VERSION)/src/lookup.h \
 		$(PACKAGE)-$(VERSION)/src/project.conf \
 		$(PACKAGE)-$(VERSION)/src/transport/tcp.c \
 		$(PACKAGE)-$(VERSION)/src/transport/tcp4.c \

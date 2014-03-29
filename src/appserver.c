@@ -55,24 +55,11 @@ static int _appserver_helper_message(void * data, AppTransport * transport,
 /* appserver_new */
 AppServer * appserver_new(const char * app, char const * name)
 {
-	AppServer * appserver;
-	Event * event;
-
-	if((event = event_new()) == NULL)
-		return NULL;
-	if((appserver = appserver_new_event(app, name, event)) == NULL)
-	{
-		event_delete(event);
-		return NULL;
-	}
-	appserver->event_free = 1;
-	return appserver;
+	return appserver_new_event(app, name, NULL);
 }
 
 
 /* appserver_new_event */
-#include "lookup.h"
-
 AppServer * appserver_new_event(char const * app, char const * name,
 		Event * event)
 {
@@ -83,20 +70,19 @@ AppServer * appserver_new_event(char const * app, char const * name,
 	appserver->interface = appinterface_new_server(app);
 	appserver->helper.data = appserver;
 	appserver->helper.message = _appserver_helper_message;
-	appserver->transport = _new_event_transport(&appserver->helper,
-			ATM_SERVER, event, app, name);
-	appserver->event = event;
-	appserver->event_free = 0;
+	appserver->transport = apptransport_new_app(ATM_SERVER,
+			&appserver->helper, app, name, event);
+	appserver->event = (event != NULL) ? event : event_new();
+	appserver->event_free = (event != NULL) ? 0 : 1;
 	/* check for errors */
-	if(appserver->interface == NULL || appserver->transport == NULL)
+	if(appserver->interface == NULL || appserver->transport == NULL
+			|| appserver->event == NULL)
 	{
 		appserver_delete(appserver);
 		return NULL;
 	}
 	return appserver;
 }
-
-#include "lookup.c"
 
 
 /* appserver_delete */

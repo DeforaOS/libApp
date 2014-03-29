@@ -37,7 +37,14 @@ typedef struct _AppTransportHelper
 AppTransport * apptransport_new(AppTransportMode mode,
 		AppTransportHelper * helper, char const * plugin,
 		char const * name, Event * event);
+AppTransport * apptransport_new_app(AppTransportMode mode,
+		AppTransportHelper * helper, char const * app,
+		char const * name, Event * event);
 void apptransport_delete(AppTransport * transport);
+
+/* accessors */
+String const * apptransport_get_name(AppTransport * transport);
+String const * apptransport_get_transport(AppTransport * transport);
 
 /* useful */
 /* ATM_CLIENT */
