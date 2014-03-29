@@ -133,7 +133,7 @@ echo "Expected failures:" 1>&2
 _fail "appclient" "appclient"
 _fail "appserver" "appserver"
 _fail "transport" "tcp6 ::1:4242" -p tcp6 ::1:4242
-_fail "transport" "tcp6 ::1:4242" -p tcp ::1:4242
+_fail "transport" "tcp ::1:4242" -p tcp ::1:4242
 _fail "transport" "udp6 ::1:4242" -p udp6 ::1:4242
 _fail "transport" "udp ::1:4242" -p udp ::1:4242
 if [ -n "$FAILED" ]; then
