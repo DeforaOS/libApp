@@ -15,17 +15,44 @@
 
 
 
+#include <unistd.h>
+#include <stdio.h>
 #include <System/error.h>
 #include "App/appclient.h"
+
+
+/* private */
+/* functions */
+/* usage */
+static int _usage(void)
+{
+	fputs("Usage: appclient [-a app][-n name]\n", stderr);
+	return 1;
+}
 
 
 /* public */
 /* main */
 int main(int argc, char * argv[])
 {
+	int o;
+	char const * app = NULL;
+	char const * name = NULL;
 	AppClient * appclient;
 
-	if((appclient = appclient_new("VFS", "tcp")) == NULL)
+	while((o = getopt(argc, argv, "a:n:")) != -1)
+		switch(o)
+		{
+			case 'a':
+				app = optarg;
+				break;
+			case 'n':
+				name = optarg;
+				break;
+			default:
+				return _usage();
+		}
+	if((appclient = appclient_new(app, name)) == NULL)
 	{
 		error_print("appclient");
 		return 2;

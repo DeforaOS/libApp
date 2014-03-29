@@ -130,8 +130,8 @@ _test "transport" "udp ::1.4242" -p udp ::1.4242
 _test "transport" "udp localhost:4242" -p udp localhost:4242
 echo "Expected failures:" 1>&2
 #XXX appclient, appserver and lookup should really succeed
-_fail "appclient" "appclient"
-_fail "appserver" "appserver"
+_fail "appclient" "appclient" -a "VFS" -n "tcp:"
+_fail "appserver" "appserver" -a "VFS" -n "tcp:"
 _fail "lookup" "lookup" -a "VFS" -n "localhost"
 _fail "transport" "tcp6 ::1:4242" -p tcp6 ::1:4242
 _fail "transport" "tcp ::1:4242" -p tcp ::1:4242

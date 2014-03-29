@@ -15,17 +15,44 @@
 
 
 
+#include <unistd.h>
+#include <stdio.h>
 #include <System/error.h>
 #include "App/appserver.h"
+
+
+/* private */
+/* functions */
+/* usage */
+static int _usage(void)
+{
+	fputs("Usage: appserver [-a app][-n name]\n", stderr);
+	return 1;
+}
 
 
 /* public */
 /* main */
 int main(int argc, char * argv[])
 {
+	int o;
+	char const * app = NULL;
+	char const * name = NULL;
 	AppServer * appserver;
 
-	if((appserver = appserver_new("VFS", "tcp")) == NULL)
+	while((o = getopt(argc, argv, "a:n:")) != -1)
+		switch(o)
+		{
+			case 'a':
+				app = optarg;
+				break;
+			case 'n':
+				name = optarg;
+				break;
+			default:
+				return _usage();
+		}
+	if((appserver = appserver_new(app, name)) == NULL)
 	{
 		error_print("appserver");
 		return 2;
