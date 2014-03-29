@@ -1,4 +1,4 @@
-TARGETS	= appclient appmessage appserver tests.log transport
+TARGETS	= appclient appmessage appserver lookup tests.log transport
 PREFIX	= /usr/local
 DESTDIR	=
 BINDIR	= $(PREFIX)/bin
@@ -39,7 +39,14 @@ appserver_LDFLAGS = $(LDFLAGSF) $(LDFLAGS) ../src/libApp.a
 appserver: $(appserver_OBJS)
 	$(CC) -o appserver $(appserver_OBJS) $(appserver_LDFLAGS)
 
-tests.log: appclient appmessage appserver tests.sh transport ../src/transport/tcp.c ../src/transport/udp.c
+lookup_OBJS = lookup.o
+lookup_CFLAGS = $(CPPFLAGSF) $(CPPFLAGS) $(CFLAGSF) $(CFLAGS)
+lookup_LDFLAGS = $(LDFLAGSF) $(LDFLAGS)
+
+lookup: $(lookup_OBJS)
+	$(CC) -o lookup $(lookup_OBJS) $(lookup_LDFLAGS)
+
+tests.log: appclient appmessage appserver lookup tests.sh transport ../src/transport/tcp.c ../src/transport/udp.c
 	./tests.sh -P "$(PREFIX)" -- "tests.log"
 
 transport_OBJS = transport.o
@@ -58,11 +65,14 @@ appmessage.o: appmessage.c ../src/libApp.a
 appserver.o: appserver.c ../src/libApp.a
 	$(CC) $(appserver_CFLAGS) -c appserver.c
 
+lookup.o: lookup.c ../src/lookup.h ../src/lookup.c
+	$(CC) $(lookup_CFLAGS) -c lookup.c
+
 transport.o: transport.c ../src/libApp.a
 	$(CC) $(transport_CFLAGS) -c transport.c
 
 clean:
-	$(RM) -- $(appclient_OBJS) $(appmessage_OBJS) $(appserver_OBJS) $(tests.log_OBJS) $(transport_OBJS)
+	$(RM) -- $(appclient_OBJS) $(appmessage_OBJS) $(appserver_OBJS) $(lookup_OBJS) $(tests.log_OBJS) $(transport_OBJS)
 
 distclean: clean
 	$(RM) -- $(TARGETS)

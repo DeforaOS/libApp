@@ -15,8 +15,12 @@
 
 
 
-#ifndef LIBAPP_COMMON_H
-# define LIBAPP_COMMON_H
+#ifndef LIBAPP_LOOKUP_H
+# define LIBAPP_LOOKUP_H
+
+# include <System/event.h>
+# include <System/string.h>
+# include "apptransport.h"
 
 
 /* functions */
@@ -25,4 +29,4 @@ static AppTransport * _new_event_transport(AppTransportHelper * helper,
 static String * _new_server_name(char const * app, char const * name);
 static String * _new_server_transport(String ** name);
 
-#endif /* !LIBAPP_COMMON_H */
+#endif /* !LIBAPP_LOOKUP_H */

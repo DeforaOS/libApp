@@ -15,6 +15,11 @@
 
 
 
+#include <stdlib.h>
+#include <string.h>
+#include "lookup.h"
+
+
 /* new_event_transport */
 static AppTransport * _new_event_transport(AppTransportHelper * helper,
 		Event * event, char const * app, char const * name)

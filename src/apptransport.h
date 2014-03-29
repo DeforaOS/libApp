@@ -18,6 +18,7 @@
 #ifndef LIBAPP_APPTRANSPORT_H
 # define LIBAPP_APPTRANSPORT_H
 
+# include <System/event.h>
 # include "App/apptransport.h"
 
 

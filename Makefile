@@ -50,8 +50,8 @@ dist:
 		$(PACKAGE)-$(VERSION)/src/appinterface.h \
 		$(PACKAGE)-$(VERSION)/src/appmessage.h \
 		$(PACKAGE)-$(VERSION)/src/apptransport.h \
-		$(PACKAGE)-$(VERSION)/src/common.c \
-		$(PACKAGE)-$(VERSION)/src/common.h \
+		$(PACKAGE)-$(VERSION)/src/lookup.c \
+		$(PACKAGE)-$(VERSION)/src/lookup.h \
 		$(PACKAGE)-$(VERSION)/src/project.conf \
 		$(PACKAGE)-$(VERSION)/src/transport/tcp.c \
 		$(PACKAGE)-$(VERSION)/src/transport/tcp4.c \
@@ -66,6 +66,7 @@ dist:
 		$(PACKAGE)-$(VERSION)/tests/appclient.c \
 		$(PACKAGE)-$(VERSION)/tests/appmessage.c \
 		$(PACKAGE)-$(VERSION)/tests/appserver.c \
+		$(PACKAGE)-$(VERSION)/tests/lookup.c \
 		$(PACKAGE)-$(VERSION)/tests/transport.c \
 		$(PACKAGE)-$(VERSION)/tests/Makefile \
 		$(PACKAGE)-$(VERSION)/tests/tests.sh \

@@ -68,7 +68,7 @@ AppClient * appclient_new(char const * app, char const * name)
 
 
 /* appclient_new_event */
-#include "common.h"
+#include "lookup.h"
 
 AppClient * appclient_new_event(char const * app, char const * name,
 		Event * event)
@@ -104,7 +104,7 @@ AppClient * appclient_new_event(char const * app, char const * name,
 	return appclient;
 }
 
-#include "common.c"
+#include "lookup.c"
 
 
 /* appclient_delete */

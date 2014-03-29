@@ -71,7 +71,7 @@ AppServer * appserver_new(const char * app, char const * name)
 
 
 /* appserver_new_event */
-#include "common.h"
+#include "lookup.h"
 
 AppServer * appserver_new_event(char const * app, char const * name,
 		Event * event)
@@ -96,7 +96,7 @@ AppServer * appserver_new_event(char const * app, char const * name,
 	return appserver;
 }
 
-#include "common.c"
+#include "lookup.c"
 
 
 /* appserver_delete */

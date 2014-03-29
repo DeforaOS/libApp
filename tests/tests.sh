@@ -112,6 +112,9 @@ FAILED=
 echo "Performing tests:" 1>&2
 $DATE > "$target"
 _test "appmessage" "appmessage"
+_test "lookup" "lookup" -a "VFS" -n "localhost"
+_test "lookup" "lookup" -a "VFS" -n "tcp:localhost"
+_test "lookup" "lookup" -a "VFS" -n "tcp4:localhost"
 _test "transport" "tcp4 127.0.0.1:4242" -p tcp4 127.0.0.1:4242
 _test "transport" "tcp4 localhost:4242" -p tcp4 localhost:4242
 _test "transport" "tcp6 ::1.4242" -p tcp6 ::1.4242
