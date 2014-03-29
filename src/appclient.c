@@ -87,8 +87,8 @@ AppClient * appclient_new_event(char const * app, char const * name,
 	appclient->interface = appinterface_new_server(app);
 	appclient->helper.data = appclient;
 	appclient->helper.message = _appclient_helper_message;
-	appclient->transport = _new_event_transport(&appclient->helper, event,
-			app, name);
+	appclient->transport = _new_event_transport(&appclient->helper,
+			ATM_CLIENT, event, app, name);
 	appclient->event = event;
 	appclient->event_free = 0;
 	/* check for errors */

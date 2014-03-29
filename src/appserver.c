@@ -83,8 +83,8 @@ AppServer * appserver_new_event(char const * app, char const * name,
 	appserver->interface = appinterface_new_server(app);
 	appserver->helper.data = appserver;
 	appserver->helper.message = _appserver_helper_message;
-	appserver->transport = _new_event_transport(&appserver->helper, event,
-			app, name);
+	appserver->transport = _new_event_transport(&appserver->helper,
+			ATM_SERVER, event, app, name);
 	appserver->event = event;
 	appserver->event_free = 0;
 	/* check for errors */

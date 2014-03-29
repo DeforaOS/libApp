@@ -22,7 +22,8 @@
 
 /* new_event_transport */
 static AppTransport * _new_event_transport(AppTransportHelper * helper,
-		Event * event, char const * app, char const * name)
+		AppTransportMode mode, Event * event, char const * app,
+		char const * name)
 {
 	AppTransport * ret;
 	String * n;
@@ -35,7 +36,7 @@ static AppTransport * _new_event_transport(AppTransportHelper * helper,
 		string_delete(n);
 		return NULL;
 	}
-	ret = apptransport_new(ATM_SERVER, helper, transport, n, event);
+	ret = apptransport_new(mode, helper, transport, n, event);
 	string_delete(transport);
 	string_delete(n);
 	return ret;

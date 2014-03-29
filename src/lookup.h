@@ -25,7 +25,8 @@
 
 /* functions */
 static AppTransport * _new_event_transport(AppTransportHelper * helper,
-		Event * event, char const * app, char const * name);
+		AppTransportMode mode, Event * event, char const * app,
+		char const * name);
 static String * _new_server_name(char const * app, char const * name);
 static String * _new_server_transport(String ** name);
 
