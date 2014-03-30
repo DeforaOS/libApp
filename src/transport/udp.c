@@ -23,6 +23,7 @@
 # include <stdio.h>
 #endif
 #include <string.h>
+#include <time.h>
 #include <limits.h>
 #include <errno.h>
 #ifdef __WIN32__
@@ -56,6 +57,7 @@ typedef struct _UDPClient
 {
 	AppTransportClient * client;
 
+	time_t time;
 	struct sockaddr * sa;
 	socklen_t sa_len;
 } UDPClient;
@@ -397,6 +399,8 @@ static int _udp_client_init(UDPClient * client, struct sockaddr * sa,
 		free(client->sa);
 		return -1;
 	}
+	/* XXX we can ignore errors here */
+	client->time = time(NULL);
 	memcpy(client->sa, sa, sa_len);
 	client->sa_len = sa_len;
 	return 0;
@@ -519,6 +523,8 @@ static void _callback_read_server(UDP * udp, struct sockaddr * sa,
 		}
 		udp->u.server.clients_cnt++;
 	}
+	else
+		udp->u.server.clients[i]->time = time(NULL);
 	client = udp->u.server.clients[i]->client;
 	helper->client_receive(helper->transport, client, message);
 #ifdef DEBUG
