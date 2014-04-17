@@ -112,6 +112,10 @@ typedef struct _StringEnum
 } StringEnum;
 
 
+/* constants */
+#define APPINTERFACE_CALL_PREFIX "call::"
+
+
 /* variables */
 StringEnum _string_type[] =
 {
@@ -208,7 +212,7 @@ AppInterface * appinterface_new(char const * app)
 static int _new_foreach(char const * key, Hash * value,
 		AppInterface * appinterface)
 {
-	char const prefix[] = "call::";
+	char const prefix[] = APPINTERFACE_CALL_PREFIX;
 	int i;
 	char buf[8];
 	int type = VT_NULL;
@@ -358,7 +362,8 @@ int appinterface_can_call(AppInterface * appinterface, char const * name,
 	String const * allow;
 	String const * deny;
 
-	if((section = string_new_append("call::", method, NULL)) == NULL)
+	if((section = string_new_append(APPINTERFACE_CALL_PREFIX, method, NULL))
+			== NULL)
 		/* XXX report as an error */
 		return 0;
 	allow = config_get(appinterface->config, section, "allow");
