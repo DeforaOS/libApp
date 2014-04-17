@@ -105,30 +105,30 @@ typedef struct _StringEnum
 
 
 /* variables */
-StringEnum _string_type[] =
+static const StringEnum _string_type[] =
 {
-	{ "VOID",	VT_NULL			},
-	{ "BOOL",	VT_BOOL			},
-	{ "INT8",	VT_INT8			},
-	{ "UINT8",	VT_UINT8		},
-	{ "INT16",	VT_INT16		},
-	{ "UINT16",	VT_UINT16		},
-	{ "INT32",	VT_INT32		},
-	{ "UINT32",	VT_UINT32		},
-	{ "INT64",	VT_INT64		},
-	{ "UINT64",	VT_UINT64		},
-	{ "STRING",	VT_STRING		},
-	{ "STRING_OUT",	VT_STRING | AICD_OUT	},
-	{ "BUFFER",	VT_BUFFER		},
-	{ "BUFFER_OUT",	VT_BUFFER | AICD_OUT	},
-	{ "FLOAT",	VT_FLOAT		},
-	{ "DOUBLE",	VT_DOUBLE		},
-	{ NULL,		0			}
+	{ "VOID",	VT_NULL		| AICD_IN	},
+	{ "BOOL",	VT_BOOL		| AICD_IN	},
+	{ "INT8",	VT_INT8		| AICD_IN	},
+	{ "UINT8",	VT_UINT8	| AICD_IN	},
+	{ "INT16",	VT_INT16	| AICD_IN	},
+	{ "UINT16",	VT_UINT16	| AICD_IN	},
+	{ "INT32",	VT_INT32	| AICD_IN	},
+	{ "UINT32",	VT_UINT32	| AICD_IN	},
+	{ "INT64",	VT_INT64	| AICD_IN	},
+	{ "UINT64",	VT_UINT64	| AICD_IN	},
+	{ "STRING",	VT_STRING	| AICD_IN	},
+	{ "STRING_OUT",	VT_STRING	| AICD_OUT	},
+	{ "BUFFER",	VT_BUFFER	| AICD_IN	},
+	{ "BUFFER_OUT",	VT_BUFFER	| AICD_OUT	},
+	{ "FLOAT",	VT_FLOAT	| AICD_IN	},
+	{ "DOUBLE",	VT_DOUBLE	| AICD_IN	},
+	{ NULL,		0				}
 };
 
 
 /* prototypes */
-static int _string_enum(String const * string, StringEnum * se);
+static int _string_enum(String const * string, StringEnum const * se);
 
 /* accessors */
 static AppInterfaceCall * _appinterface_get_call(AppInterface * appinterface,
@@ -138,7 +138,7 @@ static AppInterfaceCall * _appinterface_get_call(AppInterface * appinterface,
 /* functions */
 /* string_enum */
 /* FIXME move to string.c */
-static int _string_enum(String const * string, StringEnum * se)
+static int _string_enum(String const * string, StringEnum const * se)
 {
 	size_t i;
 
