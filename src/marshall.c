@@ -47,6 +47,10 @@ static int _call0(VariableType type, Variable ** result, void * func)
 		uint16_t (*call_u16)(void);
 		int32_t (*call_i32)(void);
 		uint32_t (*call_u32)(void);
+		int32_t (*call_i64)(void);
+		uint32_t (*call_u64)(void);
+		float (*call_f)(void);
+		double (*call_d)(void);
 	} f;
 	union
 	{
@@ -57,6 +61,10 @@ static int _call0(VariableType type, Variable ** result, void * func)
 		uint16_t u16;
 		int32_t i32;
 		uint32_t u32;
+		int32_t i64;
+		uint32_t u64;
+		float f;
+		double d;
 	} res;
 
 	/* FIXME implement through the generic marshaller instead */
@@ -95,6 +103,22 @@ static int _call0(VariableType type, Variable ** result, void * func)
 		case VT_UINT32:
 			res.u32 = f.call_u32();
 			variable_set_from(v, type, &res.u32);
+			break;
+		case VT_INT64:
+			res.i64 = f.call_i64();
+			variable_set_from(v, type, &res.i64);
+			break;
+		case VT_UINT64:
+			res.u64 = f.call_u64();
+			variable_set_from(v, type, &res.u64);
+			break;
+		case VT_FLOAT:
+			res.f = f.call_f();
+			variable_set_from(v, type, &res.f);
+			break;
+		case VT_DOUBLE:
+			res.d = f.call_d();
+			variable_set_from(v, type, &res.d);
 			break;
 		default:
 			variable_delete(v);
