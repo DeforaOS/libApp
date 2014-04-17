@@ -12,6 +12,8 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>. */
+/* TODO:
+ * - expire clients after a timeout */
 
 
 
@@ -391,10 +393,17 @@ static int _udp_client_init(UDPClient * client, struct sockaddr * sa,
 		socklen_t sa_len, UDP * udp)
 {
 	AppTransportPluginHelper * helper = udp->helper;
+	char host[NI_MAXHOST];
+	char const * name = host;
 
 	if((client->sa = malloc(sa_len)) == NULL)
 		return -1;
-	if((client->client = helper->client_new(helper->transport)) == NULL)
+	/* XXX may not be instant */
+	if(getnameinfo(client->sa, client->sa_len, host, sizeof(host), NULL, 0,
+				NI_DGRAM) != 0)
+		name = NULL;
+	if((client->client = helper->client_new(helper->transport, name))
+			== NULL)
 	{
 		free(client->sa);
 		return -1;

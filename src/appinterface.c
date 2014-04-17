@@ -105,9 +105,10 @@ typedef struct _AppInterfaceCall
 struct _AppInterface
 {
 	String * name;
+	Config * config;
+
 	AppInterfaceCall * calls;
 	size_t calls_cnt;
-	uint16_t port;
 	int error;
 };
 
@@ -155,7 +156,7 @@ static int _string_enum(String const * string, StringEnum * se)
 	size_t i;
 
 	if(string == NULL)
-		return -error_set_code(1, "%s", strerror(EINVAL));
+		return -error_set_code(-EINVAL, "%s", strerror(EINVAL));
 	for(i = 0; se[i].string != NULL; i++)
 		if(string_compare(string, se[i].string) == 0)
 			return se[i].value;
@@ -196,41 +197,35 @@ AppInterface * appinterface_new(char const * app)
 {
 	AppInterface * appinterface;
 	String * pathname = NULL;
-	Config * config = NULL;
-	char const * p;
 
 	if(app == NULL)
 		return NULL; /* FIXME report error */
 	if((appinterface = object_new(sizeof(*appinterface))) == NULL)
 		return NULL;
 	appinterface->name = string_new(app);
+	appinterface->config = config_new();
 	appinterface->calls = NULL;
 	appinterface->calls_cnt = 0;
-	appinterface->port = 0;
 	appinterface->error = 0;
 	if(appinterface->name == NULL
 			|| (pathname = string_new_append(
 					SYSCONFDIR "/AppInterface/", app,
 					".interface", NULL)) == NULL
-			|| (config = config_new()) == NULL
-			|| config_load(config, pathname) != 0)
+			|| appinterface->config == NULL
+			|| config_load(appinterface->config, pathname) != 0)
 	{
-		if(config != NULL)
-			config_delete(config);
 		string_delete(pathname);
 		appinterface_delete(appinterface);
 		return NULL;
 	}
-	if((p = config_get(config, NULL, "port")) != NULL)
-		appinterface->port = atoi(p);
 	appinterface->error = 0;
-	hash_foreach(config, (HashForeach)_new_foreach, appinterface);
+	hash_foreach(appinterface->config, (HashForeach)_new_foreach,
+			appinterface);
 	if(appinterface->error != 0)
 	{
 		appinterface_delete(appinterface);
 		return NULL;
 	}
-	config_delete(config);
 	return appinterface;
 }
 
@@ -314,7 +309,7 @@ static int _new_append_arg(AppInterface * ai, char const * arg)
 		return -1;
 	q = &ai->calls[ai->calls_cnt - 1];
 	if((r = realloc(q->args, sizeof(*r) * (q->args_cnt + 1))) == NULL)
-		return -error_set_code(1, "%s", strerror(errno));
+		return error_set_code(-errno, "%s", strerror(errno));
 	q->args = r;
 	r = &q->args[q->args_cnt++];
 	r->type = type & AICT_MASK;
@@ -364,6 +359,8 @@ void appinterface_delete(AppInterface * appinterface)
 {
 	size_t i;
 
+	if(appinterface->config != NULL)
+		config_delete(appinterface->config);
 	for(i = 0; i < appinterface->calls_cnt; i++)
 	{
 		string_delete(appinterface->calls[i].name);
@@ -376,17 +373,36 @@ void appinterface_delete(AppInterface * appinterface)
 
 
 /* accessors */
+/* appinterface_can_call */
+int appinterface_can_call(AppInterface * appinterface, char const * name,
+		char const * method)
+{
+	int ret = 0;
+	String * section;
+	String const * allow;
+	String const * deny;
+
+	if((section = string_new_append("call::", method, NULL)) == NULL)
+		/* XXX report as an error */
+		return 0;
+	allow = config_get(appinterface->config, section, "allow");
+	deny = config_get(appinterface->config, section, "deny");
+	/* FIXME implement pattern matching */
+	if(allow == NULL && deny == NULL)
+		ret = 1;
+	else if(deny != NULL)
+		ret = (strcmp(deny, name) == 0) ? 0 : 1;
+	else
+		ret = (strcmp(allow, name) == 0) ? 1 : 0;
+	string_delete(section);
+	return ret;
+}
+
+
 /* appinterface_get_name */
 char const * appinterface_get_app(AppInterface * appinterface)
 {
 	return appinterface->name;
-}
-
-
-/* appinterface_get_port */
-int appinterface_get_port(AppInterface * appinterface)
-{
-	return appinterface->port;
 }
 
 
@@ -604,7 +620,7 @@ static int _send_bytes(char const * data, size_t datalen, char * buf,
 	if(*pos + datalen > buflen)
 	{
 		errno = ENOBUFS;
-		return error_set_code(1, "%s", strerror(ENOBUFS));
+		return error_set_code(-errno, "%s", strerror(errno));
 	}
 	memcpy(&buf[*pos], data, datalen);
 	*pos += datalen;
@@ -627,7 +643,7 @@ static int _send_string(char const * string, char buf[], size_t buflen,
 			return 0;
 	}
 	errno = ENOBUFS;
-	return error_set_code(1, "%s", strerror(ENOBUFS));
+	return error_set_code(-errno, "%s", strerror(errno));
 }
 
 
@@ -788,7 +804,7 @@ int appinterface_call_receive(AppInterface * appinterface, int32_t * ret,
 
 
 /* appinterface_callv */
-int appinterface_callv(AppInterface * appinterface, Variable * result,
+int appinterface_callv(AppInterface * appinterface, Variable ** result,
 		char const * function, size_t argc, Variable ** argv)
 {
 	/* FIXME implement */
@@ -849,7 +865,7 @@ static int _receive_args(AppInterfaceCall * call, int * ret, char buf[],
 	size_t i;
 
 	if((args = malloc(sizeof(*args) * call->args_cnt)) == NULL)
-		return error_set_code(1, "%s", strerror(errno));
+		return error_set_code(-errno, "%s", strerror(errno));
 	if((i = _args_pre_exec(call, buf, buflen, pos, args)) != call->args_cnt)
 	{
 		_args_post_exec(call, bufw, bufwlen, bufwpos, args, i);
@@ -995,7 +1011,7 @@ static int _pre_exec_in(AppInterfaceCallArg * aica, char buf[], size_t buflen,
 		case AICT_UINT64:
 		case AICT_DOUBLE:
 			errno = ENOSYS;
-			return -error_set_code(1, "%s", strerror(ENOSYS));
+			return error_set_code(-errno, "%s", strerror(errno));
 		case AICT_BUFFER:
 			if(_read_bytes(&size, sizeof(size), buf, buflen, pos)
 					!= 0)
@@ -1081,7 +1097,7 @@ static int _read_bytes(void * data, size_t datalen, char buf[], size_t buflen,
 	if(datalen > buflen - *pos)
 	{
 		errno = EAGAIN;
-		return -error_set_code(1, "%s", strerror(EAGAIN));
+		return error_set_code(-errno, "%s", strerror(errno));
 	}
 	memcpy(data, &buf[*pos], datalen);
 	(*pos) += datalen;
@@ -1198,7 +1214,7 @@ static int _post_exec_out(AppInterfaceCallArg * aica, char buf[], size_t buflen,
 	if(aica->size > buflen)
 	{
 		errno = ENOBUFS;
-		return -error_set_code(1, "%s", strerror(ENOBUFS));
+		return error_set_code(-errno, "%s", strerror(errno));
 	}
 	switch(aica->type)
 	{
@@ -1229,7 +1245,7 @@ static int _post_exec_out(AppInterfaceCallArg * aica, char buf[], size_t buflen,
 		case AICT_UINT64:
 		case AICT_DOUBLE:
 			errno = ENOSYS;
-			return -error_set_code(1, "%s", strerror(ENOSYS));
+			return error_set_code(-errno, "%s", strerror(errno));
 		case AICT_BUFFER:
 			b = arg;
 			size = htonl(buffer_get_size(b)); /* size of buffer */
@@ -1265,7 +1281,7 @@ static int _post_exec_free_in(AppInterfaceCallArg * aica, void * arg)
 		case AICT_DOUBLE:
 			/* FIXME not supported */
 			errno = ENOSYS;
-			return -error_set_code(1, "%s", strerror(ENOSYS));
+			return error_set_code(-errno, "%s", strerror(errno));
 		case AICT_BUFFER:
 			buffer_delete(b);
 			break;
@@ -1299,7 +1315,7 @@ static int _post_exec_free_out(AppInterfaceCallArg * aica, void * arg)
 			break;
 		case AICT_STRING: /* FIXME not supported */
 			errno = ENOSYS;
-			return -error_set_code(1, "%s", strerror(ENOSYS));
+			return error_set_code(-errno, "%s", strerror(errno));
 	}
 	return 0;
 }

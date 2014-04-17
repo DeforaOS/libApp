@@ -61,7 +61,7 @@ typedef struct _TCPSocket
 
 	int fd;
 	struct sockaddr * sa;
-	socklen_t sa_size;
+	socklen_t sa_len;
 
 	/* input queue */
 	char * bufin;
@@ -122,9 +122,9 @@ static int _tcp_server_add_client(TCP * tcp, TCPSocket * client);
 /* sockets */
 static int _tcp_socket_init(TCPSocket * tcpsocket, int domain, TCP * tcp);
 static void _tcp_socket_init_fd(TCPSocket * tcpsocket, TCP * tcp, int fd,
-		struct sockaddr * sa, socklen_t sa_size);
+		struct sockaddr * sa, socklen_t sa_len);
 static TCPSocket * _tcp_socket_new_fd(TCP * tcp, int fd, struct sockaddr * sa,
-		socklen_t sa_size);
+		socklen_t sa_len);
 static void _tcp_socket_delete(TCPSocket * tcpsocket);
 static void _tcp_socket_destroy(TCPSocket * tcpsocket);
 
@@ -427,14 +427,20 @@ static int _tcp_error(char const * message, int code)
 static int _tcp_server_add_client(TCP * tcp, TCPSocket * client)
 {
 	TCPSocket ** p;
+	char host[NI_MAXHOST];
+	char const * name = host;
 
 	if((p = realloc(tcp->u.server.clients, sizeof(*p)
 					* (tcp->u.server.clients_cnt + 1)))
 			== NULL)
 		return -1;
 	tcp->u.server.clients = p;
-	if((client->client = tcp->helper->client_new(tcp->helper->transport))
-			== NULL)
+	/* XXX may not be instant */
+	if(getnameinfo(client->sa, client->sa_len, host, sizeof(host), NULL, 0,
+				0) != 0)
+		name = NULL;
+	if((client->client = tcp->helper->client_new(tcp->helper->transport,
+					name)) == NULL)
 		return -1;
 	tcp->u.server.clients[tcp->u.server.clients_cnt++] = client;
 	return 0;
@@ -467,13 +473,13 @@ static int _tcp_socket_init(TCPSocket * tcpsocket, int domain, TCP * tcp)
 
 /* tcp_socket_init_fd */
 static void _tcp_socket_init_fd(TCPSocket * tcpsocket, TCP * tcp, int fd,
-		struct sockaddr * sa, socklen_t sa_size)
+		struct sockaddr * sa, socklen_t sa_len)
 {
 	tcpsocket->tcp = tcp;
 	tcpsocket->client = NULL;
 	tcpsocket->fd = fd;
 	tcpsocket->sa = sa;
-	tcpsocket->sa_size = sa_size;
+	tcpsocket->sa_len = sa_len;
 	tcpsocket->bufin = NULL;
 	tcpsocket->bufin_cnt = 0;
 	tcpsocket->bufout = NULL;
@@ -483,13 +489,13 @@ static void _tcp_socket_init_fd(TCPSocket * tcpsocket, TCP * tcp, int fd,
 
 /* tcp_socket_new_fd */
 static TCPSocket * _tcp_socket_new_fd(TCP * tcp, int fd, struct sockaddr * sa,
-		socklen_t sa_size)
+		socklen_t sa_len)
 {
 	TCPSocket * tcpsocket;
 
 	if((tcpsocket = object_new(sizeof(*tcpsocket))) == NULL)
 		return NULL;
-	_tcp_socket_init_fd(tcpsocket, tcp, fd, sa, sa_size);
+	_tcp_socket_init_fd(tcpsocket, tcp, fd, sa, sa_len);
 	return tcpsocket;
 }
 
@@ -574,12 +580,12 @@ static int _tcp_socket_queue(TCPSocket * tcpsocket, Buffer * buffer)
 /* callbacks */
 /* tcp_callback_accept */
 static int _accept_client(TCP * tcp, int fd, struct sockaddr * sa,
-		socklen_t sa_size);
+		socklen_t sa_len);
 
 static int _tcp_callback_accept(int fd, TCP * tcp)
 {
 	struct sockaddr * sa;
-	socklen_t sa_size = tcp->ai_addrlen;
+	socklen_t sa_len = tcp->ai_addrlen;
 
 #ifdef DEBUG
 	fprintf(stderr, "DEBUG: %s(%d)\n", __func__, fd);
@@ -587,15 +593,15 @@ static int _tcp_callback_accept(int fd, TCP * tcp)
 	/* check parameters */
 	if(tcp->u.server.fd != fd)
 		return -1;
-	if((sa = malloc(sa_size)) == NULL)
+	if((sa = malloc(sa_len)) == NULL)
 		/* XXX this may not be enough to recover */
-		sa_size = 0;
-	if((fd = accept(fd, sa, &sa_size)) < 0)
+		sa_len = 0;
+	if((fd = accept(fd, sa, &sa_len)) < 0)
 	{
 		free(sa);
 		return _tcp_error("accept", 1);
 	}
-	if(_accept_client(tcp, fd, sa, sa_size) != 0)
+	if(_accept_client(tcp, fd, sa, sa_len) != 0)
 	{
 		/* just close the connection and keep serving */
 		/* FIXME report error */
@@ -610,14 +616,14 @@ static int _tcp_callback_accept(int fd, TCP * tcp)
 }
 
 static int _accept_client(TCP * tcp, int fd, struct sockaddr * sa,
-		socklen_t sa_size)
+		socklen_t sa_len)
 {
 	TCPSocket * tcpsocket;
 
 #ifdef DEBUG
 	fprintf(stderr, "DEBUG: %s(%d)\n", __func__, fd);
 #endif
-	if((tcpsocket = _tcp_socket_new_fd(tcp, fd, sa, sa_size)) == NULL)
+	if((tcpsocket = _tcp_socket_new_fd(tcp, fd, sa, sa_len)) == NULL)
 		return -1;
 	if(_tcp_server_add_client(tcp, tcpsocket) != 0)
 	{

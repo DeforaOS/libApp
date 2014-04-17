@@ -25,6 +25,9 @@
 #include "appmessage.h"
 #include "apptransport.h"
 #include "../config.h"
+/* FIXME:
+ * clarify parsing name strings (if there is a colon, there is a transport,
+ * although possibly empty) */
 
 #ifndef PREFIX
 # define PREFIX		"/usr/local"
@@ -56,6 +59,7 @@ struct _AppTransport
 struct _AppTransportClient
 {
 	AppTransport * transport;
+	char * name;
 };
 
 
@@ -66,7 +70,7 @@ static int _apptransport_helper_status(AppTransport * transport,
 		char const * message);
 
 static AppTransportClient * _apptransport_helper_client_new(
-		AppTransport * transport);
+		AppTransport * transport, char const * name);
 static void _apptransport_helper_client_delete(AppTransport * transport,
 		AppTransportClient * client);
 
@@ -227,6 +231,13 @@ String const * apptransport_get_transport(AppTransport * transport)
 }
 
 
+/* apptransport_client_get_name */
+String const * apptransport_client_get_name(AppTransportClient * client)
+{
+	return client->name;
+}
+
+
 /* useful */
 /* apptransport_client_send */
 int apptransport_client_send(AppTransport * transport, AppMessage * message,
@@ -275,7 +286,7 @@ static int _apptransport_helper_status(AppTransport * transport,
 
 /* apptransport_helper_client_new */
 static AppTransportClient * _apptransport_helper_client_new(
-		AppTransport * transport)
+		AppTransport * transport, char const * name)
 {
 	AppTransportClient * client;
 
@@ -285,6 +296,7 @@ static AppTransportClient * _apptransport_helper_client_new(
 	if((client = object_new(sizeof(*client))) == NULL)
 		return NULL;
 	client->transport = transport;
+	client->name = (name != NULL) ? string_new(name) : NULL;
 	return client;
 }
 
@@ -315,6 +327,7 @@ static int _apptransport_helper_client_receive(AppTransport * transport,
 	if(transport->mode != ATM_SERVER)
 		/* XXX improve the error message */
 		return -error_set_code(1, "Not a server");
+	/* XXX check for errors? */
 	transport->helper.message(transport->helper.data, transport, client,
 			message);
 	/* check if an acknowledgement is requested */

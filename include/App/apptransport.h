@@ -59,7 +59,8 @@ typedef struct _AppTransportPluginHelper
 			unsigned int code, char const * message);
 
 	/* clients */
-	AppTransportClient * (*client_new)(AppTransport * transport);
+	AppTransportClient * (*client_new)(AppTransport * transport,
+			char const * name);
 	void (*client_delete)(AppTransport * transport,
 			AppTransportClient * client);
 	int (*client_receive)(AppTransport * transport,

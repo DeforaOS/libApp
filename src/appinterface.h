@@ -33,6 +33,9 @@ AppInterface * appinterface_new_server(char const * app);
 void appinterface_delete(AppInterface * appinterface);
 
 /* accessors */
+int appinterface_can_call(AppInterface * appinterface, char const * name,
+		char const * method);
+
 char const * appinterface_get_app(AppInterface * appinterface);
 int appinterface_get_args_count(AppInterface * appinterface, size_t * count,
 		char const * function);
@@ -45,7 +48,7 @@ int appinterface_call_receive(AppInterface * appinterface, int32_t * ret,
 int appinterface_receive(AppInterface * appinterface, int * ret, char buf[],
 		size_t buflen, char bufw[], size_t bufwlen, size_t * bufwpos);
 
-int appinterface_callv(AppInterface * appinterface, Variable * result,
-		char const * function, size_t argc, Variable ** argv);
+int appinterface_callv(AppInterface * appinterface, Variable ** result,
+		char const * method, size_t argc, Variable ** argv);
 
 #endif /* !LIBAPP_APPINTERFACE_H */

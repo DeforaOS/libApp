@@ -48,7 +48,7 @@ static int _transport_helper_status(AppTransport * transport,
 		char const * message);
 
 static AppTransportClient * _transport_helper_client_new(
-		AppTransport * transport);
+		AppTransport * transport, char const * name);
 static void _transport_helper_client_delete(AppTransport * transport,
 		AppTransportClient * client);
 static int _transport_helper_client_receive(AppTransport * transport,
@@ -138,10 +138,10 @@ static int _transport(char const * protocol, char const * name)
 /* helpers */
 /* transport_helper_client_new */
 static AppTransportClient * _transport_helper_client_new(
-		AppTransport * transport)
+		AppTransport * transport, char const * name)
 {
 #ifdef DEBUG
-	fprintf(stderr, "DEBUG: %s()\n", __func__);
+	fprintf(stderr, "DEBUG: %s(\"%s\")\n", __func__, name);
 #endif
 	/* FIXME really implement */
 	return (AppTransportClient *)transport;

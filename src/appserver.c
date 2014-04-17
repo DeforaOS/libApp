@@ -120,14 +120,47 @@ int appserver_loop(AppServer * appserver)
 
 /* private */
 /* appserver_helper_message */
+static int _helper_message_call(AppServer * appserver, AppTransport * transport,
+		AppTransportClient * client, AppMessage * message);
+
 static int _appserver_helper_message(void * data, AppTransport * transport,
 		AppTransportClient * client, AppMessage * message)
 {
 	AppServer * appserver = data;
 
-	if(client == NULL)
-		/* XXX report error */
+#ifdef DEBUG
+	fprintf(stderr, "DEBUG: %s(%p, %u)\n", __func__, (void *)client,
+			appmessage_get_type(message));
+#endif
+	/* FIXME can it happen? */
+	if(message == NULL)
+		/* XXX report errors */
 		return -1;
-	/* FIXME implement */
-	return 0;
+	switch(appmessage_get_type(message))
+	{
+		case AMT_CALL:
+			return _helper_message_call(appserver, transport,
+					client, message);
+	}
+	return -1;
+}
+
+static int _helper_message_call(AppServer * appserver, AppTransport * transport,
+		AppTransportClient * client, AppMessage * message)
+{
+	int ret;
+	String const * name;
+	String const * method;
+	Variable * result = NULL;
+
+	name = (client != NULL) ? apptransport_client_get_name(client) : NULL;
+	method = appmessage_get_method(message);
+	if(!appinterface_can_call(appserver->interface, name, method))
+		/* XXX report errors */
+		return -1;
+	ret = appinterface_callv(appserver->interface, &result, method, 0,
+			NULL);
+	if(result != NULL)
+		variable_delete(result);
+	return ret;
 }

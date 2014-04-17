@@ -28,7 +28,7 @@
 typedef struct _AppTransportHelper
 {
 	void * data;
-	void (*message)(void * data, AppTransport * transport,
+	int (*message)(void * data, AppTransport * transport,
 			AppTransportClient * client, AppMessage * message);
 } AppTransportHelper;
 
@@ -45,6 +45,8 @@ void apptransport_delete(AppTransport * transport);
 /* accessors */
 String const * apptransport_get_name(AppTransport * transport);
 String const * apptransport_get_transport(AppTransport * transport);
+
+String const * apptransport_client_get_name(AppTransportClient * client);
 
 /* useful */
 /* ATM_CLIENT */

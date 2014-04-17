@@ -91,14 +91,12 @@ static int _appclient(int verbose, char const * app, char const * name,
 static int _appclient_call(int verbose, AppClient * ac, AppClientCall * call)
 {
 	int ret = 0;
-	Variable * v;
-	int res = 0;
+	Variable * v = NULL;
+	int res;
 
 #ifdef DEBUG
 	fprintf(stderr, "DEBUG: %s()\n", __func__);
 #endif
-	if((v = variable_new(VT_INT32, &res)) == NULL)
-		return -1;
 	if(verbose != 0)
 		printf("Calling %s() with %lu arguments\n", call->name,
 				(unsigned long)call->args_cnt);
@@ -110,7 +108,7 @@ static int _appclient_call(int verbose, AppClient * ac, AppClientCall * call)
 			fprintf(stderr, "DEBUG: %s() %s() res=%d\n", __func__,
 					call->name, res);
 #endif
-			ret = appclient_call(ac, v, call->name, NULL);
+			ret = appclient_call(ac, &v, call->name, NULL);
 			break;
 		case 1:
 #ifdef DEBUG
@@ -118,16 +116,16 @@ static int _appclient_call(int verbose, AppClient * ac, AppClientCall * call)
 					call->name, call->args[0].integer);
 #endif
 			if(call->args[0].type == ACCAT_DOUBLE)
-				ret = appclient_call(ac, v, call->name,
+				ret = appclient_call(ac, &v, call->name,
 						call->args[0]._double);
 			else if(call->args[0].type == ACCAT_FLOAT)
-				ret = appclient_call(ac, v, call->name,
+				ret = appclient_call(ac, &v, call->name,
 						call->args[0]._float);
 			else if(call->args[0].type == ACCAT_INTEGER)
-				ret = appclient_call(ac, v, call->name,
+				ret = appclient_call(ac, &v, call->name,
 						call->args[0].integer);
 			else if(call->args[0].type == ACCAT_STRING)
-				ret = appclient_call(ac, v, call->name,
+				ret = appclient_call(ac, &v, call->name,
 						call->args[0].string);
 			else
 				ret = error_set_code(1, "%s",
@@ -141,7 +139,7 @@ static int _appclient_call(int verbose, AppClient * ac, AppClientCall * call)
 					call->args[0].integer,
 					call->args[1].integer);
 #endif
-			ret = appclient_call(ac, v, call->name,
+			ret = appclient_call(ac, &v, call->name,
 					call->args[0].integer,
 					call->args[1].integer);
 			break;
@@ -156,7 +154,7 @@ static int _appclient_call(int verbose, AppClient * ac, AppClientCall * call)
 						call->args[1]._float,
 						call->args[2]._float);
 #endif
-				ret = appclient_call(ac, v, call->name,
+				ret = appclient_call(ac, &v, call->name,
 						call->args[0]._float,
 						call->args[1]._float,
 						call->args[2]._float);
@@ -170,7 +168,7 @@ static int _appclient_call(int verbose, AppClient * ac, AppClientCall * call)
 					call->args[1].integer,
 					call->args[2].integer);
 #endif
-			ret = appclient_call(ac, v, call->name,
+			ret = appclient_call(ac, &v, call->name,
 					call->args[0].integer,
 					call->args[1].integer,
 					call->args[2].integer);
@@ -184,7 +182,7 @@ static int _appclient_call(int verbose, AppClient * ac, AppClientCall * call)
 					call->args[2]._float,
 					call->args[3]._float);
 #endif
-			ret = appclient_call(ac, v, call->name,
+			ret = appclient_call(ac, &v, call->name,
 					call->args[0]._float,
 					call->args[1]._float,
 					call->args[2]._float,
@@ -195,8 +193,14 @@ static int _appclient_call(int verbose, AppClient * ac, AppClientCall * call)
 					"Unsupported number of arguments");
 	}
 	if(ret == 0 && verbose)
-		printf("\"%s\"%s%d\n", call->name, " returned ", res);
-	variable_delete(v);
+	{
+		if(v != NULL && variable_get_as(v, VT_INT32, &res) == 0)
+			printf("\"%s\"%s%d\n", call->name, " returned ", res);
+		else
+			printf("\"%s\"%s\n", call->name, " returned");
+	}
+	if(v != NULL)
+		variable_delete(v);
 	return ret;
 }
 

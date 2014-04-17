@@ -35,7 +35,7 @@ AppClient * appclient_new_event(char const * app, char const * name,
 void appclient_delete(AppClient * appclient);
 
 /* useful */
-int appclient_call(AppClient * appclient, Variable * ret, char const * function,
-		...);
+int appclient_call(AppClient * appclient, Variable ** ret,
+		char const * method, ...);
 
 #endif /* !LIBAPP_APP_APPCLIENT_H */
