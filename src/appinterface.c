@@ -31,6 +31,7 @@
 #include <errno.h>
 #include <System.h>
 #include "App/appserver.h"
+#include "marshall.h"
 #include "appinterface.h"
 #include "../config.h"
 
@@ -45,29 +46,21 @@
 /* AppInterface */
 /* private */
 /* types */
-typedef enum _AppInterfaceCallType
-{
-	AICT_VOID	= 000,	AICT_BOOL	= 001,
-	AICT_INT8	= 002,	AICT_UINT8	= 003,
-	AICT_INT16	= 004, 	AICT_UINT16	= 005,
-	AICT_INT32	= 006, 	AICT_UINT32	= 007,
-	AICT_INT64	= 010, 	AICT_UINT64	= 011,
-	AICT_STRING	= 012, 	AICT_BUFFER	= 013,
-	AICT_FLOAT	= 014,	AICT_DOUBLE	= 015
-} AppInterfaceCallType;
-#define AICT_LAST AICT_DOUBLE
-#define AICT_COUNT (AICT_LAST + 1)
+/* XXX get rid of this */
+#define VT_LAST VT_STRING
+#define VT_COUNT (VT_LAST + 1)
 #define AICT_MASK 077
 
 #ifdef DEBUG
-static const String * AICTString[AICT_COUNT] =
+static const String * AICTString[VT_COUNT] =
 {
 	"void", "bool", "int8", "uint8", "int16", "uint16", "int32", "uint32",
 	"int64", "uint64", "String", "Buffer", "float", "double"
 };
 #endif
 
-static int _aict_size[AICT_COUNT] =
+/* XXX get rid of this */
+static int _aict_size[VT_COUNT] =
 {
 	0,			sizeof(char),
 	sizeof(int8_t),		sizeof(uint8_t),
@@ -88,7 +81,7 @@ typedef enum _AppInterfaceCallDirection
 
 typedef struct _AppInterfaceCallArg
 {
-	AppInterfaceCallType type;
+	VariableType type;
 	AppInterfaceCallDirection direction;
 	size_t size;
 } AppInterfaceCallArg;
@@ -122,22 +115,22 @@ typedef struct _StringEnum
 /* variables */
 StringEnum _string_type[] =
 {
-	{ "VOID",	AICT_VOID		},
-	{ "BOOL",	AICT_BOOL		},
-	{ "INT8",	AICT_INT8		},
-	{ "UINT8",	AICT_UINT8		},
-	{ "INT16",	AICT_INT16		},
-	{ "UINT16",	AICT_UINT16		},
-	{ "INT32",	AICT_INT32		},
-	{ "UINT32",	AICT_UINT32		},
-	{ "INT64",	AICT_INT64		},
-	{ "UINT64",	AICT_UINT64		},
-	{ "STRING",	AICT_STRING		},
-	{ "STRING_OUT",	AICT_STRING | AICD_OUT	},
-	{ "BUFFER",	AICT_BUFFER		},
-	{ "BUFFER_OUT",	AICT_BUFFER | AICD_OUT	},
-	{ "FLOAT",	AICT_FLOAT		},
-	{ "DOUBLE",	AICT_DOUBLE		},
+	{ "VOID",	VT_NULL			},
+	{ "BOOL",	VT_BOOL			},
+	{ "INT8",	VT_INT8			},
+	{ "UINT8",	VT_UINT8		},
+	{ "INT16",	VT_INT16		},
+	{ "UINT16",	VT_UINT16		},
+	{ "INT32",	VT_INT32		},
+	{ "UINT32",	VT_UINT32		},
+	{ "INT64",	VT_INT64		},
+	{ "UINT64",	VT_UINT64		},
+	{ "STRING",	VT_STRING		},
+	{ "STRING_OUT",	VT_STRING | AICD_OUT	},
+	{ "BUFFER",	VT_BUFFER		},
+	{ "BUFFER_OUT",	VT_BUFFER | AICD_OUT	},
+	{ "FLOAT",	VT_FLOAT		},
+	{ "DOUBLE",	VT_DOUBLE		},
 	{ NULL,		0			}
 };
 
@@ -172,7 +165,7 @@ static int _string_enum(String const * string, StringEnum * se)
 /* appinterface_new */
 static int _new_foreach(char const * key, Hash * value,
 		AppInterface * appinterface);
-static int _new_append(AppInterface * ai, AppInterfaceCallType type,
+static int _new_append(AppInterface * ai, VariableType type,
 		char const * function);
 static int _new_append_arg(AppInterface * ai, char const * arg);
 
@@ -218,7 +211,7 @@ static int _new_foreach(char const * key, Hash * value,
 	char const prefix[] = "call::";
 	int i;
 	char buf[8];
-	int type = AICT_VOID;
+	int type = VT_NULL;
 	char const * p;
 
 	if(key == NULL || strncmp(prefix, key, sizeof(prefix) - 1) != 0)
@@ -251,7 +244,7 @@ static int _new_foreach(char const * key, Hash * value,
 	return 0;
 }
 
-static int _new_append(AppInterface * ai, AppInterfaceCallType type,
+static int _new_append(AppInterface * ai, VariableType type,
 		char const * function)
 {
 	AppInterfaceCall * p;
@@ -411,8 +404,9 @@ int appinterface_callv(AppInterface * appinterface, Variable ** result,
 
 	if((call = _appinterface_get_call(appinterface, method)) == NULL)
 		return -1;
-	/* FIXME implement */
-	return -1;
+	if(argc != call->args_cnt)
+		return -1;
+	return marshall_call(call->type.type, result, call->func, argc, argv);
 }
 
 

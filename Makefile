@@ -46,10 +46,12 @@ dist:
 		$(PACKAGE)-$(VERSION)/src/appmessage.c \
 		$(PACKAGE)-$(VERSION)/src/appserver.c \
 		$(PACKAGE)-$(VERSION)/src/apptransport.c \
+		$(PACKAGE)-$(VERSION)/src/marshall.c \
 		$(PACKAGE)-$(VERSION)/src/Makefile \
 		$(PACKAGE)-$(VERSION)/src/appinterface.h \
 		$(PACKAGE)-$(VERSION)/src/appmessage.h \
 		$(PACKAGE)-$(VERSION)/src/apptransport.h \
+		$(PACKAGE)-$(VERSION)/src/marshall.h \
 		$(PACKAGE)-$(VERSION)/src/project.conf \
 		$(PACKAGE)-$(VERSION)/src/transport/tcp.c \
 		$(PACKAGE)-$(VERSION)/src/transport/tcp4.c \
