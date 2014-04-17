@@ -59,18 +59,6 @@ static const String * AICTString[VT_COUNT] =
 };
 #endif
 
-/* XXX get rid of this */
-static int _aict_size[VT_COUNT] =
-{
-	0,			sizeof(char),
-	sizeof(int8_t),		sizeof(uint8_t),
-	sizeof(int16_t),	sizeof(uint16_t),
-	sizeof(int32_t),	sizeof(uint32_t),
-	sizeof(int64_t),	sizeof(uint64_t),
-	0,			0,
-	sizeof(float),		sizeof(double)
-};
-
 typedef enum _AppInterfaceCallDirection
 {
 	AICD_IN		= 0000,
@@ -264,7 +252,6 @@ static int _new_append(AppInterface * ai, VariableType type,
 		return -1;
 	p->type.type = type & AICT_MASK;
 	p->type.direction = type & AICD_MASK;
-	p->type.size = _aict_size[p->type.type];
 	p->args = NULL;
 	p->args_cnt = 0;
 	ai->calls_cnt++;
@@ -294,11 +281,9 @@ static int _new_append_arg(AppInterface * ai, char const * arg)
 	r = &q->args[q->args_cnt++];
 	r->type = type & AICT_MASK;
 	r->direction = type & AICD_MASK;
-	r->size = _aict_size[r->type];
 #ifdef DEBUG
-	fprintf(stderr, "DEBUG: type %s, direction: %d, size: %lu\n",
-			AICTString[r->type], r->direction,
-			(unsigned long)r->size);
+	fprintf(stderr, "DEBUG: type %s, direction: %d\n", AICTString[r->type],
+			r->direction);
 #endif
 	return 0;
 }
