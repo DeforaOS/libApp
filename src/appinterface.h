@@ -41,13 +41,6 @@ int appinterface_get_args_count(AppInterface * appinterface, size_t * count,
 		char const * function);
 
 /* useful */
-int appinterface_call(AppInterface * appinterface, char buf[], size_t buflen,
-		char const * function, void ** args, va_list arg);
-int appinterface_call_receive(AppInterface * appinterface, int32_t * ret,
-		char buf[], size_t buflen, char const * function, void ** args);
-int appinterface_receive(AppInterface * appinterface, int * ret, char buf[],
-		size_t buflen, char bufw[], size_t bufwlen, size_t * bufwpos);
-
 int appinterface_callv(AppInterface * appinterface, Variable ** result,
 		char const * method, size_t argc, Variable ** argv);
 
