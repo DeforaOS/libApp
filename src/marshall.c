@@ -39,6 +39,10 @@ static int _call0(VariableType type, Variable ** result, void * func)
 	union
 	{
 		void * call;
+		void (*call_null)(void);
+		uint8_t (*call_bool)(void);
+		int8_t (*call_i8)(void);
+		uint8_t (*call_u8)(void);
 		int16_t (*call_i16)(void);
 		uint16_t (*call_u16)(void);
 		int32_t (*call_i32)(void);
@@ -46,6 +50,9 @@ static int _call0(VariableType type, Variable ** result, void * func)
 	} f;
 	union
 	{
+		uint8_t bool;
+		int8_t i8;
+		uint8_t u8;
 		int16_t i16;
 		uint16_t u16;
 		int32_t i32;
@@ -58,6 +65,21 @@ static int _call0(VariableType type, Variable ** result, void * func)
 		return -1;
 	switch(type)
 	{
+		case VT_NULL:
+			f.call_null();
+			break;
+		case VT_BOOL:
+			res.bool = (f.call_bool() != 0) ? 1 : 0;
+			variable_set_from(v, type, &res.bool);
+			break;
+		case VT_INT8:
+			res.i8 = f.call_i8();
+			variable_set_from(v, type, &res.i8);
+			break;
+		case VT_UINT8:
+			res.u8 = f.call_u8();
+			variable_set_from(v, type, &res.u8);
+			break;
 		case VT_INT16:
 			res.i16 = f.call_i16();
 			variable_set_from(v, type, &res.i16);
