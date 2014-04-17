@@ -65,7 +65,7 @@ appmessage.o: appmessage.c ../src/libApp.a
 appserver.o: appserver.c ../src/libApp.a
 	$(CC) $(appserver_CFLAGS) -c appserver.c
 
-lookup.o: lookup.c
+lookup.o: lookup.c ../src/apptransport.h
 	$(CC) $(lookup_CFLAGS) -c lookup.c
 
 transport.o: transport.c ../src/libApp.a
