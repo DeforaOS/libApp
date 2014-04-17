@@ -144,8 +144,10 @@ StringEnum _string_type[] =
 
 /* prototypes */
 static int _string_enum(String const * string, StringEnum * se);
+
+/* accessors */
 static AppInterfaceCall * _appinterface_get_call(AppInterface * appinterface,
-		char const * call);
+		char const * method);
 
 
 /* functions */
@@ -162,25 +164,6 @@ static int _string_enum(String const * string, StringEnum * se)
 			return se[i].value;
 	return -error_set_code(1, "%s\"%s\"", "Unknown enumerated value for ",
 			string);
-}
-
-
-/* appinterface_get_call */
-static AppInterfaceCall * _appinterface_get_call(AppInterface * appinterface,
-		String const * call)
-{
-	size_t i;
-
-	for(i = 0; i < appinterface->calls_cnt; i++)
-		if(string_compare(appinterface->calls[i].name, call) == 0)
-			break;
-	if(i == appinterface->calls_cnt)
-	{
-		error_set_code(1, "%s%s%s%s", "Unknown call ", call,
-				" for interface ", appinterface->name);
-		return NULL;
-	}
-	return &appinterface->calls[i];
 }
 
 
@@ -422,8 +405,28 @@ int appinterface_get_args_count(AppInterface * appinterface, size_t * count,
 /* useful */
 /* appinterface_callv */
 int appinterface_callv(AppInterface * appinterface, Variable ** result,
-		char const * function, size_t argc, Variable ** argv)
+		char const * method, size_t argc, Variable ** argv)
 {
+	AppInterfaceCall * call;
+
+	if((call = _appinterface_get_call(appinterface, method)) == NULL)
+		return -1;
 	/* FIXME implement */
 	return -1;
+}
+
+
+/* private */
+/* appinterface_get_call */
+static AppInterfaceCall * _appinterface_get_call(AppInterface * appinterface,
+		String const * method)
+{
+	size_t i;
+
+	for(i = 0; i < appinterface->calls_cnt; i++)
+		if(string_compare(appinterface->calls[i].name, method) == 0)
+			return &appinterface->calls[i];
+	error_set_code(1, "%s%s%s%s", "Unknown call \"", method,
+			"\" for interface ", appinterface->name);
+	return NULL;
 }
