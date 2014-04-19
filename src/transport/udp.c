@@ -398,15 +398,16 @@ static int _udp_client_init(UDPClient * client, struct sockaddr * sa,
 #endif
 	char host[NI_MAXHOST];
 	char const * name = host;
+	const int flags = NI_NUMERICSERV | NI_DGRAM;
 
 	if((client->sa = malloc(sa_len)) == NULL)
 		return -1;
 	/* XXX may not be instant */
 	if(getnameinfo(client->sa, client->sa_len, host, sizeof(host), NULL, 0,
-				NI_NAMEREQD | NI_DGRAM) != 0
+				NI_NAMEREQD | flags) != 0
 			&& getnameinfo(client->sa, client->sa_len, host,
-				sizeof(host), NULL, 0,
-				NI_NUMERICHOST | NI_DGRAM) != 0)
+				sizeof(host), NULL, 0, NI_NUMERICHOST | flags)
+			!= 0)
 		name = NULL;
 	if((client->client = helper->client_new(helper->transport, name))
 			== NULL)

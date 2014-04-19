@@ -432,6 +432,7 @@ static int _tcp_server_add_client(TCP * tcp, TCPSocket * client)
 #endif
 	char host[NI_MAXHOST];
 	char const * name = host;
+	const int flags = NI_NUMERICSERV;
 
 	if((p = realloc(tcp->u.server.clients, sizeof(*p)
 					* (tcp->u.server.clients_cnt + 1)))
@@ -440,9 +441,10 @@ static int _tcp_server_add_client(TCP * tcp, TCPSocket * client)
 	tcp->u.server.clients = p;
 	/* XXX may not be instant */
 	if(getnameinfo(client->sa, client->sa_len, host, sizeof(host), NULL, 0,
-				NI_NAMEREQD) != 0
+				NI_NAMEREQD | flags) != 0
 			&& getnameinfo(client->sa, client->sa_len, host,
-				sizeof(host), NULL, 0, NI_NUMERICHOST) != 0)
+				sizeof(host), NULL, 0, NI_NUMERICHOST | flags)
+			!= 0)
 		name = NULL;
 	if((client->client = tcp->helper->client_new(tcp->helper->transport,
 					name)) == NULL)
