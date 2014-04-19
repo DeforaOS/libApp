@@ -403,7 +403,10 @@ static int _udp_client_init(UDPClient * client, struct sockaddr * sa,
 		return -1;
 	/* XXX may not be instant */
 	if(getnameinfo(client->sa, client->sa_len, host, sizeof(host), NULL, 0,
-				NI_DGRAM) != 0)
+				NI_NAMEREQD | NI_DGRAM) != 0
+			&& getnameinfo(client->sa, client->sa_len, host,
+				sizeof(host), NULL, 0,
+				NI_NUMERICHOST | NI_DGRAM) != 0)
 		name = NULL;
 	if((client->client = helper->client_new(helper->transport, name))
 			== NULL)
