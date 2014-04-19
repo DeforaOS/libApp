@@ -393,6 +393,9 @@ static int _udp_client_init(UDPClient * client, struct sockaddr * sa,
 		socklen_t sa_len, UDP * udp)
 {
 	AppTransportPluginHelper * helper = udp->helper;
+#ifndef NI_MAXHOST
+# define NI_MAXHOST 256
+#endif
 	char host[NI_MAXHOST];
 	char const * name = host;
 

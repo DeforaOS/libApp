@@ -427,6 +427,9 @@ static int _tcp_error(char const * message, int code)
 static int _tcp_server_add_client(TCP * tcp, TCPSocket * client)
 {
 	TCPSocket ** p;
+#ifndef NI_MAXHOST
+# define NI_MAXHOST 256
+#endif
 	char host[NI_MAXHOST];
 	char const * name = host;
 
