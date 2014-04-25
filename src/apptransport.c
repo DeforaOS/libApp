@@ -59,7 +59,7 @@ struct _AppTransport
 struct _AppTransportClient
 {
 	AppTransport * transport;
-	char * name;
+	String * name;
 };
 
 
