@@ -388,18 +388,21 @@ int appinterface_get_args_count(AppInterface * appinterface, size_t * count,
 /* useful */
 /* appinterface_callv */
 int appinterface_callv(AppInterface * appinterface, void ** result,
-		char const * method, size_t argc, Variable ** argv)
+		char const * method, va_list args)
 {
 	int ret;
 	AppInterfaceCall * call;
-	Variable * r = NULL;
+	Variable * r;
 
 	if((call = _appinterface_get_call(appinterface, method)) == NULL)
 		return -1;
-	if(argc != call->args_cnt)
+	/* FIXME implement argv */
+	if(call->type.type == VT_NULL)
+		r = NULL;
+	else if((r = variable_new(call->type.type, NULL)) == NULL)
 		return -1;
-	if((ret = marshall_call(call->type.type, &r, call->func, argc, argv))
-			== 0 && r != NULL)
+	if((ret = marshall_call(call->type.type, r, call->func, call->args_cnt,
+					NULL)) == 0 && r != NULL)
 	{
 		if(result != NULL)
 			/* XXX return 0 anyway? */
@@ -407,6 +410,21 @@ int appinterface_callv(AppInterface * appinterface, void ** result,
 		variable_delete(r);
 	}
 	return ret;
+}
+
+
+/* appinterface_call_variablev */
+int appinterface_call_variablev(AppInterface * appinterface, Variable * result,
+		char const * method, size_t argc, Variable ** argv)
+{
+	AppInterfaceCall * call;
+
+	if((call = _appinterface_get_call(appinterface, method)) == NULL)
+		return -1;
+	if(argc != call->args_cnt)
+		return -1;
+	/* FIXME implement argv */
+	return marshall_call(call->type.type, result, call->func, argc, NULL);
 }
 
 

@@ -23,7 +23,7 @@
 
 /* Marshall */
 /* functions */
-int marshall_call(VariableType type, Variable ** result, void * func,
+int marshall_call(VariableType type, Variable * result, void * func,
 		size_t argc, Variable ** argv);
 
 #endif /* !LIBAPP_MARSHALL_H */

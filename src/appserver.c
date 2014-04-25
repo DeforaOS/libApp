@@ -158,8 +158,8 @@ static int _helper_message_call(AppServer * appserver, AppTransport * transport,
 	if(!appinterface_can_call(appserver->interface, name, method))
 		/* XXX report errors */
 		return -1;
-	ret = appinterface_callv(appserver->interface, &result, method, 0,
-			NULL);
+	ret = appinterface_call_variablev(appserver->interface, result, method,
+			0, NULL);
 	if(result != NULL)
 		variable_delete(result);
 	return ret;

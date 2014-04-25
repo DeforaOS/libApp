@@ -115,7 +115,21 @@ char const * appclient_get_app(AppClient * appclient)
 /* useful */
 /* appclient_call */
 int appclient_call(AppClient * appclient,
-		void ** result, char const * function, ...)
+		void ** result, char const * method, ...)
+{
+	int ret;
+	va_list ap;
+
+	va_start(ap, method);
+	ret = appinterface_callv(appclient->interface, result, method, ap);
+	va_end(ap);
+	return ret;
+}
+
+
+/* appclient_call_variable */
+int appclient_call_variable(AppClient * appclient,
+		Variable * result, char const * method, ...)
 {
 	int ret;
 	size_t cnt;
@@ -123,17 +137,16 @@ int appclient_call(AppClient * appclient,
 	va_list ap;
 	Variable ** argv;
 
-	if(appinterface_get_args_count(appclient->interface, &cnt, function)
-			!= 0)
+	if(appinterface_get_args_count(appclient->interface, &cnt, method) != 0)
 		return -1;
 	if((argv = malloc(sizeof(*argv) * cnt)) == NULL)
 		return error_set_code(-errno, "%s", strerror(errno));
-	va_start(ap, function);
+	va_start(ap, method);
 	for(i = 0; i < cnt; i++)
 		argv[i] = va_arg(ap, Variable *);
 	va_end(ap);
-	ret = appinterface_callv(appclient->interface, result, function, cnt,
-			argv);
+	ret = appinterface_call_variablev(appclient->interface, result, method,
+			cnt, argv);
 	free(argv);
 	return ret;
 }

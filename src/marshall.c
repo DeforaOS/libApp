@@ -15,16 +15,18 @@
 
 
 
-#include <stddef.h>
+#include <string.h>
+#include <errno.h>
+#include <System/error.h>
 #include "marshall.h"
 
 
 /* Marshall */
 /* public */
 /* functions */
-static int _call0(VariableType type, Variable ** result, void * func);
+static int _call0(VariableType type, Variable * result, void * func);
 
-int marshall_call(VariableType type, Variable ** result, void * func,
+int marshall_call(VariableType type, Variable * result, void * func,
 		size_t argc, Variable ** argv)
 {
 	if(argc == 0)
@@ -33,9 +35,9 @@ int marshall_call(VariableType type, Variable ** result, void * func,
 	return -1;
 }
 
-static int _call0(VariableType type, Variable ** result, void * func)
+static int _call0(VariableType type, Variable * result, void * func)
 {
-	Variable * v;
+	int ret = 0;
 	union
 	{
 		void * call;
@@ -54,7 +56,7 @@ static int _call0(VariableType type, Variable ** result, void * func)
 	} f;
 	union
 	{
-		uint8_t bool;
+		uint8_t b;
 		int8_t i8;
 		uint8_t u8;
 		int16_t i16;
@@ -69,61 +71,68 @@ static int _call0(VariableType type, Variable ** result, void * func)
 
 	/* FIXME implement through the generic marshaller instead */
 	f.call = func;
-	if((v = variable_new(type, NULL)) == NULL)
-		return -1;
 	switch(type)
 	{
 		case VT_NULL:
 			f.call_null();
 			break;
 		case VT_BOOL:
-			res.bool = (f.call_bool() != 0) ? 1 : 0;
-			variable_set_from(v, type, &res.bool);
+			res.b = (f.call_bool() != 0) ? 1 : 0;
+			if(result != NULL)
+				ret = variable_set_from(result, type, &res.b);
 			break;
 		case VT_INT8:
 			res.i8 = f.call_i8();
-			variable_set_from(v, type, &res.i8);
+			if(result != NULL)
+				ret = variable_set_from(result, type, &res.i8);
 			break;
 		case VT_UINT8:
 			res.u8 = f.call_u8();
-			variable_set_from(v, type, &res.u8);
+			if(result != NULL)
+				ret = variable_set_from(result, type, &res.u8);
 			break;
 		case VT_INT16:
 			res.i16 = f.call_i16();
-			variable_set_from(v, type, &res.i16);
+			if(result != NULL)
+				ret = variable_set_from(result, type, &res.i16);
 			break;
 		case VT_UINT16:
 			res.u16 = f.call_u16();
-			variable_set_from(v, type, &res.u16);
+			if(result != NULL)
+				ret = variable_set_from(result, type, &res.u16);
 			break;
 		case VT_INT32:
 			res.i32 = f.call_i32();
-			variable_set_from(v, type, &res.i32);
+			if(result != NULL)
+				ret = variable_set_from(result, type, &res.i32);
 			break;
 		case VT_UINT32:
 			res.u32 = f.call_u32();
-			variable_set_from(v, type, &res.u32);
+			if(result != NULL)
+				ret = variable_set_from(result, type, &res.u32);
 			break;
 		case VT_INT64:
 			res.i64 = f.call_i64();
-			variable_set_from(v, type, &res.i64);
+			if(result != NULL)
+				ret = variable_set_from(result, type, &res.i64);
 			break;
 		case VT_UINT64:
 			res.u64 = f.call_u64();
-			variable_set_from(v, type, &res.u64);
+			if(result != NULL)
+				ret = variable_set_from(result, type, &res.u64);
 			break;
 		case VT_FLOAT:
 			res.f = f.call_f();
-			variable_set_from(v, type, &res.f);
+			if(result != NULL)
+				ret = variable_set_from(result, type, &res.f);
 			break;
 		case VT_DOUBLE:
 			res.d = f.call_d();
-			variable_set_from(v, type, &res.d);
+			if(result != NULL)
+				ret = variable_set_from(result, type, &res.d);
 			break;
 		default:
-			variable_delete(v);
-			return -1;
+			return -error_set_code(1, "%s", strerror(ENOSYS));
 	}
-	*result = v;
-	return 0;
+	return ret;
 }
