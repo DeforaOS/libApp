@@ -94,7 +94,6 @@ struct _AppTransportPlugin
 	size_t messages_cnt;
 };
 
-#define Class UDP
 #include "common.h"
 #include "common.c"
 
@@ -141,7 +140,7 @@ AppTransportPluginDefinition transport =
 /* udp_init */
 static int _init_client(UDP * udp, char const * name);
 static int _init_server(UDP * udp, char const * name);
-static int _init_socket(UDP * udp, int domain);
+static int _init_socket(UDP * udp);
 
 static UDP * _udp_init(AppTransportPluginHelper * helper,
 		AppTransportMode mode, char const * name)
@@ -183,12 +182,12 @@ static int _init_client(UDP * udp, char const * name)
 {
 	memset(&udp->u, 0, sizeof(udp->u));
 	/* obtain the remote address */
-	if(_init_address(udp, name, UDP_FAMILY, 0) != 0)
+	if((udp->ai = _init_address(name, UDP_FAMILY, 0)) == NULL)
 		return -1;
 	for(udp->aip = udp->ai; udp->aip != NULL; udp->aip = udp->aip->ai_next)
 	{
 		/* create the socket */
-		if(_init_socket(udp, udp->aip->ai_family) != 0)
+		if(_init_socket(udp) != 0)
 			continue;
 		/* listen for incoming messages */
 		event_register_io_read(udp->helper->event, udp->fd,
@@ -209,12 +208,12 @@ static int _init_server(UDP * udp, char const * name)
 	udp->u.server.clients = NULL;
 	udp->u.server.clients_cnt = 0;
 	/* obtain the local address */
-	if(_init_address(udp, name, UDP_FAMILY, AI_PASSIVE) != 0)
+	if((udp->ai = _init_address(name, UDP_FAMILY, AI_PASSIVE)) == NULL)
 		return -1;
 	for(udp->aip = udp->ai; udp->aip != NULL; udp->aip = udp->aip->ai_next)
 	{
 		/* create the socket */
-		if(_init_socket(udp, udp->aip->ai_family) != 0)
+		if(_init_socket(udp) != 0)
 			continue;
 		/* accept incoming messages */
 		if(bind(udp->fd, udp->aip->ai_addr, udp->aip->ai_addrlen) != 0)
@@ -238,11 +237,11 @@ static int _init_server(UDP * udp, char const * name)
 	return 0;
 }
 
-static int _init_socket(UDP * udp, int domain)
+static int _init_socket(UDP * udp)
 {
 	int flags;
 
-	if((udp->fd = socket(domain, SOCK_DGRAM, 0)) < 0)
+	if((udp->fd = socket(udp->aip->ai_family, SOCK_DGRAM, 0)) < 0)
 		return -_udp_error("socket", 1);
 	/* set the socket as non-blocking */
 	if((flags = fcntl(udp->fd, F_GETFL)) == -1)

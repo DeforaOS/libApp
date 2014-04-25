@@ -21,7 +21,7 @@
 
 /* private */
 /* functions */
-static int _init_address(Class * class, char const * name, int domain,
+static struct addrinfo * _init_address(char const * name, int domain,
 		int flags);
 
 #endif /* !APPTRANSPORT_TRANSPORT_COMMON_H */

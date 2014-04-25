@@ -16,9 +16,9 @@
 
 
 /* init_address */
-static int _init_address(Class * instance, char const * name, int domain,
-		int flags)
+static struct addrinfo * _init_address(char const * name, int domain, int flags)
 {
+	struct addrinfo * ai = NULL;
 	char sep = ':';
 	char * p;
 	char * q;
@@ -38,7 +38,10 @@ static int _init_address(Class * instance, char const * name, int domain,
 	if(strlen(name) == 0)
 		p = NULL;
 	else if((p = strdup(name)) == NULL)
-		return -error_set_code(1, "%s", strerror(errno));
+	{
+		error_set_code(1, "%s", strerror(errno));
+		return NULL;
+	}
 	/* obtain the port number */
 	if(p == NULL || (q = strrchr(p, sep)) == NULL)
 	{
@@ -58,16 +61,15 @@ static int _init_address(Class * instance, char const * name, int domain,
 	hints.ai_socktype = SOCK_STREAM;
 	hints.ai_flags = flags;
 	if(l >= 0)
-		res = getaddrinfo(p, q, &hints, &instance->ai);
+		res = getaddrinfo(p, q, &hints, &ai);
 	free(p);
 	/* check for errors */
 	if(res != 0)
 	{
 		error_set_code(1, "%s", gai_strerror(res));
-		if(instance->ai != NULL)
-			freeaddrinfo(instance->ai);
-		instance->ai = NULL;
-		return -1;
+		if(ai != NULL)
+			freeaddrinfo(ai);
+		return NULL;
 	}
-	return (instance->ai != NULL) ? 0 : -1;
+	return ai;
 }
