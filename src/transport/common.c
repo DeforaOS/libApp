@@ -27,6 +27,10 @@ static int _init_address(Class * instance, char const * name, int domain,
 	struct addrinfo hints;
 	int res = 0;
 
+#ifdef DEBUG
+	fprintf(stderr, "DEBUG: %s(\"%s\", %d, %d)\n", __func__, name, domain,
+			flags);
+#endif
 	/* guess the port separator */
 	if((q = strchr(name, ':')) != NULL && strchr(++q, ':') != NULL)
 		sep = '.';
