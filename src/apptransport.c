@@ -94,7 +94,7 @@ AppTransport * apptransport_new(AppTransportMode mode,
 	fprintf(stderr, "DEBUG: %s(\"%s\", \"%s\")\n", __func__, plugin, name);
 #endif
 	/* check the arguments */
-	if(name == NULL || name[0] == '\0')
+	if(plugin == NULL || plugin[0] == '\0')
 	{
 		error_set_code(1, "%s", "Invalid transport");
 		return NULL;
