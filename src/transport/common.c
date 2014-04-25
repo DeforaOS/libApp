@@ -41,7 +41,10 @@ static int _init_address(Class * instance, char const * name, int domain,
 		return -error_set_code(1, "%s", strerror(errno));
 	/* obtain the port number */
 	if(p == NULL || (q = strrchr(p, sep)) == NULL)
-		l = -error_set_code(1, "%s", strerror(EINVAL));
+	{
+		l = 0;
+		q = NULL;
+	}
 	else
 	{
 		*(q++) = '\0';
