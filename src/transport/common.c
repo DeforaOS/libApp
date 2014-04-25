@@ -19,10 +19,11 @@
 static struct addrinfo * _init_address(char const * name, int domain, int flags)
 {
 	struct addrinfo * ai = NULL;
+	char * hostname;
+	char * servname;
 	char sep = ':';
 	char * p;
 	char * q;
-	char * r;
 	long l;
 	struct addrinfo hints;
 	int res = 0;
@@ -32,27 +33,27 @@ static struct addrinfo * _init_address(char const * name, int domain, int flags)
 			flags);
 #endif
 	/* guess the port separator */
-	if((q = strchr(name, ':')) != NULL && strchr(++q, ':') != NULL)
+	if((p = strchr(name, ':')) != NULL && strchr(++p, ':') != NULL)
 		sep = '.';
 	/* obtain the name */
 	if(strlen(name) == 0)
-		p = NULL;
-	else if((p = strdup(name)) == NULL)
+		hostname = NULL;
+	else if((hostname = strdup(name)) == NULL)
 	{
 		error_set_code(1, "%s", strerror(errno));
 		return NULL;
 	}
 	/* obtain the port number */
-	if(p == NULL || (q = strrchr(p, sep)) == NULL)
+	if(hostname == NULL || (servname = strrchr(hostname, sep)) == NULL)
 	{
 		l = 0;
-		q = NULL;
+		servname = NULL;
 	}
 	else
 	{
-		*(q++) = '\0';
-		l = strtol(q, &r, 10);
-		if(q[0] == '\0' || *r != '\0')
+		*(servname++) = '\0';
+		l = strtol(servname, &q, 10);
+		if(servname[0] == '\0' || *q != '\0')
 			l = -error_set_code(1, "%s", strerror(EINVAL));
 	}
 	/* FIXME perform this asynchronously */
@@ -61,8 +62,8 @@ static struct addrinfo * _init_address(char const * name, int domain, int flags)
 	hints.ai_socktype = SOCK_STREAM;
 	hints.ai_flags = flags;
 	if(l >= 0)
-		res = getaddrinfo(p, q, &hints, &ai);
-	free(p);
+		res = getaddrinfo(hostname, servname, &hints, &ai);
+	free(hostname);
 	/* check for errors */
 	if(res != 0)
 	{
