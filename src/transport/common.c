@@ -16,7 +16,8 @@
 
 
 /* init_address */
-static int _init_address(Class * instance, char const * name, int domain)
+static int _init_address(Class * instance, char const * name, int domain,
+		int flags)
 {
 	char sep = ':';
 	char * p;
@@ -46,6 +47,7 @@ static int _init_address(Class * instance, char const * name, int domain)
 	memset(&hints, 0, sizeof(hints));
 	hints.ai_family = domain;
 	hints.ai_socktype = SOCK_STREAM;
+	hints.ai_flags = flags;
 	if(l >= 0)
 		res = getaddrinfo(p, q, &hints, &instance->ai);
 	free(p);

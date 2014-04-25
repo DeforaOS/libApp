@@ -95,6 +95,7 @@ struct _AppTransportPlugin
 };
 
 #define Class UDP
+#include "common.h"
 #include "common.c"
 
 
@@ -138,7 +139,6 @@ AppTransportPluginDefinition transport =
 /* functions */
 /* plug-in */
 /* udp_init */
-static int _init_address(UDP * udp, char const * name, int domain);
 static int _init_client(UDP * udp, char const * name);
 static int _init_server(UDP * udp, char const * name);
 static int _init_socket(UDP * udp, int domain);
@@ -183,7 +183,7 @@ static int _init_client(UDP * udp, char const * name)
 {
 	memset(&udp->u, 0, sizeof(udp->u));
 	/* obtain the remote address */
-	if(_init_address(udp, name, UDP_FAMILY) != 0)
+	if(_init_address(udp, name, UDP_FAMILY, 0) != 0)
 		return -1;
 	for(udp->aip = udp->ai; udp->aip != NULL; udp->aip = udp->aip->ai_next)
 	{
@@ -209,7 +209,7 @@ static int _init_server(UDP * udp, char const * name)
 	udp->u.server.clients = NULL;
 	udp->u.server.clients_cnt = 0;
 	/* obtain the local address */
-	if(_init_address(udp, name, UDP_FAMILY) != 0)
+	if(_init_address(udp, name, UDP_FAMILY, AI_PASSIVE) != 0)
 		return -1;
 	for(udp->aip = udp->ai; udp->aip != NULL; udp->aip = udp->aip->ai_next)
 	{

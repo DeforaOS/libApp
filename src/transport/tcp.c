@@ -99,6 +99,7 @@ struct _AppTransportPlugin
 #define INC 1024
 
 #define Class TCP
+#include "common.h"
 #include "common.c"
 
 
@@ -155,7 +156,6 @@ AppTransportPluginDefinition transport =
 /* functions */
 /* plug-in */
 /* tcp_init */
-static int _init_address(TCP * tcp, char const * name, int domain);
 static int _init_client(TCP * tcp, char const * name);
 static int _init_server(TCP * tcp, char const * name);
 
@@ -207,7 +207,7 @@ static int _init_client(TCP * tcp, char const * name)
 	tcp->u.client.tcp = tcp;
 	tcp->u.client.fd = -1;
 	/* obtain the remote address */
-	if(_init_address(tcp, name, TCP_FAMILY) != 0)
+	if(_init_address(tcp, name, TCP_FAMILY, 0) != 0)
 		return -1;
 	/* connect to the remote host */
 	for(aip = tcp->ai; aip != NULL; aip = aip->ai_next)
@@ -267,7 +267,7 @@ static int _init_server(TCP * tcp, char const * name)
 
 	tcp->u.server.fd = -1;
 	/* obtain the local address */
-	if(_init_address(tcp, name, TCP_FAMILY) != 0)
+	if(_init_address(tcp, name, TCP_FAMILY, AI_PASSIVE) != 0)
 		return -1;
 	for(aip = tcp->ai; aip != NULL; aip = aip->ai_next)
 	{
