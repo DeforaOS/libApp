@@ -720,9 +720,6 @@ static int _tcp_socket_callback_read(int fd, TCPSocket * tcpsocket)
 		return -1;
 	if(_socket_callback_recv(tcpsocket) != 0)
 		return -1;
-#ifdef DEBUG
-	fprintf(stderr, "DEBUG: %s() read() => %ld\n", __func__, ssize);
-#endif
 	while((message = _socket_callback_message(tcpsocket)) != NULL)
 	{
 		switch(tcpsocket->tcp->mode)
@@ -804,7 +801,7 @@ static int _socket_callback_recv(TCPSocket * tcpsocket)
 	else if(ssize == 0)
 	{
 #ifdef DEBUG
-		fprintf(stderr, "DEBUG: %s() read() => %ld\n", __func__, ssize);
+		fprintf(stderr, "DEBUG: %s() recv() => %ld\n", __func__, ssize);
 #endif
 		close(tcpsocket->fd);
 		tcpsocket->fd = -1;
@@ -844,7 +841,7 @@ static int _tcp_socket_callback_write(int fd, TCPSocket * tcpsocket)
 		return -error_set_code(1, "%s", strerror(errno));
 	}
 #ifdef DEBUG
-	fprintf(stderr, "DEBUG: %s() write() => %ld\n", __func__, ssize);
+	fprintf(stderr, "DEBUG: %s() send() => %ld\n", __func__, ssize);
 #endif
 	/* XXX use a sliding cursor instead (and then queue the next message) */
 	memmove(tcpsocket->bufout, &tcpsocket->bufout[ssize],
