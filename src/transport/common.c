@@ -44,7 +44,8 @@ static struct addrinfo * _init_address(char const * name, int domain, int flags)
 		return NULL;
 	}
 	/* obtain the port number */
-	if(hostname == NULL || (servname = strrchr(hostname, sep)) == NULL)
+	if(hostname == NULL || (servname = strrchr(hostname, sep)) == NULL
+			|| servname[1] == '\0')
 	{
 		l = 0;
 		servname = NULL;
