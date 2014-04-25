@@ -31,10 +31,12 @@ static int _init_address(Class * instance, char const * name, int domain,
 	if((q = strchr(name, ':')) != NULL && strchr(++q, ':') != NULL)
 		sep = '.';
 	/* obtain the name */
-	if((p = strdup(name)) == NULL)
+	if(strlen(name) == 0)
+		p = NULL;
+	else if((p = strdup(name)) == NULL)
 		return -error_set_code(1, "%s", strerror(errno));
 	/* obtain the port number */
-	if((q = strrchr(p, sep)) == NULL)
+	if(p == NULL || (q = strrchr(p, sep)) == NULL)
 		l = -error_set_code(1, "%s", strerror(EINVAL));
 	else
 	{
