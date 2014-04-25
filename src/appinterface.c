@@ -387,16 +387,26 @@ int appinterface_get_args_count(AppInterface * appinterface, size_t * count,
 
 /* useful */
 /* appinterface_callv */
-int appinterface_callv(AppInterface * appinterface, Variable ** result,
+int appinterface_callv(AppInterface * appinterface, void ** result,
 		char const * method, size_t argc, Variable ** argv)
 {
+	int ret;
 	AppInterfaceCall * call;
+	Variable * r = NULL;
 
 	if((call = _appinterface_get_call(appinterface, method)) == NULL)
 		return -1;
 	if(argc != call->args_cnt)
 		return -1;
-	return marshall_call(call->type.type, result, call->func, argc, argv);
+	if((ret = marshall_call(call->type.type, &r, call->func, argc, argv))
+			== 0 && r != NULL)
+	{
+		if(result != NULL)
+			/* XXX return 0 anyway? */
+			ret = variable_get_as(r, call->type.type, *result);
+		variable_delete(r);
+	}
+	return ret;
 }
 
 

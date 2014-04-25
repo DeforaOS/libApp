@@ -114,8 +114,8 @@ char const * appclient_get_app(AppClient * appclient)
 
 /* useful */
 /* appclient_call */
-int appclient_call(AppClient * appclient, Variable ** result,
-		char const * function, ...)
+int appclient_call(AppClient * appclient,
+		void ** result, char const * function, ...)
 {
 	int ret;
 	size_t cnt;
