@@ -92,7 +92,7 @@ static int _appclient_call(int verbose, AppClient * ac, AppClientCall * call)
 {
 	int ret = 0;
 	Variable * v;
-	int res;
+	int32_t res;
 
 #ifdef DEBUG
 	fprintf(stderr, "DEBUG: %s()\n", __func__);
