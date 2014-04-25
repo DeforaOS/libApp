@@ -20,8 +20,8 @@
 # include <stdio.h>
 #endif
 #include <string.h>
-#include <errno.h>
 #include <System.h>
+#include "App/appclient.h"
 #include "appmessage.h"
 #include "apptransport.h"
 #include "../config.h"
@@ -135,6 +135,7 @@ static void _new_helper(AppTransport * transport, AppTransportMode mode,
 
 /* apptransport_new_app */
 static String * _new_app_name(char const * app, char const * name);
+static String * _new_app_query(char const * app);
 static String * _new_app_transport(String ** name);
 
 AppTransport * apptransport_new_app(AppTransportMode mode,
@@ -165,15 +166,43 @@ static String * _new_app_name(char const * app, char const * name)
 {
 	String * var;
 
+#ifdef DEBUG
+	fprintf(stderr, "DEBUG: %s(\"%s\", \"%s\")\n", __func__, app, name);
+#endif
+	if(app == NULL || app[0] == '\0')
+	{
+		error_set_code(1, "%s", "Invalid App");
+		return NULL;
+	}
 	if(name != NULL)
 		return string_new(name);
 	/* obtain the desired transport and name from the environment */
 	if((var = string_new_append("APPSERVER_", app, NULL)) == NULL)
 		return NULL;
-	if((name = getenv(var)) == NULL)
-		error_set_code(-errno, "%s", strerror(errno));
+	name = getenv(var);
 	string_delete(var);
-	return (name != NULL) ? string_new(name) : NULL;
+	if(name == NULL)
+		return _new_app_query(app);
+	return string_new(name);
+}
+
+static String * _new_app_query(char const * app)
+{
+	const char session[] = "Session";
+	String * name = NULL;
+	AppClient * appclient;
+
+#ifdef DEBUG
+	fprintf(stderr, "DEBUG: %s(\"%s\")\n", __func__, app);
+#endif
+	if(strcmp(app, session) == 0)
+		return NULL;
+	if((appclient = appclient_new(session, NULL)) == NULL)
+		return NULL;
+	/* we can ignore errors */
+	appclient_call(appclient, (void **)&name, "lookup", app);
+	appclient_delete(appclient);
+	return name;
 }
 
 static String * _new_app_transport(String ** name)
