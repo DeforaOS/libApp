@@ -92,7 +92,10 @@ static int _appclient_call(int verbose, AppClient * ac, AppClientCall * call)
 {
 	int ret = 0;
 	Variable * v;
+	VariableType type;
 	int64_t res;
+	double dres;
+	String * sres;
 
 #ifdef DEBUG
 	fprintf(stderr, "DEBUG: %s()\n", __func__);
@@ -196,10 +199,48 @@ static int _appclient_call(int verbose, AppClient * ac, AppClientCall * call)
 	}
 	if(ret == 0 && verbose)
 	{
-		if(v != NULL && variable_get_as(v, VT_INT64, &res) == 0)
-			printf("\"%s\"%s%ld\n", call->name, " returned ", res);
-		else
-			printf("\"%s\"%s\n", call->name, " returned");
+		type = (v != NULL) ? variable_get_type(v) : VT_NULL;
+		switch(type)
+		{
+			case VT_BOOL:
+			case VT_INT8:
+			case VT_UINT8:
+			case VT_INT16:
+			case VT_UINT16:
+			case VT_INT32:
+			case VT_UINT32:
+			case VT_INT64:
+			case VT_UINT64:
+				if(variable_get_as(v, VT_INT64, &res) == 0)
+					printf("\"%s\"%s%ld\n", call->name,
+							" returned ", res);
+				else
+					printf("\"%s\"%s\n", call->name,
+							" returned");
+				break;
+			case VT_FLOAT:
+			case VT_DOUBLE:
+				if(variable_get_as(v, VT_DOUBLE, &dres) == 0)
+					printf("\"%s\"%s%f\n", call->name,
+							" returned ", dres);
+				else
+					printf("\"%s\"%s\n", call->name,
+							" returned");
+				break;
+			case VT_STRING:
+				sres = NULL;
+				if(variable_get_as(v, VT_STRING, &sres) == 0)
+					printf("\"%s\"%s\"%s\"\n", call->name,
+							" returned ", sres);
+				else
+					printf("\"%s\"%s\n", call->name,
+							" returned");
+				string_delete(sres);
+				break;
+			default:
+				printf("\"%s\"%s\n", call->name, " returned");
+				break;
+		}
 	}
 	if(v != NULL)
 		variable_delete(v);
