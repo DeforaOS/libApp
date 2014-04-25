@@ -92,7 +92,7 @@ static int _appclient_call(int verbose, AppClient * ac, AppClientCall * call)
 {
 	int ret = 0;
 	Variable * v;
-	int32_t res;
+	int64_t res;
 
 #ifdef DEBUG
 	fprintf(stderr, "DEBUG: %s()\n", __func__);
@@ -107,7 +107,7 @@ static int _appclient_call(int verbose, AppClient * ac, AppClientCall * call)
 	{
 		case 0:
 #ifdef DEBUG
-			fprintf(stderr, "DEBUG: %s() %s() res=%d\n", __func__,
+			fprintf(stderr, "DEBUG: %s() %s() res=%ld\n", __func__,
 					call->name, res);
 #endif
 			ret = appclient_call_variable(ac, v, call->name, NULL);
@@ -196,8 +196,8 @@ static int _appclient_call(int verbose, AppClient * ac, AppClientCall * call)
 	}
 	if(ret == 0 && verbose)
 	{
-		if(v != NULL && variable_get_as(v, VT_INT32, &res) == 0)
-			printf("\"%s\"%s%d\n", call->name, " returned ", res);
+		if(v != NULL && variable_get_as(v, VT_INT64, &res) == 0)
+			printf("\"%s\"%s%ld\n", call->name, " returned ", res);
 		else
 			printf("\"%s\"%s\n", call->name, " returned");
 	}
