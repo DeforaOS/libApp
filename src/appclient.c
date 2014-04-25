@@ -63,9 +63,6 @@ AppClient * appclient_new_event(char const * app, char const * name,
 	AppClient * appclient;
 
 #ifdef DEBUG
-	fprintf(stderr, "%s%s%s%s", __func__, "(\"", app, "\")\n");
-#endif
-#ifdef DEBUG
 	fprintf(stderr, "DEBUG: %s(\"%s\", %p)\n", __func__, app,
 			(void *)event);
 #endif
