@@ -93,6 +93,12 @@ AppTransport * apptransport_new(AppTransportMode mode,
 #ifdef DEBUG
 	fprintf(stderr, "DEBUG: %s(\"%s\", \"%s\")\n", __func__, plugin, name);
 #endif
+	/* check the arguments */
+	if(name == NULL || name[0] == '\0')
+	{
+		error_set_code(1, "%s", "Invalid transport");
+		return NULL;
+	}
 	/* allocate the transport */
 	if((transport = object_new(sizeof(*transport))) == NULL)
 		return NULL;
