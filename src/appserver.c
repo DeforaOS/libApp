@@ -53,15 +53,16 @@ static int _appserver_helper_message(void * data, AppTransport * transport,
 /* public */
 /* functions */
 /* appserver_new */
-AppServer * appserver_new(const char * app, char const * name)
+AppServer * appserver_new(AppServerOptions options, const char * app,
+		char const * name)
 {
-	return appserver_new_event(app, name, NULL);
+	return appserver_new_event(options, app, name, NULL);
 }
 
 
 /* appserver_new_event */
-AppServer * appserver_new_event(char const * app, char const * name,
-		Event * event)
+AppServer * appserver_new_event(AppServerOptions options, char const * app,
+		char const * name, Event * event)
 {
 	AppServer * appserver;
 
@@ -81,6 +82,10 @@ AppServer * appserver_new_event(char const * app, char const * name,
 		appserver_delete(appserver);
 		return NULL;
 	}
+	/* register the server if requested */
+	if(options & ASO_REGISTER)
+		/* XXX should we really ignore errors? */
+		apptransport_server_register(appserver->transport, app);
 	return appserver;
 }
 

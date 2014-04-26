@@ -141,7 +141,6 @@ static void _new_helper(AppTransport * transport, AppTransportMode mode,
 
 /* apptransport_new_app */
 static String * _new_app_name(char const * app, char const * name);
-static String * _new_app_query(char const * app);
 static String * _new_app_transport(String ** name);
 
 AppTransport * apptransport_new_app(AppTransportMode mode,
@@ -188,27 +187,8 @@ static String * _new_app_name(char const * app, char const * name)
 	name = getenv(var);
 	string_delete(var);
 	if(name == NULL)
-		return _new_app_query(app);
+		return apptransport_lookup(app);
 	return string_new(name);
-}
-
-static String * _new_app_query(char const * app)
-{
-	const char session[] = "Session";
-	String * name = NULL;
-	AppClient * appclient;
-
-#ifdef DEBUG
-	fprintf(stderr, "DEBUG: %s(\"%s\")\n", __func__, app);
-#endif
-	if(strcmp(app, session) == 0)
-		return NULL;
-	if((appclient = appclient_new(session, NULL)) == NULL)
-		return NULL;
-	/* we can ignore errors */
-	appclient_call(appclient, (void **)&name, "lookup", app);
-	appclient_delete(appclient);
-	return name;
 }
 
 static String * _new_app_transport(String ** name)
@@ -274,6 +254,27 @@ String const * apptransport_client_get_name(AppTransportClient * client)
 
 
 /* useful */
+/* apptransport_lookup */
+String * apptransport_lookup(char const * app)
+{
+	const char session[] = "Session";
+	String * name = NULL;
+	AppClient * appclient;
+
+#ifdef DEBUG
+	fprintf(stderr, "DEBUG: %s(\"%s\")\n", __func__, app);
+#endif
+	if(strcmp(app, session) == 0)
+		return NULL;
+	if((appclient = appclient_new(session, NULL)) == NULL)
+		return NULL;
+	/* we can ignore errors */
+	appclient_call(appclient, (void **)&name, "lookup", app);
+	appclient_delete(appclient);
+	return name;
+}
+
+
 /* apptransport_client_send */
 int apptransport_client_send(AppTransport * transport, AppMessage * message,
 		int acknowledge)
@@ -284,6 +285,24 @@ int apptransport_client_send(AppTransport * transport, AppMessage * message,
 		/* FIXME will wrap around after 2^32-1 acknowledgements */
 		appmessage_set_id(message, ++transport->id);
 	return transport->definition->client_send(transport->tplugin, message);
+}
+
+
+/* apptransport_server_register */
+int apptransport_server_register(AppTransport * transport, char const * app)
+{
+	int ret;
+	AppClient * appclient;
+	int res = -1;
+
+	if((appclient = appclient_new("Session", NULL)) == NULL)
+		return -1;
+	ret = appclient_call(appclient, (void **)&res, "register", app,
+			transport->name);
+	ret = (ret == 0 && res == 0) ? 0 : -1;
+	/* FIXME really keep alive until the transport exits */
+	appclient_delete(appclient);
+	return ret;
 }
 
 

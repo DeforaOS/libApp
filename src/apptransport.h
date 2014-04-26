@@ -49,11 +49,14 @@ String const * apptransport_get_transport(AppTransport * transport);
 String const * apptransport_client_get_name(AppTransportClient * client);
 
 /* useful */
+String * apptransport_lookup(char const * app);
+
 /* ATM_CLIENT */
 int apptransport_client_send(AppTransport * transport, AppMessage * message,
 		int acknowledge);
 
 /* ATM_SERVER */
+int apptransport_server_register(AppTransport * transport, char const * app);
 int apptransport_server_send(AppTransport * transport,
 		AppTransportClient * client, AppMessage * message);
 
