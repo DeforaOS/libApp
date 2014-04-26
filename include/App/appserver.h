@@ -23,6 +23,11 @@
 
 /* AppServer */
 /* types */
+typedef void AppServerClient;
+
+typedef unsigned int AppServerOptions;
+# define ASO_REGISTER	0x1
+
 typedef struct _AppServer AppServer;
 
 
@@ -31,9 +36,10 @@ typedef struct _AppServer AppServer;
 
 
 /* functions */
-AppServer * appserver_new(char const * app, char const * name);
-AppServer * appserver_new_event(char const * app, char const * name,
-		Event * event);
+AppServer * appserver_new(AppServerOptions options, char const * app,
+		char const * name);
+AppServer * appserver_new_event(AppServerOptions options, char const * app,
+		char const * name, Event * event);
 void appserver_delete(AppServer * appserver);
 
 /* accessors */

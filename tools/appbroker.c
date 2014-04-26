@@ -1,5 +1,5 @@
 /* $Id$ */
-/* Copyright (c) 2011-2012 Pierre Pronchery <khorben@defora.org> */
+/* Copyright (c) 2011-2014 Pierre Pronchery <khorben@defora.org> */
 /* This file is part of DeforaOS System libApp */
 /* This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -102,7 +102,7 @@ static int _appbroker_foreach_call(char const * key, Hash * value, void * data)
 	int i;
 	char buf[8];
 	char const * p;
-	char const * sep = "";
+	const char sep[] = ", ";
 
 	if(key == NULL || key[0] == '\0')
 		return 0;
@@ -112,7 +112,7 @@ static int _appbroker_foreach_call(char const * key, Hash * value, void * data)
 	if((p = hash_get(value, "ret")) == NULL)
 		p = "void";
 	fprintf(appbroker->fp, "%s%s%s%s%s%s", p, " ", appbroker->prefix, "_",
-			key, "(");
+			key, "(AppServerClient * client");
 	for(i = 0; i < APPSERVER_MAX_ARGUMENTS; i++)
 	{
 		snprintf(buf, sizeof(buf), "arg%d", i + 1);
@@ -120,7 +120,6 @@ static int _appbroker_foreach_call(char const * key, Hash * value, void * data)
 			break;
 		if(_appbroker_foreach_call_arg(appbroker, sep, p) != 0)
 			return 1;
-		sep = ", ";
 	}
 	fprintf(appbroker->fp, "%s", ");\n");
 	return 0;
