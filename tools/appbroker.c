@@ -165,7 +165,7 @@ static void _appbroker_head(AppBroker * appbroker)
 				appbroker->prefix, "_",
 				appbroker->prefix, "_H\n");
 	fputs("\n# include <stdint.h>\n", appbroker->fp);
-	fputs("# include <System.h>\n\n", appbroker->fp);
+	fputs("# include <System/App.h>\n\n", appbroker->fp);
 	fputs("\n/* types */\n", appbroker->fp);
 	fputs("typedef Buffer * BUFFER;\n", appbroker->fp);
 	fputs("typedef double * DOUBLE;\n", appbroker->fp);
