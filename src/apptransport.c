@@ -313,6 +313,9 @@ int apptransport_server_register(AppTransport * transport, char const * app)
 	int ret;
 	int res = -1;
 
+	if(transport->mode != ATM_SERVER)
+		return -error_set_code(1, "%s",
+				"Only servers can register to sessions");
 	if(transport->appclient != NULL)
 		appclient_delete(transport->appclient);
 	if((transport->appclient = appclient_new("Session", NULL)) == NULL)
