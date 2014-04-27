@@ -112,8 +112,12 @@ FAILED=
 echo "Performing tests:" 1>&2
 $DATE > "$target"
 _test "appmessage" "appmessage"
-_test "lookup" "lookup" -a "VFS" -n "tcp:localhost:4242"
-_test "lookup" "lookup" -a "VFS" -n "tcp4:localhost:4242"
+_test "lookup" "lookup VFS tcp" -a "VFS" -n "tcp:localhost:4242"
+_test "lookup" "lookup VFS tcp4" -a "VFS" -n "tcp4:localhost:4242"
+#XXX avoid the export/unset dance
+export APPSERVER_Session="tcp:localhost:4242"
+_test "lookup" "lookup Session" -a "Session"
+unset APPSERVER_Session
 _test "transport" "tcp4 127.0.0.1:4242" -p tcp4 127.0.0.1:4242
 _test "transport" "tcp4 localhost:4242" -p tcp4 localhost:4242
 _test "transport" "tcp6 ::1.4242" -p tcp6 ::1.4242
