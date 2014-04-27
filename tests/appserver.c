@@ -19,6 +19,7 @@
 #include <stdio.h>
 #include <System/error.h>
 #include "App/appserver.h"
+#include "Dummy.h"
 
 
 /* private */

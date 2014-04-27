@@ -68,7 +68,7 @@ AppClient * appclient_new_event(char const * app, char const * name,
 #endif
 	if((appclient = object_new(sizeof(*appclient))) == NULL)
 		return NULL;
-	appclient->interface = appinterface_new_server(app);
+	appclient->interface = appinterface_new(app);
 	appclient->helper.data = appclient;
 	appclient->helper.message = _appclient_helper_message;
 	appclient->event = (event != NULL) ? event : event_new();

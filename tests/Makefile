@@ -1,4 +1,4 @@
-TARGETS	= appclient appmessage appserver lookup tests.log transport
+TARGETS	= Dummy.h appclient appmessage appserver lookup tests.log transport
 PREFIX	= /usr/local
 DESTDIR	=
 BINDIR	= $(PREFIX)/bin
@@ -17,6 +17,9 @@ INSTALL	= install
 
 
 all: $(TARGETS)
+
+Dummy.h: ../data/Dummy.interface
+	../data/appbroker.sh -P "$(PREFIX)" -- "Dummy.h"
 
 appclient_OBJS = appclient.o
 appclient_CFLAGS = $(CPPFLAGSF) $(CPPFLAGS) $(CFLAGSF) $(CFLAGS)
@@ -72,7 +75,7 @@ transport.o: transport.c ../src/libApp.a
 	$(CC) $(transport_CFLAGS) -c transport.c
 
 clean:
-	$(RM) -- $(appclient_OBJS) $(appmessage_OBJS) $(appserver_OBJS) $(lookup_OBJS) $(tests.log_OBJS) $(transport_OBJS)
+	$(RM) -- $(Dummy.h_OBJS) $(appclient_OBJS) $(appmessage_OBJS) $(appserver_OBJS) $(lookup_OBJS) $(tests.log_OBJS) $(transport_OBJS)
 
 distclean: clean
 	$(RM) -- $(TARGETS)

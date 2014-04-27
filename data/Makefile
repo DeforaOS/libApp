@@ -1,3 +1,6 @@
+MKDIR	= mkdir -m 0755 -p
+INSTALL	= install
+RM	= rm -f
 TARGETS	= libApp.pc
 PREFIX	= /usr/local
 DESTDIR	=
@@ -21,8 +24,11 @@ distclean: clean
 
 install: $(TARGETS)
 	./pkgconfig.sh -P "$(DESTDIR)$(PREFIX)" -i -- "libApp.pc"
+	$(MKDIR) $(DESTDIR)$(PREFIX)/etc/AppInterface
+	$(INSTALL) -m 0644 Dummy.interface $(DESTDIR)$(PREFIX)/etc/AppInterface/Dummy.interface
 
 uninstall:
 	./pkgconfig.sh -P "$(DESTDIR)$(PREFIX)" -u -- "libApp.pc"
+	$(RM) -- $(DESTDIR)$(PREFIX)/etc/AppInterface/Dummy.interface
 
 .PHONY: all clean distclean install uninstall
