@@ -265,12 +265,19 @@ String * apptransport_lookup(char const * app)
 	fprintf(stderr, "DEBUG: %s(\"%s\")\n", __func__, app);
 #endif
 	if(strcmp(app, session) == 0)
+	{
+		error_set_code(1, "%s: %s", app, "Could not lookup");
 		return NULL;
+	}
 	if((appclient = appclient_new(session, NULL)) == NULL)
 		return NULL;
-	/* we can ignore errors */
 	appclient_call(appclient, (void **)&name, "lookup", app);
 	appclient_delete(appclient);
+#ifdef DEBUG
+	fprintf(stderr, "DEBUG: %s() => \"%s\"\n", __func__, name);
+#endif
+	if(name == NULL)
+		error_set_code(1, "%s: %s", app, "Could not lookup");
 	return name;
 }
 
