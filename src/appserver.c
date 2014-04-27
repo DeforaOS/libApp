@@ -71,21 +71,20 @@ AppServer * appserver_new_event(AppServerOptions options, char const * app,
 	appserver->interface = appinterface_new_server(app);
 	appserver->helper.data = appserver;
 	appserver->helper.message = _appserver_helper_message;
-	appserver->transport = apptransport_new_app(ATM_SERVER,
-			&appserver->helper, app, name, event);
 	appserver->event = (event != NULL) ? event : event_new();
 	appserver->event_free = (event != NULL) ? 0 : 1;
+	appserver->transport = apptransport_new_app(ATM_SERVER,
+			&appserver->helper, app, name, appserver->event);
 	/* check for errors */
 	if(appserver->interface == NULL || appserver->transport == NULL
-			|| appserver->event == NULL)
+			|| appserver->event == NULL
+			|| (((options & ASO_REGISTER) == ASO_REGISTER)
+				&& apptransport_server_register(
+					appserver->transport, app) != 0))
 	{
 		appserver_delete(appserver);
 		return NULL;
 	}
-	/* register the server if requested */
-	if(options & ASO_REGISTER)
-		/* XXX should we really ignore errors? */
-		apptransport_server_register(appserver->transport, app);
 	return appserver;
 }
 

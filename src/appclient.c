@@ -63,7 +63,7 @@ AppClient * appclient_new_event(char const * app, char const * name,
 	AppClient * appclient;
 
 #ifdef DEBUG
-	fprintf(stderr, "DEBUG: %s(\"%s\", %p)\n", __func__, app,
+	fprintf(stderr, "DEBUG: %s(\"%s\", \"%s\", %p)\n", __func__, app, name,
 			(void *)event);
 #endif
 	if((appclient = object_new(sizeof(*appclient))) == NULL)
@@ -71,10 +71,10 @@ AppClient * appclient_new_event(char const * app, char const * name,
 	appclient->interface = appinterface_new_server(app);
 	appclient->helper.data = appclient;
 	appclient->helper.message = _appclient_helper_message;
-	appclient->transport = apptransport_new_app(ATM_CLIENT,
-			&appclient->helper, app, name, event);
 	appclient->event = (event != NULL) ? event : event_new();
 	appclient->event_free = (event != NULL) ? 0 : 1;
+	appclient->transport = apptransport_new_app(ATM_CLIENT,
+			&appclient->helper, app, name, appclient->event);
 	/* check for errors */
 	if(appclient->interface == NULL || appclient->transport == NULL
 			|| appclient->event == NULL)

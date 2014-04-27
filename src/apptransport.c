@@ -94,13 +94,18 @@ AppTransport * apptransport_new(AppTransportMode mode,
 	AppTransport * transport;
 
 #ifdef DEBUG
-	fprintf(stderr, "DEBUG: %s(%u, \"%s\", \"%s\")\n", __func__, mode,
-			plugin, name);
+	fprintf(stderr, "DEBUG: %s(%u, \"%s\", \"%s\", %p)\n", __func__, mode,
+			plugin, name, (void *)event);
 #endif
 	/* check the arguments */
 	if(plugin == NULL || plugin[0] == '\0')
 	{
 		error_set_code(1, "%s", "Invalid transport");
+		return NULL;
+	}
+	if(event == NULL)
+	{
+		error_set_code(1, "%s", "Invalid arguments");
 		return NULL;
 	}
 	/* allocate the transport */
