@@ -185,7 +185,7 @@ static String * _new_app_name(char const * app, char const * name)
 		error_set_code(1, "%s", "Invalid App");
 		return NULL;
 	}
-	if(name != NULL && name[0] != '\0')
+	if(name != NULL)
 		return string_new(name);
 	/* obtain the desired transport and name from the environment */
 	if((var = string_new_append("APPSERVER_", app, NULL)) == NULL)
