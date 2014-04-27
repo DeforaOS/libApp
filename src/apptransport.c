@@ -46,6 +46,9 @@ struct _AppTransport
 	AppTransportHelper helper;
 	String * name;
 
+	/* registration */
+	AppClient * appclient;
+
 	/* plug-in */
 	AppTransportPluginHelper thelper;
 	Plugin * plugin;
@@ -108,6 +111,7 @@ AppTransport * apptransport_new(AppTransportMode mode,
 	if(helper != NULL)
 		transport->helper = *helper;
 	transport->name = string_new(name);
+	transport->appclient = NULL;
 	/* initialize the plug-in helper */
 	_new_helper(transport, mode, event);
 	/* load the transport plug-in */
@@ -220,6 +224,8 @@ static String * _new_app_transport(String ** name)
 /* apptransport_delete */
 void apptransport_delete(AppTransport * transport)
 {
+	if(transport->appclient != NULL)
+		appclient_delete(transport->appclient);
 	if(transport->tplugin != NULL)
 		transport->definition->destroy(transport->tplugin);
 	if(transport->plugin != NULL)
@@ -305,16 +311,15 @@ int apptransport_client_send(AppTransport * transport, AppMessage * message,
 int apptransport_server_register(AppTransport * transport, char const * app)
 {
 	int ret;
-	AppClient * appclient;
 	int res = -1;
 
-	if((appclient = appclient_new("Session", NULL)) == NULL)
+	if(transport->appclient != NULL)
+		appclient_delete(transport->appclient);
+	if((transport->appclient = appclient_new("Session", NULL)) == NULL)
 		return -1;
-	ret = appclient_call(appclient, (void **)&res, "register", app,
-			transport->name);
+	ret = appclient_call(transport->appclient, (void **)&res, "register",
+			app, transport->name);
 	ret = (ret == 0 && res == 0) ? 0 : -1;
-	/* FIXME really keep alive until the transport exits */
-	appclient_delete(appclient);
 	return ret;
 }
 
