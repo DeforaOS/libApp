@@ -91,7 +91,8 @@ AppTransport * apptransport_new(AppTransportMode mode,
 	AppTransport * transport;
 
 #ifdef DEBUG
-	fprintf(stderr, "DEBUG: %s(\"%s\", \"%s\")\n", __func__, plugin, name);
+	fprintf(stderr, "DEBUG: %s(%u, \"%s\", \"%s\")\n", __func__, mode,
+			plugin, name);
 #endif
 	/* check the arguments */
 	if(plugin == NULL || plugin[0] == '\0')
@@ -152,7 +153,8 @@ AppTransport * apptransport_new_app(AppTransportMode mode,
 	String * transport;
 
 #ifdef DEBUG
-	fprintf(stderr, "DEBUG: %s(\"%s\", \"%s\")\n", __func__, app, name);
+	fprintf(stderr, "DEBUG: %s(%u, \"%s\", \"%s\")\n", __func__, mode, app,
+			name);
 #endif
 	if((n = _new_app_name(app, name)) == NULL)
 		return NULL;
@@ -179,11 +181,14 @@ static String * _new_app_name(char const * app, char const * name)
 		error_set_code(1, "%s", "Invalid App");
 		return NULL;
 	}
-	if(name != NULL)
+	if(name != NULL && name[0] != '\0')
 		return string_new(name);
 	/* obtain the desired transport and name from the environment */
 	if((var = string_new_append("APPSERVER_", app, NULL)) == NULL)
 		return NULL;
+#ifdef DEBUG
+	fprintf(stderr, "DEBUG: %s() \"%s\"\n", __func__, var);
+#endif
 	name = getenv(var);
 	string_delete(var);
 	if(name == NULL)
@@ -200,9 +205,10 @@ static String * _new_app_transport(String ** name)
 		/* XXX hard-coded default value */
 		return string_new("tcp");
 	/* XXX */
-	*(p++) = '\0';
-	transport = *name;
-	if((*name = string_new(p)) == NULL)
+	*p = '\0';
+	transport = string_new(*name);
+	*p = ':';
+	if(transport == NULL || (*name = string_new(++p)) == NULL)
 	{
 		string_delete(transport);
 		return NULL;
