@@ -111,6 +111,7 @@ target="$1"
 FAILED=
 echo "Performing tests:" 1>&2
 $DATE > "$target"
+_test "appclient" "appclient" -a "VFS" -n tcp:localhost:4242
 _test "appmessage" "appmessage"
 _test "lookup" "lookup VFS tcp" -a "VFS" -n "tcp:localhost:4242"
 _test "lookup" "lookup VFS tcp4" -a "VFS" -n "tcp4:localhost:4242"
@@ -133,9 +134,11 @@ _test "transport" "udp 127.0.0.1:4242" -p udp 127.0.0.1:4242
 _test "transport" "udp ::1.4242" -p udp ::1.4242
 _test "transport" "udp localhost:4242" -p udp localhost:4242
 echo "Expected failures:" 1>&2
-#XXX appclient, appserver and lookup should really succeed
-_fail "appclient" "appclient" -a "VFS" -n "tcp:"
-_fail "appserver" "appserver" -a "VFS" -n "tcp:"
+#XXX should really succeed but appserver doesn't define the VFS symbols
+_fail "appserver" "appserver" -a "VFS" -n tcp:localhost:4242
+export APPSERVER_VFS="tcp:localhost:4242"
+_fail "appserver" "appserver" -a "VFS"
+unset APPSERVER_VFS
 _fail "lookup" "lookup" -a "VFS" -n "localhost"
 _fail "transport" "tcp6 ::1:4242" -p tcp6 ::1:4242
 _fail "transport" "tcp ::1:4242" -p tcp ::1:4242
