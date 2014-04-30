@@ -33,6 +33,7 @@
 /* types */
 struct _AppClient
 {
+	App * app;
 	AppInterface * interface;
 	Event * event;
 	int event_free;
@@ -50,15 +51,15 @@ static int _appclient_helper_message(void * data, AppTransport * transport,
 /* public */
 /* functions */
 /* appclient_new */
-AppClient * appclient_new(char const * app, char const * name)
+AppClient * appclient_new(App * self, char const * app, char const * name)
 {
-	return appclient_new_event(app, name, NULL);
+	return appclient_new_event(self, app, name, NULL);
 }
 
 
 /* appclient_new_event */
-AppClient * appclient_new_event(char const * app, char const * name,
-		Event * event)
+AppClient * appclient_new_event(App * self, char const * app,
+		char const * name, Event * event)
 {
 	AppClient * appclient;
 
@@ -68,6 +69,7 @@ AppClient * appclient_new_event(char const * app, char const * name,
 #endif
 	if((appclient = object_new(sizeof(*appclient))) == NULL)
 		return NULL;
+	appclient->app = self;
 	appclient->interface = appinterface_new(app);
 	appclient->helper.data = appclient;
 	appclient->helper.message = _appclient_helper_message;
@@ -121,7 +123,8 @@ int appclient_call(AppClient * appclient,
 	va_list ap;
 
 	va_start(ap, method);
-	ret = appinterface_callv(appclient->interface, result, method, ap);
+	ret = appinterface_callv(appclient->interface, appclient->app, result,
+			method, ap);
 	va_end(ap);
 	return ret;
 }
@@ -145,8 +148,8 @@ int appclient_call_variable(AppClient * appclient,
 	for(i = 0; i < cnt; i++)
 		argv[i] = va_arg(ap, Variable *);
 	va_end(ap);
-	ret = appinterface_call_variablev(appclient->interface, result, method,
-			cnt, argv);
+	ret = appinterface_call_variablev(appclient->interface, appclient->app,
+			result, method, cnt, argv);
 	free(argv);
 	return ret;
 }

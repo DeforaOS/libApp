@@ -74,7 +74,7 @@ static int _appclient(int verbose, char const * app, char const * name,
 	fprintf(stderr, "DEBUG: %s(%d, %s, %s, %p, %zu)\n", __func__, verbose,
 			hostname, service, (void *)calls, calls_cnt);
 #endif
-	if((ac = appclient_new(app, name)) == NULL)
+	if((ac = appclient_new(NULL, app, name)) == NULL)
 		return _error(PROGNAME, 1);
 	if(verbose != 0)
 		puts("Connected.");

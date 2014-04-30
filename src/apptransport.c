@@ -286,7 +286,7 @@ String * apptransport_lookup(char const * app)
 		error_set_code(1, "%s: %s", app, "Could not lookup");
 		return NULL;
 	}
-	if((appclient = appclient_new(session, NULL)) == NULL)
+	if((appclient = appclient_new(NULL, session, NULL)) == NULL)
 		return NULL;
 	appclient_call(appclient, (void **)&name, "lookup", app);
 	appclient_delete(appclient);
@@ -317,13 +317,14 @@ int apptransport_server_register(AppTransport * transport, char const * app)
 {
 	int ret;
 	int res = -1;
+	const char session[] = "Session";
 
 	if(transport->mode != ATM_SERVER)
 		return -error_set_code(1, "%s",
 				"Only servers can register to sessions");
 	if(transport->appclient != NULL)
 		appclient_delete(transport->appclient);
-	if((transport->appclient = appclient_new("Session", NULL)) == NULL)
+	if((transport->appclient = appclient_new(NULL, session, NULL)) == NULL)
 		return -1;
 	ret = appclient_call(transport->appclient, (void **)&res, "register",
 			app, transport->name);

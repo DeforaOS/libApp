@@ -21,6 +21,7 @@
 # include <stdint.h>
 # include <System/event.h>
 # include <System/variable.h>
+# include "app.h"
 
 
 /* AppClient */
@@ -29,9 +30,9 @@ typedef struct _AppClient AppClient;
 
 
 /* functions */
-AppClient * appclient_new(char const * app, char const * name);
-AppClient * appclient_new_event(char const * app, char const * name,
-		Event * event);
+AppClient * appclient_new(App * self, char const * app, char const * name);
+AppClient * appclient_new_event(App * self, char const * app,
+		char const * name, Event * event);
 void appclient_delete(AppClient * appclient);
 
 /* useful */

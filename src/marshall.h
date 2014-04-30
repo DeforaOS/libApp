@@ -19,11 +19,12 @@
 # define LIBAPP_MARSHALL_H
 
 # include <System/variable.h>
+# include "App/app.h"
 
 
 /* Marshall */
 /* functions */
-int marshall_call(VariableType type, Variable * result, void * func,
-		size_t argc, Variable ** argv);
+int marshall_call(App * app, VariableType type, Variable * result,
+		void * (*func)(void *), size_t argc, Variable ** argv);
 
 #endif /* !LIBAPP_MARSHALL_H */

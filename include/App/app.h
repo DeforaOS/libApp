@@ -21,6 +21,8 @@
 
 /* App */
 /* types */
+typedef struct _App App;
+
 typedef struct _AppMessage AppMessage;
 
 #endif /* !LIBAPP_APP_APP_H */

@@ -36,6 +36,8 @@
 /* types */
 struct _AppServer
 {
+	App * app;
+	AppServerOptions options;
 	AppInterface * interface;
 	Event * event;
 	int event_free;
@@ -53,21 +55,23 @@ static int _appserver_helper_message(void * data, AppTransport * transport,
 /* public */
 /* functions */
 /* appserver_new */
-AppServer * appserver_new(AppServerOptions options, const char * app,
-		char const * name)
+AppServer * appserver_new(App * self, AppServerOptions options,
+		const char * app, char const * name)
 {
-	return appserver_new_event(options, app, name, NULL);
+	return appserver_new_event(self, options, app, name, NULL);
 }
 
 
 /* appserver_new_event */
-AppServer * appserver_new_event(AppServerOptions options, char const * app,
-		char const * name, Event * event)
+AppServer * appserver_new_event(App * self, AppServerOptions options,
+		char const * app, char const * name, Event * event)
 {
 	AppServer * appserver;
 
 	if((appserver = object_new(sizeof(*appserver))) == NULL)
 		return NULL;
+	appserver->app = self;
+	appserver->options = options;
 	appserver->interface = appinterface_new_server(app);
 	appserver->helper.data = appserver;
 	appserver->helper.message = _appserver_helper_message;
@@ -162,8 +166,8 @@ static int _helper_message_call(AppServer * appserver, AppTransport * transport,
 	if(!appinterface_can_call(appserver->interface, name, method))
 		/* XXX report errors */
 		return -1;
-	ret = appinterface_call_variablev(appserver->interface, result, method,
-			0, NULL);
+	ret = appinterface_call_variablev(appserver->interface, appserver->app,
+			result, method, 0, NULL);
 	if(result != NULL)
 		variable_delete(result);
 	return ret;

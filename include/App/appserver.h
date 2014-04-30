@@ -19,6 +19,7 @@
 # define LIBAPP_APP_APPSERVER_H
 
 # include <System/event.h>
+# include "app.h"
 
 
 /* AppServer */
@@ -36,10 +37,10 @@ typedef struct _AppServer AppServer;
 
 
 /* functions */
-AppServer * appserver_new(AppServerOptions options, char const * app,
-		char const * name);
-AppServer * appserver_new_event(AppServerOptions options, char const * app,
-		char const * name, Event * event);
+AppServer * appserver_new(App * self, AppServerOptions options,
+		char const * app, char const * name);
+AppServer * appserver_new_event(App * self, AppServerOptions options,
+		char const * app, char const * name, Event * event);
 void appserver_delete(AppServer * appserver);
 
 /* accessors */

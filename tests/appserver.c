@@ -53,7 +53,7 @@ int main(int argc, char * argv[])
 			default:
 				return _usage();
 		}
-	if((appserver = appserver_new(0, app, name)) == NULL)
+	if((appserver = appserver_new(NULL, 0, app, name)) == NULL)
 	{
 		error_print("appserver");
 		return 2;

@@ -80,7 +80,7 @@ typedef struct _AppInterfaceCall
 	AppInterfaceCallArg type;
 	AppInterfaceCallArg * args;
 	size_t args_cnt;
-	void * func;
+	void * (*func)(void *);
 } AppInterfaceCall;
 
 struct _AppInterface
@@ -387,7 +387,7 @@ int appinterface_get_args_count(AppInterface * appinterface, size_t * count,
 
 /* useful */
 /* appinterface_callv */
-int appinterface_callv(AppInterface * appinterface, void ** result,
+int appinterface_callv(AppInterface * appinterface, App * app, void ** result,
 		char const * method, va_list args)
 {
 	int ret;
@@ -401,8 +401,9 @@ int appinterface_callv(AppInterface * appinterface, void ** result,
 		r = NULL;
 	else if((r = variable_new(call->type.type, NULL)) == NULL)
 		return -1;
-	if((ret = marshall_call(call->type.type, r, call->func, call->args_cnt,
-					NULL)) == 0 && r != NULL)
+	if((ret = marshall_call(app, call->type.type, r, call->func,
+					call->args_cnt, NULL)) == 0
+			&& r != NULL)
 	{
 		if(result != NULL)
 			/* XXX return 0 anyway? */
@@ -414,8 +415,9 @@ int appinterface_callv(AppInterface * appinterface, void ** result,
 
 
 /* appinterface_call_variablev */
-int appinterface_call_variablev(AppInterface * appinterface, Variable * result,
-		char const * method, size_t argc, Variable ** argv)
+int appinterface_call_variablev(AppInterface * appinterface, App * app,
+		Variable * result, char const * method,
+		size_t argc, Variable ** argv)
 {
 	AppInterfaceCall * call;
 
@@ -424,7 +426,8 @@ int appinterface_call_variablev(AppInterface * appinterface, Variable * result,
 	if(argc != call->args_cnt)
 		return -1;
 	/* FIXME implement argv */
-	return marshall_call(call->type.type, result, call->func, argc, NULL);
+	return marshall_call(app, call->type.type, result, call->func, argc,
+			NULL);
 }
 
 

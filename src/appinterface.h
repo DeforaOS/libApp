@@ -41,9 +41,10 @@ int appinterface_get_args_count(AppInterface * appinterface, size_t * count,
 		char const * function);
 
 /* useful */
-int appinterface_callv(AppInterface * appinterface, void ** result,
+int appinterface_callv(AppInterface * appinterface, App * app, void ** result,
 		char const * method, va_list args);
-int appinterface_call_variablev(AppInterface * appinterface, Variable * result,
-		char const * method, size_t argc, Variable ** argv);
+int appinterface_call_variablev(AppInterface * appinterface, App * app,
+		Variable * result, char const * method,
+		size_t argc, Variable ** argv);
 
 #endif /* !LIBAPP_APPINTERFACE_H */

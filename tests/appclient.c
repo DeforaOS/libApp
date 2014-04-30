@@ -52,7 +52,7 @@ int main(int argc, char * argv[])
 			default:
 				return _usage();
 		}
-	if((appclient = appclient_new(app, name)) == NULL)
+	if((appclient = appclient_new(NULL, app, name)) == NULL)
 	{
 		error_print("appclient");
 		return 2;
