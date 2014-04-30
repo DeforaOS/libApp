@@ -23,7 +23,9 @@
 #include <System.h>
 #include "App.h"
 
-#define APPCLIENT_PROGNAME "AppClient"
+#ifndef PROGNAME
+# define PROGNAME "AppClient"
+#endif
 
 
 /* AppClient */
@@ -73,13 +75,13 @@ static int _appclient(int verbose, char const * app, char const * name,
 			hostname, service, (void *)calls, calls_cnt);
 #endif
 	if((ac = appclient_new(app, name)) == NULL)
-		return _error(APPCLIENT_PROGNAME, 1);
+		return _error(PROGNAME, 1);
 	if(verbose != 0)
 		puts("Connected.");
 	for(i = 0; i < calls_cnt; i++)
 		if(_appclient_call(verbose, ac, &calls[i]) != 0)
 		{
-			ret |= _error(APPCLIENT_PROGNAME, 1);
+			ret |= _error(PROGNAME, 1);
 			break;
 		}
 	if(verbose != 0)
@@ -259,7 +261,7 @@ static int _error(char const * message, int ret)
 /* usage */
 static int _usage(void)
 {
-	fputs("Usage: " APPCLIENT_PROGNAME " [-v][-H hostname] -S service"
+	fputs("Usage: " PROGNAME " [-v][-H hostname] -S service"
 " [-C call [-d double|-f float|-i integer|-s string]...]...\n"
 "  -v	Be more verbose\n"
 "  -H	Hostname to connect to\n"
@@ -326,7 +328,7 @@ int main(int argc, char * argv[])
 				return _usage();
 		}
 		if(res != 0)
-			return _error(APPCLIENT_PROGNAME, 2);
+			return _error(PROGNAME, 2);
 	}
 	if(app == NULL)
 		return _usage();
