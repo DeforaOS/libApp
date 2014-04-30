@@ -32,20 +32,24 @@ static struct addrinfo * _init_address(char const * name, int domain, int flags)
 	fprintf(stderr, "DEBUG: %s(\"%s\", %d, %d)\n", __func__, name, domain,
 			flags);
 #endif
+	/* check the arguments */
+	if(name == NULL || strlen(name) == 0)
+	{
+		error_set_code(1, "%s", "Empty names are not allowed");
+		return NULL;
+	}
 	/* guess the port separator */
 	if((p = strchr(name, ':')) != NULL && strchr(++p, ':') != NULL)
 		sep = '.';
 	/* obtain the name */
-	if(strlen(name) == 0)
-		hostname = NULL;
-	else if((hostname = strdup(name)) == NULL)
+	if((p = strdup(name)) == NULL)
 	{
 		error_set_code(1, "%s", strerror(errno));
 		return NULL;
 	}
+	hostname = p;
 	/* obtain the port number */
-	if(hostname == NULL || (servname = strrchr(hostname, sep)) == NULL
-			|| servname[1] == '\0')
+	if((servname = strrchr(hostname, sep)) == NULL || servname[1] == '\0')
 	{
 		l = 0;
 		servname = NULL;
@@ -53,6 +57,8 @@ static struct addrinfo * _init_address(char const * name, int domain, int flags)
 	else
 	{
 		*(servname++) = '\0';
+		if(hostname[0] == '\0')
+			hostname = NULL;
 		l = strtol(servname, &q, 10);
 		if(servname[0] == '\0' || *q != '\0')
 			l = -error_set_code(1, "%s", strerror(EINVAL));
@@ -62,9 +68,13 @@ static struct addrinfo * _init_address(char const * name, int domain, int flags)
 	hints.ai_family = domain;
 	hints.ai_socktype = SOCK_STREAM;
 	hints.ai_flags = flags;
+#ifdef DEBUG
+	fprintf(stderr, "DEBUG: %s() %ld \"%s\" \"%s\" %u\n", __func__, l,
+			hostname, servname, flags);
+#endif
 	if(l >= 0)
 		res = getaddrinfo(hostname, servname, &hints, &ai);
-	free(hostname);
+	free(p);
 	/* check for errors */
 	if(res != 0)
 	{
