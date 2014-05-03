@@ -116,7 +116,6 @@ AppTransport * apptransport_new(AppTransportMode mode,
 	if(helper != NULL)
 		transport->helper = *helper;
 	transport->name = string_new(name);
-	transport->appclient = NULL;
 	/* initialize the plug-in helper */
 	_new_helper(transport, mode, event);
 	/* load the transport plug-in */
