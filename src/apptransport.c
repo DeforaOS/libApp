@@ -149,7 +149,8 @@ static void _new_helper(AppTransport * transport, AppTransportMode mode,
 
 
 /* apptransport_new_app */
-static String * _new_app_name(char const * app, char const * name);
+static String * _new_app_name(AppTransportMode mode, char const * app,
+		char const * name);
 static String * _new_app_transport(String ** name);
 
 AppTransport * apptransport_new_app(AppTransportMode mode,
@@ -164,7 +165,7 @@ AppTransport * apptransport_new_app(AppTransportMode mode,
 	fprintf(stderr, "DEBUG: %s(%u, \"%s\", \"%s\")\n", __func__, mode, app,
 			name);
 #endif
-	if((n = _new_app_name(app, name)) == NULL)
+	if((n = _new_app_name(mode, app, name)) == NULL)
 		return NULL;
 	if((transport = _new_app_transport(&n)) == NULL)
 	{
@@ -177,7 +178,8 @@ AppTransport * apptransport_new_app(AppTransportMode mode,
 	return apptransport;
 }
 
-static String * _new_app_name(char const * app, char const * name)
+static String * _new_app_name(AppTransportMode mode, char const * app,
+		char const * name)
 {
 	String * var;
 
@@ -200,7 +202,7 @@ static String * _new_app_name(char const * app, char const * name)
 	name = getenv(var);
 	string_delete(var);
 	if(name == NULL)
-		return apptransport_lookup(app);
+		return (mode == ATM_CLIENT) ? apptransport_lookup(app) : NULL;
 	return string_new(name);
 }
 
