@@ -103,7 +103,7 @@ AppTransport * apptransport_new(AppTransportMode mode,
 		error_set_code(1, "%s", "Invalid transport");
 		return NULL;
 	}
-	if(event == NULL)
+	if(name == NULL || event == NULL)
 	{
 		error_set_code(1, "%s", "Invalid arguments");
 		return NULL;
