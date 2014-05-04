@@ -202,7 +202,12 @@ static String * _new_app_name(AppTransportMode mode, char const * app,
 	name = getenv(var);
 	string_delete(var);
 	if(name == NULL)
-		return (mode == ATM_CLIENT) ? apptransport_lookup(app) : NULL;
+	{
+		if(mode == ATM_CLIENT)
+			return apptransport_lookup(app);
+		error_set_code(1, "%s: %s", app, "Could not lookup name");
+		return NULL;
+	}
 	return string_new(name);
 }
 
