@@ -79,6 +79,50 @@
 		<para>The following options are available:</para>
 		<variablelist>
 			<varlistentry>
+				<term><option>-C</option></term>
+				<listitem>
+					<para>Enqueue a call to the method specified.</para>
+				</listitem>
+			</varlistentry>
+			<varlistentry>
+				<term><option>-H</option></term>
+				<listitem>
+					<para>Location of the service. It should include the name of the transport
+						protocol to use, such as "unix" or "tcp".</para>
+				</listitem>
+			</varlistentry>
+			<varlistentry>
+				<term><option>-S</option></term>
+				<listitem>
+					<para>Name of the service to connect to (in other words, the protocol to
+						speak).</para>
+				</listitem>
+			</varlistentry>
+			<varlistentry>
+				<term><option>-d</option></term>
+				<listitem>
+					<para>Add a double value as an argument to the current call.</para>
+				</listitem>
+			</varlistentry>
+			<varlistentry>
+				<term><option>-f</option></term>
+				<listitem>
+					<para>Add a float value as an argument to the current call.</para>
+				</listitem>
+			</varlistentry>
+			<varlistentry>
+				<term><option>-i</option></term>
+				<listitem>
+					<para>Add an integer value as an argument to the current call.</para>
+				</listitem>
+			</varlistentry>
+			<varlistentry>
+				<term><option>-s</option></term>
+				<listitem>
+					<para>Add a string value as an argument to the current call.</para>
+				</listitem>
+			</varlistentry>
+			<varlistentry>
 				<term><option>-v</option></term>
 				<listitem>
 					<para>Be more verbose.</para>
