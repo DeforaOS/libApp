@@ -56,7 +56,8 @@ int apptransport_client_send(AppTransport * transport, AppMessage * message,
 		int acknowledge);
 
 /* ATM_SERVER */
-int apptransport_server_register(AppTransport * transport, char const * app);
+int apptransport_server_register(AppTransport * transport, char const * app,
+		char const * name);
 int apptransport_server_send(AppTransport * transport,
 		AppTransportClient * client, AppMessage * message);
 

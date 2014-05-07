@@ -48,5 +48,6 @@ char const * appserver_get_app(AppServer * appserver);
 
 /* useful */
 int appserver_loop(AppServer * appserver);
+int appserver_register(AppServer * appserver, char const * name);
 
 #endif /* !LIBAPP_APP_APPSERVER_H */

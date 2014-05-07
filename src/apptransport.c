@@ -319,7 +319,8 @@ int apptransport_client_send(AppTransport * transport, AppMessage * message,
 
 
 /* apptransport_server_register */
-int apptransport_server_register(AppTransport * transport, char const * app)
+int apptransport_server_register(AppTransport * transport, char const * app,
+		char const * name)
 {
 	int ret;
 	int res = -1;
@@ -330,7 +331,7 @@ int apptransport_server_register(AppTransport * transport, char const * app)
 				"Only servers can register to sessions");
 	if(transport->appclient != NULL)
 		appclient_delete(transport->appclient);
-	if((transport->appclient = appclient_new(NULL, session, NULL)) == NULL)
+	if((transport->appclient = appclient_new(NULL, session, name)) == NULL)
 		return -1;
 	ret = appclient_call(transport->appclient, (void **)&res, "register",
 			app, transport->name);

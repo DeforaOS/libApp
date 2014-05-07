@@ -37,6 +37,7 @@
 struct _AppServer
 {
 	App * app;
+	char * name;
 	AppServerOptions options;
 	AppInterface * interface;
 	Event * event;
@@ -71,6 +72,7 @@ AppServer * appserver_new_event(App * self, AppServerOptions options,
 	if((appserver = object_new(sizeof(*appserver))) == NULL)
 		return NULL;
 	appserver->app = self;
+	appserver->name = string_new(app);
 	appserver->options = options;
 	appserver->interface = appinterface_new_server(app);
 	appserver->helper.data = appserver;
@@ -80,11 +82,11 @@ AppServer * appserver_new_event(App * self, AppServerOptions options,
 	appserver->transport = apptransport_new_app(ATM_SERVER,
 			&appserver->helper, app, name, appserver->event);
 	/* check for errors */
-	if(appserver->interface == NULL || appserver->transport == NULL
+	if(appserver->name == NULL || appserver->interface == NULL
+			|| appserver->transport == NULL
 			|| appserver->event == NULL
 			|| (((options & ASO_REGISTER) == ASO_REGISTER)
-				&& apptransport_server_register(
-					appserver->transport, app) != 0))
+				&& appserver_register(appserver, NULL) != 0))
 	{
 		appserver_delete(appserver);
 		return NULL;
@@ -123,6 +125,14 @@ int appserver_loop(AppServer * appserver)
 	fprintf(stderr, "DEBUG: %s()\n", __func__);
 #endif
 	return event_loop(appserver->event);
+}
+
+
+/* appserver_register */
+int appserver_register(AppServer * appserver, char const * name)
+{
+	return apptransport_server_register(appserver->transport,
+			appserver->name, name);
 }
 
 
