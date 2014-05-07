@@ -22,12 +22,6 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
-#ifdef __WIN32__
-# include <Winsock2.h>
-#else
-# include <arpa/inet.h>
-# include <netinet/in.h>
-#endif
 #include <errno.h>
 #include <System.h>
 #include "App/appserver.h"
