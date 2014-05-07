@@ -117,6 +117,7 @@ _test "appserver" "appserver" -a "Dummy" -n tcp:localhost:4242
 export APPSERVER_Dummy="tcp:localhost:4242"
 _test "appserver" "appserver" -a "Dummy"
 unset APPSERVER_Dummy
+_test "includes" "includes"
 _test "lookup" "lookup VFS tcp" -a "VFS" -n "tcp:localhost:4242"
 _test "lookup" "lookup VFS tcp4" -a "VFS" -n "tcp4:localhost:4242"
 #XXX avoid the export/unset dance

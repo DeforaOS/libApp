@@ -72,6 +72,7 @@ dist:
 		$(PACKAGE)-$(VERSION)/tests/appclient.c \
 		$(PACKAGE)-$(VERSION)/tests/appmessage.c \
 		$(PACKAGE)-$(VERSION)/tests/appserver.c \
+		$(PACKAGE)-$(VERSION)/tests/includes.c \
 		$(PACKAGE)-$(VERSION)/tests/lookup.c \
 		$(PACKAGE)-$(VERSION)/tests/transport.c \
 		$(PACKAGE)-$(VERSION)/tests/Makefile \
