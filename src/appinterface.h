@@ -20,6 +20,7 @@
 
 # include <stdarg.h>
 # include <System/variable.h>
+# include "App/apptransport.h"
 
 
 /* AppInterface */
@@ -28,8 +29,7 @@ typedef struct _AppInterface AppInterface;
 
 
 /* functions */
-AppInterface * appinterface_new(char const * app);
-AppInterface * appinterface_new_server(char const * app);
+AppInterface * appinterface_new(AppTransportMode mode, char const * app);
 void appinterface_delete(AppInterface * appinterface);
 
 /* accessors */

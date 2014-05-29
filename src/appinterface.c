@@ -79,6 +79,7 @@ typedef struct _AppInterfaceCall
 
 struct _AppInterface
 {
+	AppTransportMode mode;
 	String * name;
 	Config * config;
 
@@ -96,6 +97,7 @@ typedef struct _StringEnum
 
 /* constants */
 #define APPINTERFACE_CALL_PREFIX "call::"
+#define APPINTERFACE_CALLBACK_PREFIX "callback::"
 
 
 /* variables */
@@ -149,13 +151,42 @@ static int _string_enum(String const * string, StringEnum const * se)
 /* public */
 /* functions */
 /* appinterface_new */
+AppInterface * _new_do(AppTransportMode mode, char const * app);
 static int _new_foreach(char const * key, Hash * value,
 		AppInterface * appinterface);
 static int _new_append(AppInterface * ai, VariableType type,
 		char const * function);
 static int _new_append_arg(AppInterface * ai, char const * arg);
 
-AppInterface * appinterface_new(char const * app)
+AppInterface * appinterface_new(AppTransportMode mode, char const * app)
+{
+	AppInterface * ai;
+	Plugin * handle;
+	size_t i;
+	String * name;
+
+	if((handle = plugin_new_self()) == NULL)
+		return NULL;
+	if((ai = _new_do(mode, app)) == NULL)
+		return NULL;
+	for(i = 0; i < ai->calls_cnt; i++)
+	{
+		name = string_new_append(ai->name, "_", ai->calls[i].name,
+				NULL);
+		ai->calls[i].func = plugin_lookup(handle, name);
+		string_delete(name);
+		if(ai->calls[i].func == NULL)
+		{
+			appinterface_delete(ai);
+			plugin_delete(handle);
+			return NULL;
+		}
+	}
+	plugin_delete(handle);
+	return ai;
+}
+
+AppInterface * _new_do(AppTransportMode mode, char const * app)
 {
 	AppInterface * appinterface;
 	String * pathname = NULL;
@@ -164,6 +195,7 @@ AppInterface * appinterface_new(char const * app)
 		return NULL; /* FIXME report error */
 	if((appinterface = object_new(sizeof(*appinterface))) == NULL)
 		return NULL;
+	appinterface->mode = mode;
 	appinterface->name = string_new(app);
 	appinterface->config = config_new();
 	appinterface->calls = NULL;
@@ -194,15 +226,16 @@ AppInterface * appinterface_new(char const * app)
 static int _new_foreach(char const * key, Hash * value,
 		AppInterface * appinterface)
 {
-	char const prefix[] = APPINTERFACE_CALL_PREFIX;
+	String const * prefix = (appinterface->mode == ATM_SERVER)
+		? APPINTERFACE_CALL_PREFIX : APPINTERFACE_CALLBACK_PREFIX;
 	int i;
 	char buf[8];
 	int type = VT_NULL;
 	char const * p;
 
-	if(key == NULL || strncmp(prefix, key, sizeof(prefix) - 1) != 0)
+	if(key == NULL || strncmp(prefix, key, string_length(prefix)) != 0)
 		return 0;
-	key += sizeof(prefix) - 1;
+	key += string_length(prefix);
 	if((p = hash_get(value, "ret")) != NULL
 			&& (type = _string_enum(p, _string_type)) < 0)
 	{
@@ -283,36 +316,6 @@ static int _new_append_arg(AppInterface * ai, char const * arg)
 }
 
 
-/* appinterface_new_server */
-AppInterface * appinterface_new_server(char const * app)
-{
-	AppInterface * ai;
-	Plugin * handle;
-	size_t i;
-	String * name;
-
-	if((handle = plugin_new_self()) == NULL)
-		return NULL;
-	if((ai = appinterface_new(app)) == NULL)
-		return NULL;
-	for(i = 0; i < ai->calls_cnt; i++)
-	{
-		name = string_new_append(ai->name, "_", ai->calls[i].name,
-				NULL);
-		ai->calls[i].func = plugin_lookup(handle, name);
-		string_delete(name);
-		if(ai->calls[i].func == NULL)
-		{
-			appinterface_delete(ai);
-			plugin_delete(handle);
-			return NULL;
-		}
-	}
-	plugin_delete(handle);
-	return ai;
-}
-
-
 /* appinterface_delete */
 void appinterface_delete(AppInterface * appinterface)
 {
@@ -333,7 +336,30 @@ void appinterface_delete(AppInterface * appinterface)
 
 /* accessors */
 /* appinterface_can_call */
+static int _can_call_client(AppInterface * appinterface);
+static int _can_call_server(AppInterface * appinterface, char const * name,
+		char const * method);
+
 int appinterface_can_call(AppInterface * appinterface, char const * name,
+		char const * method)
+{
+	switch(appinterface->mode)
+	{
+		case ATM_CLIENT:
+			return _can_call_client(appinterface);
+		case ATM_SERVER:
+			return _can_call_server(appinterface, name, method);
+	}
+	return -error_set_code(1, "%s", "Unknown AppInterface mode");
+}
+
+static int _can_call_client(AppInterface * appinterface)
+{
+	/* FIXME really implement */
+	return -1;
+}
+
+static int _can_call_server(AppInterface * appinterface, char const * name,
 		char const * method)
 {
 	int ret = 0;

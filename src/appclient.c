@@ -24,6 +24,7 @@
 #include <errno.h>
 #include <System.h>
 #include "App/appclient.h"
+#include "App/appmessage.h"
 #include "apptransport.h"
 #include "appinterface.h"
 
@@ -70,7 +71,7 @@ AppClient * appclient_new_event(App * self, char const * app,
 	if((appclient = object_new(sizeof(*appclient))) == NULL)
 		return NULL;
 	appclient->app = self;
-	appclient->interface = appinterface_new(app);
+	appclient->interface = appinterface_new(ATM_CLIENT, app);
 	appclient->helper.data = appclient;
 	appclient->helper.message = _appclient_helper_message;
 	appclient->event = (event != NULL) ? event : event_new();
@@ -157,6 +158,9 @@ int appclient_call_variable(AppClient * appclient,
 
 /* private */
 /* appclient_helper_message */
+static int _helper_message_call(AppClient * appclient, AppTransport * transport,
+		AppMessage * message);
+
 static int _appclient_helper_message(void * data, AppTransport * transport,
 		AppTransportClient * client, AppMessage * message)
 {
@@ -165,6 +169,31 @@ static int _appclient_helper_message(void * data, AppTransport * transport,
 	if(client != NULL)
 		/* XXX report error */
 		return -1;
+	switch(appmessage_get_type(message))
+	{
+		case AMT_CALL:
+			return _helper_message_call(appclient, transport,
+					message);
+	}
 	/* FIXME implement */
-	return 0;
+	return -1;
+}
+
+static int _helper_message_call(AppClient * appclient, AppTransport * transport,
+		AppMessage * message)
+{
+	/* we have received a callback request */
+	int ret;
+	String const * method;
+	Variable * result = NULL;
+
+	method = appmessage_get_method(message);
+	if(!appinterface_can_call(appclient->interface, NULL, method))
+		/* XXX report errors */
+		return -1;
+	ret = appinterface_call_variablev(appclient->interface, appclient->app,
+			result, method, 0, NULL);
+	if(result != NULL)
+		variable_delete(result);
+	return ret;
 }

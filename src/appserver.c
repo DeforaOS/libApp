@@ -74,7 +74,7 @@ AppServer * appserver_new_event(App * self, AppServerOptions options,
 	appserver->app = self;
 	appserver->name = string_new(app);
 	appserver->options = options;
-	appserver->interface = appinterface_new_server(app);
+	appserver->interface = appinterface_new(ATM_SERVER, app);
 	appserver->helper.data = appserver;
 	appserver->helper.message = _appserver_helper_message;
 	appserver->event = (event != NULL) ? event : event_new();
