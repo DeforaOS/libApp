@@ -96,8 +96,8 @@ typedef struct _StringEnum
 
 
 /* constants */
-#define APPINTERFACE_CALL_PREFIX "call::"
-#define APPINTERFACE_CALLBACK_PREFIX "callback::"
+#define APPINTERFACE_CALL_PREFIX	"call::"
+#define APPINTERFACE_CALLBACK_PREFIX	"callback::"
 
 
 /* variables */
