@@ -84,7 +84,6 @@ dist:
 		$(PACKAGE)-$(VERSION)/tools/appbroker.c \
 		$(PACKAGE)-$(VERSION)/tools/appclient.c \
 		$(PACKAGE)-$(VERSION)/tools/Makefile \
-		$(PACKAGE)-$(VERSION)/tools/README \
 		$(PACKAGE)-$(VERSION)/tools/project.conf \
 		$(PACKAGE)-$(VERSION)/Makefile \
 		$(PACKAGE)-$(VERSION)/COPYING \
