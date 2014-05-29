@@ -28,10 +28,13 @@ dist:
 		$(PACKAGE)-$(VERSION)/data/pkgconfig.sh \
 		$(PACKAGE)-$(VERSION)/data/project.conf \
 		$(PACKAGE)-$(VERSION)/doc/Makefile \
+		$(PACKAGE)-$(VERSION)/doc/AppBroker.css.xml \
 		$(PACKAGE)-$(VERSION)/doc/AppBroker.xml \
+		$(PACKAGE)-$(VERSION)/doc/AppClient.css.xml \
 		$(PACKAGE)-$(VERSION)/doc/AppClient.xml \
 		$(PACKAGE)-$(VERSION)/doc/docbook.sh \
 		$(PACKAGE)-$(VERSION)/doc/gtkdoc.sh \
+		$(PACKAGE)-$(VERSION)/doc/manual.css.xml \
 		$(PACKAGE)-$(VERSION)/doc/project.conf \
 		$(PACKAGE)-$(VERSION)/doc/gtkdoc/Makefile \
 		$(PACKAGE)-$(VERSION)/doc/gtkdoc/libApp-docs.xml \

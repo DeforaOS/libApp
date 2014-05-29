@@ -16,13 +16,13 @@ subdirs:
 AppBroker.1: AppBroker.xml
 	./docbook.sh -P "$(PREFIX)" -- "AppBroker.1"
 
-AppBroker.html: AppBroker.xml
+AppBroker.html: AppBroker.css.xml AppBroker.xml manual.css.xml
 	./docbook.sh -P "$(PREFIX)" -- "AppBroker.html"
 
 AppClient.1: AppClient.xml
 	./docbook.sh -P "$(PREFIX)" -- "AppClient.1"
 
-AppClient.html: AppClient.xml
+AppClient.html: AppClient.css.xml AppClient.xml manual.css.xml
 	./docbook.sh -P "$(PREFIX)" -- "AppClient.html"
 
 gtkdoc/libApp.types:
