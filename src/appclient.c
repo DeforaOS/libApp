@@ -185,10 +185,12 @@ static int _helper_message_call(AppClient * appclient, AppTransport * transport,
 	/* we have received a callback request */
 	int ret;
 	String const * method;
+	String const * name;
 	Variable * result = NULL;
 
 	method = appmessage_get_method(message);
-	if(!appinterface_can_call(appclient->interface, NULL, method))
+	name = apptransport_get_name(transport);
+	if(!appinterface_can_call(appclient->interface, method, name))
 		/* XXX report errors */
 		return -1;
 	ret = appinterface_call_variablev(appclient->interface, appclient->app,

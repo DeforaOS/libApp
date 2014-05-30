@@ -173,7 +173,7 @@ static int _helper_message_call(AppServer * appserver, AppTransport * transport,
 
 	name = (client != NULL) ? apptransport_client_get_name(client) : NULL;
 	method = appmessage_get_method(message);
-	if(!appinterface_can_call(appserver->interface, name, method))
+	if(!appinterface_can_call(appserver->interface, method, name))
 		/* XXX report errors */
 		return -1;
 	ret = appinterface_call_variablev(appserver->interface, appserver->app,

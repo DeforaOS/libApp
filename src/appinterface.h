@@ -33,8 +33,8 @@ AppInterface * appinterface_new(AppTransportMode mode, char const * app);
 void appinterface_delete(AppInterface * appinterface);
 
 /* accessors */
-int appinterface_can_call(AppInterface * appinterface, char const * name,
-		char const * method);
+int appinterface_can_call(AppInterface * appinterface, char const * method,
+		char const * name);
 
 char const * appinterface_get_app(AppInterface * appinterface);
 int appinterface_get_args_count(AppInterface * appinterface, size_t * count,

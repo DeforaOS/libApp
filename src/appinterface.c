@@ -341,8 +341,8 @@ static int _can_call_client(AppInterface * appinterface,
 static int _can_call_server(AppInterface * appinterface,
 		AppInterfaceCall * call, char const * name);
 
-int appinterface_can_call(AppInterface * appinterface, char const * name,
-		char const * method)
+int appinterface_can_call(AppInterface * appinterface, char const * method,
+		char const * name)
 {
 	AppInterfaceCall * call;
 
