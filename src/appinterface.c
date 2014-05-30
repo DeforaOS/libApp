@@ -336,41 +336,46 @@ void appinterface_delete(AppInterface * appinterface)
 
 /* accessors */
 /* appinterface_can_call */
-static int _can_call_client(AppInterface * appinterface);
-static int _can_call_server(AppInterface * appinterface, char const * name,
-		char const * method);
+static int _can_call_client(AppInterface * appinterface,
+		AppInterfaceCall * call, char const * name);
+static int _can_call_server(AppInterface * appinterface,
+		AppInterfaceCall * call, char const * name);
 
 int appinterface_can_call(AppInterface * appinterface, char const * name,
 		char const * method)
 {
+	AppInterfaceCall * call;
+
+	if((call = _appinterface_get_call(appinterface, method)) == NULL)
+		return -1;
 	switch(appinterface->mode)
 	{
 		case ATM_CLIENT:
-			return _can_call_client(appinterface);
+			return _can_call_client(appinterface, call, name);
 		case ATM_SERVER:
-			return _can_call_server(appinterface, name, method);
+			return _can_call_server(appinterface, call, name);
 	}
 	return -error_set_code(1, "%s", "Unknown AppInterface mode");
 }
 
-static int _can_call_client(AppInterface * appinterface)
+static int _can_call_client(AppInterface * appinterface,
+		AppInterfaceCall * call, char const * name)
 {
 	/* FIXME really implement */
-	return -1;
+	return 1;
 }
 
-static int _can_call_server(AppInterface * appinterface, char const * name,
-		char const * method)
+static int _can_call_server(AppInterface * appinterface,
+		AppInterfaceCall * call, char const * name)
 {
 	int ret = 0;
 	String * section;
 	String const * allow;
 	String const * deny;
 
-	if((section = string_new_append(APPINTERFACE_CALL_PREFIX, method, NULL))
-			== NULL)
-		/* XXX report as an error */
-		return 0;
+	if((section = string_new_append(APPINTERFACE_CALL_PREFIX, call->name,
+					NULL)) == NULL)
+		return -1;
 	allow = config_get(appinterface->config, section, "allow");
 	deny = config_get(appinterface->config, section, "deny");
 	/* FIXME implement pattern matching */
