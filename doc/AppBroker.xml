@@ -49,6 +49,10 @@
 	<refsynopsisdiv>
 		<cmdsynopsis>
 			<command>&name;</command>
+			<group>
+				<arg choice="plain"><option>-c</option></arg>
+				<arg choice="plain"><option>-s</option></arg>
+			</group>
 			<arg choice="opt"><option>-o</option>
 				<replaceable>output</replaceable></arg>
 			<arg choice="plain"><replaceable>filename</replaceable></arg>
@@ -66,6 +70,15 @@
 			The following option is available:</para>
 		<variablelist>
 			<varlistentry>
+				<term><option>-c</option></term>
+				<para>Generate a file suitable for a client.</para>
+			</varlistentry>
+			<varlistentry>
+				<term><option>-s</option></term>
+				<para>Generate a file suitable for a server. This is the default
+					behavior.</para>
+			</varlistentry>
+			<varlistentry>
 				<term><option>-o</option></term>
 				<listitem>
 					<para>Output file.</para>
@@ -82,7 +95,7 @@
 ret=INT32
 arg1=STRING,pathname
 arg2=UINT32,mode</programlisting>
-		<para>will likely be translated as follows:</para>
+		<para>will likely be translated as follows for a server:</para>
 		<programlisting>/* $Id$ */
 
 
