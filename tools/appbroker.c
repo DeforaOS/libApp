@@ -37,18 +37,28 @@ typedef struct _AppBroker
 } AppBroker;
 
 
+/* prototypes */
+static int _appbroker(AppTransportMode mode, char const * outfile,
+		char const * filename);
+static int _usage(void);
+
+
 /* functions */
 static void _appbroker_calls(AppBroker * appbroker);
+static void _appbroker_callbacks(AppBroker * appbroker);
 static void _appbroker_constants(AppBroker * appbroker);
 static int _appbroker_foreach_call(char const * key, Hash * value, void * data);
 static int _appbroker_foreach_call_arg(AppBroker * appbroker, char const * sep,
 		char const * arg);
+static int _appbroker_foreach_callback(char const * key, Hash * value,
+		void * data);
 static int _appbroker_foreach_constant(char const * key, char const * value,
 		void * data);
 static void _appbroker_head(AppBroker * appbroker);
 static void _appbroker_tail(AppBroker * appbroker);
 
-static int _appbroker(char const * outfile, char const * filename)
+static int _appbroker(AppTransportMode mode, char const * outfile,
+		char const * filename)
 {
 	AppBroker appbroker;
 
@@ -71,7 +81,8 @@ static int _appbroker(char const * outfile, char const * filename)
 	}
 	_appbroker_head(&appbroker);
 	_appbroker_constants(&appbroker);
-	_appbroker_calls(&appbroker);
+	(mode == ATM_SERVER) ? _appbroker_calls(&appbroker)
+		: _appbroker_callbacks(&appbroker);
 	_appbroker_tail(&appbroker);
 	if(outfile != NULL)
 		fclose(appbroker.fp);
@@ -84,6 +95,13 @@ static void _appbroker_calls(AppBroker * appbroker)
 	fputs("\n\n/* calls */\n", appbroker->fp);
 	hash_foreach(appbroker->config,
 			(HashForeach)_appbroker_foreach_call, appbroker);
+}
+
+static void _appbroker_callbacks(AppBroker * appbroker)
+{
+	fputs("\n\n/* callbacks */\n", appbroker->fp);
+	hash_foreach(appbroker->config,
+			(HashForeach)_appbroker_foreach_callback, appbroker);
 }
 
 static void _appbroker_constants(AppBroker * appbroker)
@@ -142,6 +160,37 @@ static int _appbroker_foreach_call_arg(AppBroker * appbroker, char const * sep,
 		return 1;
 	if(*(++p) != '\0')
 		fprintf(appbroker->fp, " %s", p);
+	return 0;
+}
+
+static int _appbroker_foreach_callback(char const * key, Hash * value,
+		void * data)
+{
+	/* XXX some code duplication with _appbroker_foreach_call() */
+	AppBroker * appbroker = data;
+	int i;
+	char buf[8];
+	char const * p;
+	const char sep[] = ", ";
+
+	if(key == NULL || key[0] == '\0')
+		return 0;
+	if(strncmp(key, "callback::", 6) != 0)
+		return 0;
+	key += 6;
+	if((p = hash_get(value, "ret")) == NULL)
+		p = "void";
+	fprintf(appbroker->fp, "%s%s%s%s%s%s", p, " ", appbroker->prefix, "_",
+			key, "(AppClient * client");
+	for(i = 0; i < APPSERVER_MAX_ARGUMENTS; i++)
+	{
+		snprintf(buf, sizeof(buf), "arg%d", i + 1);
+		if((p = hash_get(value, buf)) == NULL)
+			break;
+		if(_appbroker_foreach_call_arg(appbroker, sep, p) != 0)
+			return 1;
+	}
+	fprintf(appbroker->fp, "%s", ");\n");
 	return 0;
 }
 
@@ -204,7 +253,8 @@ static void _appbroker_tail(AppBroker * appbroker)
 /* usage */
 static int _usage(void)
 {
-	fputs("Usage: " APPBROKER_PROGNAME " [-o outfile] filename\n", stderr);
+	fputs("Usage: " APPBROKER_PROGNAME " [-cs][-o outfile] filename\n",
+			stderr);
 	return 1;
 }
 
@@ -213,18 +263,25 @@ static int _usage(void)
 int main(int argc, char * argv[])
 {
 	int o;
+	AppTransportMode mode = ATM_SERVER;
 	char const * outfile = NULL;
 
-	while((o = getopt(argc, argv, "o:")) != -1)
+	while((o = getopt(argc, argv, "co:s")) != -1)
 		switch(o)
 		{
+			case 'c':
+				mode = ATM_CLIENT;
+				break;
 			case 'o':
 				outfile = optarg;
+				break;
+			case 's':
+				mode = ATM_SERVER;
 				break;
 			default:
 				return _usage();
 		}
 	if(optind + 1 != argc)
 		return _usage();
-	return (_appbroker(outfile, argv[optind]) == 0) ? 0 : 2;
+	return (_appbroker(mode, outfile, argv[optind]) == 0) ? 0 : 2;
 }
