@@ -22,8 +22,35 @@
 #include "../src/apptransport.h"
 
 
+/* lookup */
 /* private */
+/* prototypes */
+static int _lookup(char const * app, char const * name);
+static int _usage(void);
+
+
 /* functions */
+static int _lookup(char const * app, char const * name)
+{
+	Event * event;
+	AppTransport * transport;
+
+	if((event = event_new()) == NULL)
+		return error_print("lookup");
+	if((transport = apptransport_new_app(ATM_CLIENT, NULL, app, name,
+					event)) == NULL)
+	{
+		event_delete(event);
+		return error_print("lookup");
+	}
+	printf("transport: %s, name: %s\n",
+			apptransport_get_transport(transport),
+			apptransport_get_name(transport));
+	apptransport_delete(transport);
+	return 0;
+}
+
+
 /* usage */
 static int _usage(void)
 {
@@ -40,8 +67,6 @@ int main(int argc, char * argv[])
 	int o;
 	char const * app = NULL;
 	char const * name = NULL;
-	Event * event;
-	AppTransport * transport;
 
 	while((o = getopt(argc, argv, "a:n:")) != -1)
 		switch(o)
@@ -55,17 +80,5 @@ int main(int argc, char * argv[])
 			default:
 				return _usage();
 		}
-	if((event = event_new()) == NULL)
-		return error_print("lookup");
-	if((transport = apptransport_new_app(ATM_CLIENT, NULL, app, name,
-					event)) == NULL)
-	{
-		event_delete(event);
-		return error_print("lookup");
-	}
-	printf("transport: %s, name: %s\n",
-			apptransport_get_transport(transport),
-			apptransport_get_name(transport));
-	apptransport_delete(transport);
-	return 0;
+	return (_lookup(app, name) == 0) ? 0 : 2;
 }
