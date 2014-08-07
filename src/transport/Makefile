@@ -21,21 +21,21 @@ all: $(TARGETS)
 
 tcp_OBJS = tcp.o
 tcp_CFLAGS = $(CPPFLAGSF) $(CPPFLAGS) $(CFLAGSF) $(CFLAGS)
-tcp_LDFLAGS = $(LDFLAGSF) $(LDFLAGS)
+tcp_LDFLAGS = $(LDFLAGSF) $(LDFLAGS) 
 
 tcp.so: $(tcp_OBJS)
 	$(CCSHARED) -o tcp.so $(tcp_OBJS) $(tcp_LDFLAGS)
 
 tcp4_OBJS = tcp4.o
 tcp4_CFLAGS = $(CPPFLAGSF) $(CPPFLAGS) $(CFLAGSF) $(CFLAGS)
-tcp4_LDFLAGS = $(LDFLAGSF) $(LDFLAGS)
+tcp4_LDFLAGS = $(LDFLAGSF) $(LDFLAGS) 
 
 tcp4.so: $(tcp4_OBJS)
 	$(CCSHARED) -o tcp4.so $(tcp4_OBJS) $(tcp4_LDFLAGS)
 
 tcp6_OBJS = tcp6.o
 tcp6_CFLAGS = $(CPPFLAGSF) $(CPPFLAGS) $(CFLAGSF) $(CFLAGS)
-tcp6_LDFLAGS = $(LDFLAGSF) $(LDFLAGS)
+tcp6_LDFLAGS = $(LDFLAGSF) $(LDFLAGS) 
 
 tcp6.so: $(tcp6_OBJS)
 	$(CCSHARED) -o tcp6.so $(tcp6_OBJS) $(tcp6_LDFLAGS)
@@ -49,21 +49,21 @@ template.so: $(template_OBJS)
 
 udp_OBJS = udp.o
 udp_CFLAGS = $(CPPFLAGSF) $(CPPFLAGS) $(CFLAGSF) $(CFLAGS)
-udp_LDFLAGS = $(LDFLAGSF) $(LDFLAGS)
+udp_LDFLAGS = $(LDFLAGSF) $(LDFLAGS) 
 
 udp.so: $(udp_OBJS)
 	$(CCSHARED) -o udp.so $(udp_OBJS) $(udp_LDFLAGS)
 
 udp4_OBJS = udp4.o
 udp4_CFLAGS = $(CPPFLAGSF) $(CPPFLAGS) $(CFLAGSF) $(CFLAGS)
-udp4_LDFLAGS = $(LDFLAGSF) $(LDFLAGS)
+udp4_LDFLAGS = $(LDFLAGSF) $(LDFLAGS) 
 
 udp4.so: $(udp4_OBJS)
 	$(CCSHARED) -o udp4.so $(udp4_OBJS) $(udp4_LDFLAGS)
 
 udp6_OBJS = udp6.o
 udp6_CFLAGS = $(CPPFLAGSF) $(CPPFLAGS) $(CFLAGSF) $(CFLAGS)
-udp6_LDFLAGS = $(LDFLAGSF) $(LDFLAGS)
+udp6_LDFLAGS = $(LDFLAGSF) $(LDFLAGS) 
 
 udp6.so: $(udp6_OBJS)
 	$(CCSHARED) -o udp6.so $(udp6_OBJS) $(udp6_LDFLAGS)
