@@ -73,8 +73,8 @@ typedef struct _TCPSocket
 
 struct _AppTransportPlugin
 {
-	AppTransportMode mode;
 	AppTransportPluginHelper * helper;
+	AppTransportMode mode;
 
 	struct addrinfo * ai;
 	socklen_t ai_addrlen;
