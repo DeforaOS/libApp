@@ -1,4 +1,4 @@
-TARGETS	= tcp.so tcp4.so tcp6.so template.so udp.so udp4.so udp6.so
+TARGETS	= self.so tcp.so tcp4.so tcp6.so template.so udp.so udp4.so udp6.so
 PREFIX	= /usr/local
 DESTDIR	=
 LIBDIR	= $(PREFIX)/lib
@@ -18,6 +18,13 @@ INSTALL	= install
 
 
 all: $(TARGETS)
+
+self_OBJS = self.o
+self_CFLAGS = $(CPPFLAGSF) $(CPPFLAGS) $(CFLAGSF) $(CFLAGS)
+self_LDFLAGS = $(LDFLAGSF) $(LDFLAGS) 
+
+self.so: $(self_OBJS)
+	$(CCSHARED) -o self.so $(self_OBJS) $(self_LDFLAGS)
 
 tcp_OBJS = tcp.o
 tcp_CFLAGS = $(CPPFLAGSF) $(CPPFLAGS) $(CFLAGSF) $(CFLAGS)
@@ -68,6 +75,9 @@ udp6_LDFLAGS = $(LDFLAGSF) $(LDFLAGS)
 udp6.so: $(udp6_OBJS)
 	$(CCSHARED) -o udp6.so $(udp6_OBJS) $(udp6_LDFLAGS)
 
+self.o: self.c
+	$(CC) $(self_CFLAGS) -c self.c
+
 tcp.o: tcp.c common.h common.c
 	$(CC) $(tcp_CFLAGS) -c tcp.c
 
@@ -90,7 +100,7 @@ udp6.o: udp6.c udp.c common.h common.c
 	$(CC) $(udp6_CFLAGS) -c udp6.c
 
 clean:
-	$(RM) -- $(tcp_OBJS) $(tcp4_OBJS) $(tcp6_OBJS) $(template_OBJS) $(udp_OBJS) $(udp4_OBJS) $(udp6_OBJS)
+	$(RM) -- $(self_OBJS) $(tcp_OBJS) $(tcp4_OBJS) $(tcp6_OBJS) $(template_OBJS) $(udp_OBJS) $(udp4_OBJS) $(udp6_OBJS)
 
 distclean: clean
 	$(RM) -- $(TARGETS)

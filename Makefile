@@ -61,6 +61,7 @@ dist:
 		$(PACKAGE)-$(VERSION)/src/apptransport.h \
 		$(PACKAGE)-$(VERSION)/src/marshall.h \
 		$(PACKAGE)-$(VERSION)/src/project.conf \
+		$(PACKAGE)-$(VERSION)/src/transport/self.c \
 		$(PACKAGE)-$(VERSION)/src/transport/tcp.c \
 		$(PACKAGE)-$(VERSION)/src/transport/tcp4.c \
 		$(PACKAGE)-$(VERSION)/src/transport/tcp6.c \
