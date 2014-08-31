@@ -45,7 +45,7 @@ _fail()
 	res=$?
 	if [ $res -ne 0 ]; then
 		echo "./$test: $name: Failed with error code $res" >> "$target"
-		echo " FAILED ($name, error $res)" 1>&2
+		echo " FAIL ($name, error $res)" 1>&2
 	else
 		echo " PASS" 1>&2
 	fi
@@ -67,7 +67,7 @@ _test()
 	res=$?
 	if [ $res -ne 0 ]; then
 		echo "./$test: $name: Failed with error code $res" >> "$target"
-		echo " FAILED" 1>&2
+		echo " FAIL" 1>&2
 		FAILED="$FAILED $test($name, error $res)"
 		return 2
 	fi
