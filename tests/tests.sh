@@ -140,6 +140,7 @@ _test "transport" "udp ::1.4242" -p udp ::1.4242
 _test "transport" "udp localhost:4242" -p udp localhost:4242
 echo "Expected failures:" 1>&2
 _fail "lookup" "lookup" -a "VFS" -n "localhost"
+_fail "transport" "self" -p self
 _fail "transport" "tcp6 ::1:4242" -p tcp6 ::1:4242
 _fail "transport" "tcp ::1:4242" -p tcp ::1:4242
 _fail "transport" "udp6 ::1:4242" -p udp6 ::1:4242
