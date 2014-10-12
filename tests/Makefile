@@ -86,6 +86,8 @@ transport.o: transport.c ../src/libApp.a
 
 clean:
 	$(RM) -- $(Dummy.h_OBJS) $(appclient_OBJS) $(appmessage_OBJS) $(appserver_OBJS) $(includes_OBJS) $(lookup_OBJS) $(tests.log_OBJS) $(transport_OBJS)
+	../data/appbroker.sh -c -P "$(PREFIX)" -- "Dummy.h"
+	./tests.sh -c -P "$(PREFIX)" -- "tests.log"
 
 distclean: clean
 	$(RM) -- $(TARGETS)

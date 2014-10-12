@@ -40,11 +40,25 @@ gtkdoc/html.stamp: gtkdoc/libApp-docs.xml gtkdoc/sgml.stamp gtkdoc/tmpl.stamp
 clean:
 	@for i in $(SUBDIRS); do (cd "$$i" && $(MAKE) clean) || exit; done
 	$(RM) -- $(AppBroker.1_OBJS) $(AppBroker.html_OBJS) $(AppClient.1_OBJS) $(AppClient.html_OBJS) $(gtkdoc/libApp.types_OBJS) $(gtkdoc/tmpl.stamp_OBJS) $(gtkdoc/sgml.stamp_OBJS) $(gtkdoc/html.stamp_OBJS)
+	./docbook.sh -c -P "$(PREFIX)" -- "AppBroker.1"
+	./docbook.sh -c -P "$(PREFIX)" -- "AppBroker.html"
+	./docbook.sh -c -P "$(PREFIX)" -- "AppClient.1"
+	./docbook.sh -c -P "$(PREFIX)" -- "AppClient.html"
+	./gtkdoc.sh -c -P "$(PREFIX)" -- "gtkdoc/libApp.types"
+	./gtkdoc.sh -c -P "$(PREFIX)" -- "gtkdoc/tmpl.stamp"
+	./gtkdoc.sh -c -P "$(PREFIX)" -- "gtkdoc/sgml.stamp"
 	./gtkdoc.sh -c -P "$(PREFIX)" -- "gtkdoc/html.stamp"
 
 distclean:
 	@for i in $(SUBDIRS); do (cd "$$i" && $(MAKE) distclean) || exit; done
 	$(RM) -- $(AppBroker.1_OBJS) $(AppBroker.html_OBJS) $(AppClient.1_OBJS) $(AppClient.html_OBJS) $(gtkdoc/libApp.types_OBJS) $(gtkdoc/tmpl.stamp_OBJS) $(gtkdoc/sgml.stamp_OBJS) $(gtkdoc/html.stamp_OBJS)
+	./docbook.sh -c -P "$(PREFIX)" -- "AppBroker.1"
+	./docbook.sh -c -P "$(PREFIX)" -- "AppBroker.html"
+	./docbook.sh -c -P "$(PREFIX)" -- "AppClient.1"
+	./docbook.sh -c -P "$(PREFIX)" -- "AppClient.html"
+	./gtkdoc.sh -c -P "$(PREFIX)" -- "gtkdoc/libApp.types"
+	./gtkdoc.sh -c -P "$(PREFIX)" -- "gtkdoc/tmpl.stamp"
+	./gtkdoc.sh -c -P "$(PREFIX)" -- "gtkdoc/sgml.stamp"
 	./gtkdoc.sh -c -P "$(PREFIX)" -- "gtkdoc/html.stamp"
 	$(RM) -- $(TARGETS)
 
