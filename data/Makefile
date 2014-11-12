@@ -1,7 +1,8 @@
 MKDIR	= mkdir -m 0755 -p
 INSTALL	= install
 RM	= rm -f
-TARGETS	= libApp.pc
+TARGETS	= $(OBJDIR)libApp.pc
+OBJDIR	=
 PREFIX	= /usr/local
 DESTDIR	=
 RM	= rm -f
@@ -12,8 +13,8 @@ INSTALL	= install
 
 all: $(TARGETS)
 
-libApp.pc: libApp.pc.in ../config.sh
-	./pkgconfig.sh -P "$(PREFIX)" -- "libApp.pc"
+$(OBJDIR)libApp.pc: libApp.pc.in ../config.sh
+	./pkgconfig.sh -P "$(PREFIX)" -- "$(OBJDIR)libApp.pc"
 
 clean:
 	$(RM) -- $(libApp.pc_OBJS)
@@ -23,7 +24,7 @@ distclean: clean
 	$(RM) -- $(TARGETS)
 
 install: $(TARGETS)
-	./pkgconfig.sh -P "$(DESTDIR)$(PREFIX)" -i -- "libApp.pc"
+	./pkgconfig.sh -P "$(DESTDIR)$(PREFIX)" -i -- "$(OBJDIR)libApp.pc"
 	$(MKDIR) $(DESTDIR)$(PREFIX)/etc/AppInterface
 	$(INSTALL) -m 0644 Dummy.interface $(DESTDIR)$(PREFIX)/etc/AppInterface/Dummy.interface
 

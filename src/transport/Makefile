@@ -1,4 +1,5 @@
-TARGETS	= self.so tcp.so tcp4.so tcp6.so template.so udp.so udp4.so udp6.so
+TARGETS	= $(OBJDIR)self.so $(OBJDIR)tcp.so $(OBJDIR)tcp4.so $(OBJDIR)tcp6.so $(OBJDIR)template.so $(OBJDIR)udp.so $(OBJDIR)udp4.so $(OBJDIR)udp6.so
+OBJDIR	=
 PREFIX	= /usr/local
 DESTDIR	=
 LIBDIR	= $(PREFIX)/lib
@@ -19,85 +20,85 @@ INSTALL	= install
 
 all: $(TARGETS)
 
-self_OBJS = self.o
+self_OBJS = $(OBJDIR)self.o
 self_CFLAGS = $(CPPFLAGSF) $(CPPFLAGS) $(CFLAGSF) $(CFLAGS)
 self_LDFLAGS = $(LDFLAGSF) $(LDFLAGS) 
 
-self.so: $(self_OBJS)
-	$(CCSHARED) -o self.so $(self_OBJS) $(self_LDFLAGS)
+$(OBJDIR)self.so: $(self_OBJS)
+	$(CCSHARED) -o $(OBJDIR)self.so $(self_OBJS) $(self_LDFLAGS)
 
-tcp_OBJS = tcp.o
+tcp_OBJS = $(OBJDIR)tcp.o
 tcp_CFLAGS = $(CPPFLAGSF) $(CPPFLAGS) $(CFLAGSF) $(CFLAGS)
 tcp_LDFLAGS = $(LDFLAGSF) $(LDFLAGS) 
 
-tcp.so: $(tcp_OBJS)
-	$(CCSHARED) -o tcp.so $(tcp_OBJS) $(tcp_LDFLAGS)
+$(OBJDIR)tcp.so: $(tcp_OBJS)
+	$(CCSHARED) -o $(OBJDIR)tcp.so $(tcp_OBJS) $(tcp_LDFLAGS)
 
-tcp4_OBJS = tcp4.o
+tcp4_OBJS = $(OBJDIR)tcp4.o
 tcp4_CFLAGS = $(CPPFLAGSF) $(CPPFLAGS) $(CFLAGSF) $(CFLAGS)
 tcp4_LDFLAGS = $(LDFLAGSF) $(LDFLAGS) 
 
-tcp4.so: $(tcp4_OBJS)
-	$(CCSHARED) -o tcp4.so $(tcp4_OBJS) $(tcp4_LDFLAGS)
+$(OBJDIR)tcp4.so: $(tcp4_OBJS)
+	$(CCSHARED) -o $(OBJDIR)tcp4.so $(tcp4_OBJS) $(tcp4_LDFLAGS)
 
-tcp6_OBJS = tcp6.o
+tcp6_OBJS = $(OBJDIR)tcp6.o
 tcp6_CFLAGS = $(CPPFLAGSF) $(CPPFLAGS) $(CFLAGSF) $(CFLAGS)
 tcp6_LDFLAGS = $(LDFLAGSF) $(LDFLAGS) 
 
-tcp6.so: $(tcp6_OBJS)
-	$(CCSHARED) -o tcp6.so $(tcp6_OBJS) $(tcp6_LDFLAGS)
+$(OBJDIR)tcp6.so: $(tcp6_OBJS)
+	$(CCSHARED) -o $(OBJDIR)tcp6.so $(tcp6_OBJS) $(tcp6_LDFLAGS)
 
-template_OBJS = template.o
+template_OBJS = $(OBJDIR)template.o
 template_CFLAGS = $(CPPFLAGSF) $(CPPFLAGS) $(CFLAGSF) $(CFLAGS)
 template_LDFLAGS = $(LDFLAGSF) $(LDFLAGS)
 
-template.so: $(template_OBJS)
-	$(CCSHARED) -o template.so $(template_OBJS) $(template_LDFLAGS)
+$(OBJDIR)template.so: $(template_OBJS)
+	$(CCSHARED) -o $(OBJDIR)template.so $(template_OBJS) $(template_LDFLAGS)
 
-udp_OBJS = udp.o
+udp_OBJS = $(OBJDIR)udp.o
 udp_CFLAGS = $(CPPFLAGSF) $(CPPFLAGS) $(CFLAGSF) $(CFLAGS)
 udp_LDFLAGS = $(LDFLAGSF) $(LDFLAGS) 
 
-udp.so: $(udp_OBJS)
-	$(CCSHARED) -o udp.so $(udp_OBJS) $(udp_LDFLAGS)
+$(OBJDIR)udp.so: $(udp_OBJS)
+	$(CCSHARED) -o $(OBJDIR)udp.so $(udp_OBJS) $(udp_LDFLAGS)
 
-udp4_OBJS = udp4.o
+udp4_OBJS = $(OBJDIR)udp4.o
 udp4_CFLAGS = $(CPPFLAGSF) $(CPPFLAGS) $(CFLAGSF) $(CFLAGS)
 udp4_LDFLAGS = $(LDFLAGSF) $(LDFLAGS) 
 
-udp4.so: $(udp4_OBJS)
-	$(CCSHARED) -o udp4.so $(udp4_OBJS) $(udp4_LDFLAGS)
+$(OBJDIR)udp4.so: $(udp4_OBJS)
+	$(CCSHARED) -o $(OBJDIR)udp4.so $(udp4_OBJS) $(udp4_LDFLAGS)
 
-udp6_OBJS = udp6.o
+udp6_OBJS = $(OBJDIR)udp6.o
 udp6_CFLAGS = $(CPPFLAGSF) $(CPPFLAGS) $(CFLAGSF) $(CFLAGS)
 udp6_LDFLAGS = $(LDFLAGSF) $(LDFLAGS) 
 
-udp6.so: $(udp6_OBJS)
-	$(CCSHARED) -o udp6.so $(udp6_OBJS) $(udp6_LDFLAGS)
+$(OBJDIR)udp6.so: $(udp6_OBJS)
+	$(CCSHARED) -o $(OBJDIR)udp6.so $(udp6_OBJS) $(udp6_LDFLAGS)
 
-self.o: self.c
-	$(CC) $(self_CFLAGS) -c self.c
+$(OBJDIR)self.o: self.c
+	$(CC) $(self_CFLAGS) -o $(OBJDIR)self.o -c self.c
 
-tcp.o: tcp.c common.h common.c
-	$(CC) $(tcp_CFLAGS) -c tcp.c
+$(OBJDIR)tcp.o: tcp.c common.h common.c
+	$(CC) $(tcp_CFLAGS) -o $(OBJDIR)tcp.o -c tcp.c
 
-tcp4.o: tcp4.c tcp.c common.h common.c
-	$(CC) $(tcp4_CFLAGS) -c tcp4.c
+$(OBJDIR)tcp4.o: tcp4.c tcp.c common.h common.c
+	$(CC) $(tcp4_CFLAGS) -o $(OBJDIR)tcp4.o -c tcp4.c
 
-tcp6.o: tcp6.c tcp.c common.h common.c
-	$(CC) $(tcp6_CFLAGS) -c tcp6.c
+$(OBJDIR)tcp6.o: tcp6.c tcp.c common.h common.c
+	$(CC) $(tcp6_CFLAGS) -o $(OBJDIR)tcp6.o -c tcp6.c
 
-template.o: template.c
-	$(CC) $(template_CFLAGS) -c template.c
+$(OBJDIR)template.o: template.c
+	$(CC) $(template_CFLAGS) -o $(OBJDIR)template.o -c template.c
 
-udp.o: udp.c common.h common.c
-	$(CC) $(udp_CFLAGS) -c udp.c
+$(OBJDIR)udp.o: udp.c common.h common.c
+	$(CC) $(udp_CFLAGS) -o $(OBJDIR)udp.o -c udp.c
 
-udp4.o: udp4.c udp.c common.h common.c
-	$(CC) $(udp4_CFLAGS) -c udp4.c
+$(OBJDIR)udp4.o: udp4.c udp.c common.h common.c
+	$(CC) $(udp4_CFLAGS) -o $(OBJDIR)udp4.o -c udp4.c
 
-udp6.o: udp6.c udp.c common.h common.c
-	$(CC) $(udp6_CFLAGS) -c udp6.c
+$(OBJDIR)udp6.o: udp6.c udp.c common.h common.c
+	$(CC) $(udp6_CFLAGS) -o $(OBJDIR)udp6.o -c udp6.c
 
 clean:
 	$(RM) -- $(self_OBJS) $(tcp_OBJS) $(tcp4_OBJS) $(tcp6_OBJS) $(template_OBJS) $(udp_OBJS) $(udp4_OBJS) $(udp6_OBJS)
@@ -107,17 +108,17 @@ distclean: clean
 
 install: $(TARGETS)
 	$(MKDIR) $(DESTDIR)$(LIBDIR)/App/transport
-	$(INSTALL) -m 0644 tcp.so $(DESTDIR)$(LIBDIR)/App/transport/tcp.so
+	$(INSTALL) -m 0755 $(OBJDIR)tcp.so $(DESTDIR)$(LIBDIR)/App/transport/tcp.so
 	$(MKDIR) $(DESTDIR)$(LIBDIR)/App/transport
-	$(INSTALL) -m 0644 tcp4.so $(DESTDIR)$(LIBDIR)/App/transport/tcp4.so
+	$(INSTALL) -m 0755 $(OBJDIR)tcp4.so $(DESTDIR)$(LIBDIR)/App/transport/tcp4.so
 	$(MKDIR) $(DESTDIR)$(LIBDIR)/App/transport
-	$(INSTALL) -m 0644 tcp6.so $(DESTDIR)$(LIBDIR)/App/transport/tcp6.so
+	$(INSTALL) -m 0755 $(OBJDIR)tcp6.so $(DESTDIR)$(LIBDIR)/App/transport/tcp6.so
 	$(MKDIR) $(DESTDIR)$(LIBDIR)/App/transport
-	$(INSTALL) -m 0644 udp.so $(DESTDIR)$(LIBDIR)/App/transport/udp.so
+	$(INSTALL) -m 0755 $(OBJDIR)udp.so $(DESTDIR)$(LIBDIR)/App/transport/udp.so
 	$(MKDIR) $(DESTDIR)$(LIBDIR)/App/transport
-	$(INSTALL) -m 0644 udp4.so $(DESTDIR)$(LIBDIR)/App/transport/udp4.so
+	$(INSTALL) -m 0755 $(OBJDIR)udp4.so $(DESTDIR)$(LIBDIR)/App/transport/udp4.so
 	$(MKDIR) $(DESTDIR)$(LIBDIR)/App/transport
-	$(INSTALL) -m 0644 udp6.so $(DESTDIR)$(LIBDIR)/App/transport/udp6.so
+	$(INSTALL) -m 0755 $(OBJDIR)udp6.so $(DESTDIR)$(LIBDIR)/App/transport/udp6.so
 
 uninstall:
 	$(RM) -- $(DESTDIR)$(LIBDIR)/App/transport/tcp.so

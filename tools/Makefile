@@ -1,4 +1,5 @@
-TARGETS	= AppBroker AppClient
+TARGETS	= $(OBJDIR)AppBroker $(OBJDIR)AppClient
+OBJDIR	=
 PREFIX	= /usr/local
 DESTDIR	=
 BINDIR	= $(PREFIX)/bin
@@ -18,25 +19,25 @@ INSTALL	= install
 
 all: $(TARGETS)
 
-AppBroker_OBJS = appbroker.o
+AppBroker_OBJS = $(OBJDIR)appbroker.o
 AppBroker_CFLAGS = $(CPPFLAGSF) $(CPPFLAGS) $(CFLAGSF) $(CFLAGS)
 AppBroker_LDFLAGS = $(LDFLAGSF) $(LDFLAGS)
 
-AppBroker: $(AppBroker_OBJS)
-	$(CC) -o AppBroker $(AppBroker_OBJS) $(AppBroker_LDFLAGS)
+$(OBJDIR)AppBroker: $(AppBroker_OBJS)
+	$(CC) -o $(OBJDIR)AppBroker $(AppBroker_OBJS) $(AppBroker_LDFLAGS)
 
-AppClient_OBJS = appclient.o
+AppClient_OBJS = $(OBJDIR)appclient.o
 AppClient_CFLAGS = $(CPPFLAGSF) $(CPPFLAGS) $(CFLAGSF) $(CFLAGS)
 AppClient_LDFLAGS = $(LDFLAGSF) $(LDFLAGS)
 
-AppClient: $(AppClient_OBJS)
-	$(CC) -o AppClient $(AppClient_OBJS) $(AppClient_LDFLAGS)
+$(OBJDIR)AppClient: $(AppClient_OBJS)
+	$(CC) -o $(OBJDIR)AppClient $(AppClient_OBJS) $(AppClient_LDFLAGS)
 
-appbroker.o: appbroker.c
-	$(CC) $(AppBroker_CFLAGS) -c appbroker.c
+$(OBJDIR)appbroker.o: appbroker.c
+	$(CC) $(AppBroker_CFLAGS) -o $(OBJDIR)appbroker.o -c appbroker.c
 
-appclient.o: appclient.c
-	$(CC) $(AppClient_CFLAGS) -c appclient.c
+$(OBJDIR)appclient.o: appclient.c
+	$(CC) $(AppClient_CFLAGS) -o $(OBJDIR)appclient.o -c appclient.c
 
 clean:
 	$(RM) -- $(AppBroker_OBJS) $(AppClient_OBJS)
@@ -46,7 +47,7 @@ distclean: clean
 
 install: $(TARGETS)
 	$(MKDIR) $(DESTDIR)$(BINDIR)
-	$(INSTALL) -m 0755 AppBroker $(DESTDIR)$(BINDIR)/AppBroker
+	$(INSTALL) -m 0755 $(OBJDIR)AppBroker $(DESTDIR)$(BINDIR)/AppBroker
 
 uninstall:
 	$(RM) -- $(DESTDIR)$(BINDIR)/AppBroker

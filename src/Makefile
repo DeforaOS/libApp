@@ -1,4 +1,5 @@
-TARGETS	= libApp.a libApp.so.0.0 libApp.so.0 libApp.so
+TARGETS	= $(OBJDIR)libApp.a $(OBJDIR)libApp.so.0.0 $(OBJDIR)libApp.so.0 $(OBJDIR)libApp.so
+OBJDIR	=
 PREFIX	= /usr/local
 DESTDIR	=
 LIBDIR	= $(PREFIX)/lib
@@ -20,36 +21,36 @@ INSTALL	= install
 
 all: $(TARGETS)
 
-libApp_OBJS = appclient.o appinterface.o appmessage.o appserver.o apptransport.o marshall.o
+libApp_OBJS = $(OBJDIR)appclient.o $(OBJDIR)appinterface.o $(OBJDIR)appmessage.o $(OBJDIR)appserver.o $(OBJDIR)apptransport.o $(OBJDIR)marshall.o
 libApp_CFLAGS = $(CPPFLAGSF) $(CPPFLAGS) $(CFLAGSF) $(CFLAGS)
 libApp_LDFLAGS = $(LDFLAGSF) $(LDFLAGS)  
 
-libApp.a: $(libApp_OBJS)
-	$(AR) -rc libApp.a $(libApp_OBJS)
-	$(RANLIB) libApp.a
+$(OBJDIR)libApp.a: $(libApp_OBJS)
+	$(AR) -rc $(OBJDIR)libApp.a $(libApp_OBJS)
+	$(RANLIB) $(OBJDIR)libApp.a
 
-libApp.so.0.0 libApp.so.0 libApp.so: $(libApp_OBJS)
-	$(CCSHARED) -o libApp.so.0.0 -Wl,-soname,libApp.so.0 $(libApp_OBJS) $(libApp_LDFLAGS)
-	$(LN) -s -- libApp.so.0.0 libApp.so.0
-	$(LN) -s -- libApp.so.0.0 libApp.so
+$(OBJDIR)libApp.so.0.0 $(OBJDIR)libApp.so.0 $(OBJDIR)libApp.so: $(libApp_OBJS)
+	$(CCSHARED) -o $(OBJDIR)libApp.so.0.0 -Wl,-soname,libApp.so.0 $(libApp_OBJS) $(libApp_LDFLAGS)
+	$(LN) -s -- libApp.so.0.0 $(OBJDIR)libApp.so.0
+	$(LN) -s -- libApp.so.0.0 $(OBJDIR)libApp.so
 
-appclient.o: appclient.c appinterface.h ../include/App/appclient.h
-	$(CC) $(libApp_CFLAGS) -c appclient.c
+$(OBJDIR)appclient.o: appclient.c appinterface.h ../include/App/appclient.h
+	$(CC) $(libApp_CFLAGS) -o $(OBJDIR)appclient.o -c appclient.c
 
-appinterface.o: appinterface.c ../include/App/appserver.h marshall.h ../config.h
-	$(CC) $(libApp_CFLAGS) -c appinterface.c
+$(OBJDIR)appinterface.o: appinterface.c ../include/App/appserver.h marshall.h ../config.h
+	$(CC) $(libApp_CFLAGS) -o $(OBJDIR)appinterface.o -c appinterface.c
 
-appmessage.o: appmessage.c ../include/App/appmessage.h appmessage.h
-	$(CC) $(libApp_CFLAGS) -c appmessage.c
+$(OBJDIR)appmessage.o: appmessage.c ../include/App/appmessage.h appmessage.h
+	$(CC) $(libApp_CFLAGS) -o $(OBJDIR)appmessage.o -c appmessage.c
 
-appserver.o: appserver.c appinterface.h ../include/App/appserver.h ../config.h
-	$(CC) $(libApp_CFLAGS) -c appserver.c
+$(OBJDIR)appserver.o: appserver.c appinterface.h ../include/App/appserver.h ../config.h
+	$(CC) $(libApp_CFLAGS) -o $(OBJDIR)appserver.o -c appserver.c
 
-apptransport.o: apptransport.c apptransport.h ../include/App/apptransport.h ../config.h
-	$(CC) $(libApp_CFLAGS) -c apptransport.c
+$(OBJDIR)apptransport.o: apptransport.c apptransport.h ../include/App/apptransport.h ../config.h
+	$(CC) $(libApp_CFLAGS) -o $(OBJDIR)apptransport.o -c apptransport.c
 
-marshall.o: marshall.c marshall.h
-	$(CC) $(libApp_CFLAGS) -c marshall.c
+$(OBJDIR)marshall.o: marshall.c marshall.h
+	$(CC) $(libApp_CFLAGS) -o $(OBJDIR)marshall.o -c marshall.c
 
 clean:
 	$(RM) -- $(libApp_OBJS)
@@ -59,8 +60,8 @@ distclean: clean
 
 install: $(TARGETS)
 	$(MKDIR) $(DESTDIR)$(LIBDIR)
-	$(INSTALL) -m 0644 libApp.a $(DESTDIR)$(LIBDIR)/libApp.a
-	$(INSTALL) -m 0755 libApp.so.0.0 $(DESTDIR)$(LIBDIR)/libApp.so.0.0
+	$(INSTALL) -m 0644 $(OBJDIR)libApp.a $(DESTDIR)$(LIBDIR)/libApp.a
+	$(INSTALL) -m 0755 $(OBJDIR)libApp.so.0.0 $(DESTDIR)$(LIBDIR)/libApp.so.0.0
 	$(LN) -s -- libApp.so.0.0 $(DESTDIR)$(LIBDIR)/libApp.so.0
 	$(LN) -s -- libApp.so.0.0 $(DESTDIR)$(LIBDIR)/libApp.so
 

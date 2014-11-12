@@ -1,5 +1,6 @@
 SUBDIRS	= gtkdoc
-TARGETS	= AppBroker.1 AppBroker.html AppClient.1 AppClient.html gtkdoc/libApp.types gtkdoc/tmpl.stamp gtkdoc/sgml.stamp gtkdoc/html.stamp
+TARGETS	= $(OBJDIR)AppBroker.1 $(OBJDIR)AppBroker.html $(OBJDIR)AppClient.1 $(OBJDIR)AppClient.html $(OBJDIR)gtkdoc/libApp.types $(OBJDIR)gtkdoc/tmpl.stamp $(OBJDIR)gtkdoc/sgml.stamp $(OBJDIR)gtkdoc/html.stamp
+OBJDIR	=
 PREFIX	= /usr/local
 DESTDIR	=
 RM	= rm -f
@@ -13,29 +14,29 @@ all: subdirs $(TARGETS)
 subdirs:
 	@for i in $(SUBDIRS); do (cd "$$i" && $(MAKE)) || exit; done
 
-AppBroker.1: AppBroker.xml
-	./docbook.sh -P "$(PREFIX)" -- "AppBroker.1"
+$(OBJDIR)AppBroker.1: AppBroker.xml
+	./docbook.sh -P "$(PREFIX)" -- "$(OBJDIR)AppBroker.1"
 
-AppBroker.html: AppBroker.css.xml AppBroker.xml manual.css.xml
-	./docbook.sh -P "$(PREFIX)" -- "AppBroker.html"
+$(OBJDIR)AppBroker.html: AppBroker.css.xml AppBroker.xml manual.css.xml
+	./docbook.sh -P "$(PREFIX)" -- "$(OBJDIR)AppBroker.html"
 
-AppClient.1: AppClient.xml
-	./docbook.sh -P "$(PREFIX)" -- "AppClient.1"
+$(OBJDIR)AppClient.1: AppClient.xml
+	./docbook.sh -P "$(PREFIX)" -- "$(OBJDIR)AppClient.1"
 
-AppClient.html: AppClient.css.xml AppClient.xml manual.css.xml
-	./docbook.sh -P "$(PREFIX)" -- "AppClient.html"
+$(OBJDIR)AppClient.html: AppClient.css.xml AppClient.xml manual.css.xml
+	./docbook.sh -P "$(PREFIX)" -- "$(OBJDIR)AppClient.html"
 
-gtkdoc/libApp.types:
-	./gtkdoc.sh -P "$(PREFIX)" -- "gtkdoc/libApp.types"
+$(OBJDIR)gtkdoc/libApp.types:
+	./gtkdoc.sh -P "$(PREFIX)" -- "$(OBJDIR)gtkdoc/libApp.types"
 
-gtkdoc/tmpl.stamp: gtkdoc/libApp.types
-	./gtkdoc.sh -P "$(PREFIX)" -- "gtkdoc/tmpl.stamp"
+$(OBJDIR)gtkdoc/tmpl.stamp: $(OBJDIR)gtkdoc/libApp.types
+	./gtkdoc.sh -P "$(PREFIX)" -- "$(OBJDIR)gtkdoc/tmpl.stamp"
 
-gtkdoc/sgml.stamp: gtkdoc/tmpl.stamp
-	./gtkdoc.sh -P "$(PREFIX)" -- "gtkdoc/sgml.stamp"
+$(OBJDIR)gtkdoc/sgml.stamp: $(OBJDIR)gtkdoc/tmpl.stamp
+	./gtkdoc.sh -P "$(PREFIX)" -- "$(OBJDIR)gtkdoc/sgml.stamp"
 
-gtkdoc/html.stamp: gtkdoc/libApp-docs.xml gtkdoc/sgml.stamp gtkdoc/tmpl.stamp
-	./gtkdoc.sh -P "$(PREFIX)" -- "gtkdoc/html.stamp"
+$(OBJDIR)gtkdoc/html.stamp: gtkdoc/libApp-docs.xml $(OBJDIR)gtkdoc/sgml.stamp $(OBJDIR)gtkdoc/tmpl.stamp
+	./gtkdoc.sh -P "$(PREFIX)" -- "$(OBJDIR)gtkdoc/html.stamp"
 
 clean:
 	@for i in $(SUBDIRS); do (cd "$$i" && $(MAKE) clean) || exit; done
@@ -64,9 +65,9 @@ distclean:
 
 install: $(TARGETS)
 	@for i in $(SUBDIRS); do (cd "$$i" && $(MAKE) install) || exit; done
-	./docbook.sh -P "$(DESTDIR)$(PREFIX)" -i -- "AppBroker.1"
-	./docbook.sh -P "$(DESTDIR)$(PREFIX)" -i -- "AppBroker.html"
-	./gtkdoc.sh -P "$(DESTDIR)$(PREFIX)" -i -- "gtkdoc/html.stamp"
+	./docbook.sh -P "$(DESTDIR)$(PREFIX)" -i -- "$(OBJDIR)AppBroker.1"
+	./docbook.sh -P "$(DESTDIR)$(PREFIX)" -i -- "$(OBJDIR)AppBroker.html"
+	./gtkdoc.sh -P "$(DESTDIR)$(PREFIX)" -i -- "$(OBJDIR)gtkdoc/html.stamp"
 
 uninstall:
 	@for i in $(SUBDIRS); do (cd "$$i" && $(MAKE) uninstall) || exit; done
