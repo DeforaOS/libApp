@@ -67,16 +67,20 @@
 	<refsect1 id="options">
 		<title>Options</title>
 		<para>&name; expects a specification file to be specified on the command line.
-			The following option is available:</para>
+			The following options are available:</para>
 		<variablelist>
 			<varlistentry>
 				<term><option>-c</option></term>
-				<para>Generate a file suitable for a client.</para>
+				<listitem>
+					<para>Generate a file suitable for a client.</para>
+				</listitem>
 			</varlistentry>
 			<varlistentry>
 				<term><option>-s</option></term>
-				<para>Generate a file suitable for a server. This is the default
-					behavior.</para>
+				<listitem>
+					<para>Generate a file suitable for a server. This is the default
+						behavior.</para>
+				</listitem>
 			</varlistentry>
 			<varlistentry>
 				<term><option>-o</option></term>
