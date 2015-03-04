@@ -1,6 +1,6 @@
 PACKAGE	= libApp
 VERSION	= 0.1.5
-SUBDIRS	= data doc include src src/transport tests tools
+SUBDIRS	= data doc include src src/transport tools tests
 RM	= rm -f
 LN	= ln -f
 TAR	= tar
@@ -77,6 +77,11 @@ dist:
 		$(PACKAGE)-$(VERSION)/src/transport/common.h \
 		$(PACKAGE)-$(VERSION)/src/transport/common.c \
 		$(PACKAGE)-$(VERSION)/src/transport/project.conf \
+		$(PACKAGE)-$(VERSION)/tools/appbroker.c \
+		$(PACKAGE)-$(VERSION)/tools/appclient.c \
+		$(PACKAGE)-$(VERSION)/tools/Makefile \
+		$(PACKAGE)-$(VERSION)/tools/appbroker.sh \
+		$(PACKAGE)-$(VERSION)/tools/project.conf \
 		$(PACKAGE)-$(VERSION)/tests/appclient.c \
 		$(PACKAGE)-$(VERSION)/tests/appmessage.c \
 		$(PACKAGE)-$(VERSION)/tests/appserver.c \
@@ -86,11 +91,6 @@ dist:
 		$(PACKAGE)-$(VERSION)/tests/Makefile \
 		$(PACKAGE)-$(VERSION)/tests/tests.sh \
 		$(PACKAGE)-$(VERSION)/tests/project.conf \
-		$(PACKAGE)-$(VERSION)/tools/appbroker.c \
-		$(PACKAGE)-$(VERSION)/tools/appclient.c \
-		$(PACKAGE)-$(VERSION)/tools/Makefile \
-		$(PACKAGE)-$(VERSION)/tools/appbroker.sh \
-		$(PACKAGE)-$(VERSION)/tools/project.conf \
 		$(PACKAGE)-$(VERSION)/Makefile \
 		$(PACKAGE)-$(VERSION)/COPYING \
 		$(PACKAGE)-$(VERSION)/config.h \
