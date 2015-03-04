@@ -20,7 +20,7 @@ INSTALL	= install
 all: $(TARGETS)
 
 $(OBJDIR)Dummy.h: ../data/Dummy.interface ../tools/appbroker.sh
-	../tools/appbroker.sh -P "$(PREFIX)" -- "$(OBJDIR)Dummy.h"
+	../tools/appbroker.sh -O APPBROKER=../tools/AppBroker -P "$(PREFIX)" -- "$(OBJDIR)Dummy.h"
 
 appclient_OBJS = $(OBJDIR)appclient.o
 appclient_CFLAGS = $(CPPFLAGSF) $(CPPFLAGS) $(CFLAGSF) $(CFLAGS)
@@ -87,7 +87,7 @@ $(OBJDIR)transport.o: transport.c ../src/libApp.a
 
 clean:
 	$(RM) -- $(Dummy.h_OBJS) $(appclient_OBJS) $(appmessage_OBJS) $(appserver_OBJS) $(includes_OBJS) $(lookup_OBJS) $(tests.log_OBJS) $(transport_OBJS)
-	../tools/appbroker.sh -c -P "$(PREFIX)" -- "Dummy.h"
+	../tools/appbroker.sh -O APPBROKER=../tools/AppBroker -c -P "$(PREFIX)" -- "Dummy.h"
 	./tests.sh -c -P "$(PREFIX)" -- "tests.log"
 
 distclean: clean
