@@ -19,7 +19,7 @@ INSTALL	= install
 
 all: $(TARGETS)
 
-$(OBJDIR)Dummy.h: ../data/Dummy.interface
+$(OBJDIR)Dummy.h: ../data/Dummy.interface ../tools/appbroker.sh
 	../tools/appbroker.sh -P "$(PREFIX)" -- "$(OBJDIR)Dummy.h"
 
 appclient_OBJS = $(OBJDIR)appclient.o
@@ -73,7 +73,7 @@ $(OBJDIR)appclient.o: appclient.c ../src/libApp.a
 $(OBJDIR)appmessage.o: appmessage.c ../src/libApp.a
 	$(CC) $(appmessage_CFLAGS) -o $(OBJDIR)appmessage.o -c appmessage.c
 
-$(OBJDIR)appserver.o: appserver.c ../src/libApp.a
+$(OBJDIR)appserver.o: appserver.c ../src/libApp.a $(OBJDIR)Dummy.h
 	$(CC) $(appserver_CFLAGS) -o $(OBJDIR)appserver.o -c appserver.c
 
 $(OBJDIR)includes.o: includes.c
