@@ -25,6 +25,7 @@
 
 
 #variables
+PROGNAME="appbroker.sh"
 #executables
 APPBROKER="AppBroker"
 
@@ -33,17 +34,20 @@ APPBROKER="AppBroker"
 #usage
 _usage()
 {
-	echo "Usage: appbroker.sh target" 1>&2
+	echo "Usage: $APPBROKER target" 1>&2
 	return 1
 }
 
 
 #main
 clean=0
-while getopts "cP:" name; do
+while getopts "cO:P:" name; do
 	case "$name" in
 		c)
 			clean=1
+			;;
+		O)
+			export "${OPTARG%%=*}"="${OPTARG#*=}"
 			;;
 		P)
 			#we can ignore it
