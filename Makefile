@@ -28,7 +28,6 @@ dist:
 	@cd $(OBJDIR). && $(TAR) -czvf $(OBJDIR)$(PACKAGE)-$(VERSION).tar.gz -- \
 		$(PACKAGE)-$(VERSION)/data/Makefile \
 		$(PACKAGE)-$(VERSION)/data/Dummy.interface \
-		$(PACKAGE)-$(VERSION)/data/appbroker.sh \
 		$(PACKAGE)-$(VERSION)/data/libApp.pc.in \
 		$(PACKAGE)-$(VERSION)/data/pkgconfig.sh \
 		$(PACKAGE)-$(VERSION)/data/project.conf \
@@ -90,6 +89,7 @@ dist:
 		$(PACKAGE)-$(VERSION)/tools/appbroker.c \
 		$(PACKAGE)-$(VERSION)/tools/appclient.c \
 		$(PACKAGE)-$(VERSION)/tools/Makefile \
+		$(PACKAGE)-$(VERSION)/tools/appbroker.sh \
 		$(PACKAGE)-$(VERSION)/tools/project.conf \
 		$(PACKAGE)-$(VERSION)/Makefile \
 		$(PACKAGE)-$(VERSION)/COPYING \
