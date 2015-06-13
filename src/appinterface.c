@@ -327,6 +327,10 @@ static String * _new_interface(String const * app)
 	if((var = string_new_append("APPINTERFACE_", app, NULL)) == NULL)
 		return NULL;
 	interface = getenv(var);
+#ifdef DEBUG
+	fprintf(stderr, "DEBUG: %s() \"%s\" \"%s\"\n", __func__, var,
+			interface);
+#endif
 	string_delete(var);
 	if(interface != NULL)
 		return interface;

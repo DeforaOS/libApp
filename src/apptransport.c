@@ -196,10 +196,10 @@ static String * _new_app_name(AppTransportMode mode, char const * app,
 	/* obtain the desired transport and name from the environment */
 	if((var = string_new_append("APPSERVER_", app, NULL)) == NULL)
 		return NULL;
-#ifdef DEBUG
-	fprintf(stderr, "DEBUG: %s() \"%s\"\n", __func__, var);
-#endif
 	name = getenv(var);
+#ifdef DEBUG
+	fprintf(stderr, "DEBUG: %s() \"%s\" \"%s\"\n", __func__, var, name);
+#endif
 	string_delete(var);
 	if(name == NULL)
 	{
