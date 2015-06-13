@@ -84,67 +84,22 @@ static int _apptransport_helper_client_receive(AppTransport * transport,
 /* protected */
 /* functions */
 /* apptransport_new */
-static void _new_helper(AppTransport * transport, AppTransportMode mode,
-		Event * event);
-
 AppTransport * apptransport_new(AppTransportMode mode,
-		AppTransportHelper * helper, char const * plugin,
+		AppTransportHelper * helper, char const * transport,
 		char const * name, Event * event)
 {
-	AppTransport * transport;
+	AppTransport * apptransport;
+	Plugin * plugin;
 
-#ifdef DEBUG
-	fprintf(stderr, "DEBUG: %s(%u, \"%s\", \"%s\", %p)\n", __func__, mode,
-			plugin, name, (void *)event);
-#endif
-	/* check the arguments */
-	if(plugin == NULL || plugin[0] == '\0')
+	if((plugin = plugin_new(LIBDIR, "App", "transport", transport)) == NULL)
+		return NULL;
+	if((apptransport = apptransport_new_plugin(mode, helper, plugin,
+					name, event)) == NULL)
 	{
-		error_set_code(1, "%s", "Invalid transport");
+		plugin_delete(plugin);
 		return NULL;
 	}
-	if(name == NULL || event == NULL)
-	{
-		error_set_code(1, "%s", "Invalid arguments");
-		return NULL;
-	}
-	/* allocate the transport */
-	if((transport = object_new(sizeof(*transport))) == NULL)
-		return NULL;
-	memset(transport, 0, sizeof(*transport));
-	transport->mode = mode;
-	if(helper != NULL)
-		transport->helper = *helper;
-	transport->name = string_new(name);
-	/* initialize the plug-in helper */
-	_new_helper(transport, mode, event);
-	/* load the transport plug-in */
-	if(transport->name == NULL
-			|| (transport->plugin = plugin_new(LIBDIR, "App",
-					"transport", plugin)) == NULL
-			|| (transport->definition = plugin_lookup(
-					transport->plugin, "transport")) == NULL
-			|| transport->definition->init == NULL
-			|| transport->definition->destroy == NULL
-			|| (transport->tplugin = transport->definition->init(
-					&transport->thelper, mode, name))
-			== NULL)
-	{
-		apptransport_delete(transport);
-		return NULL;
-	}
-	return transport;
-}
-
-static void _new_helper(AppTransport * transport, AppTransportMode mode,
-		Event * event)
-{
-	transport->thelper.transport = transport;
-	transport->thelper.event = event;
-	transport->thelper.status = _apptransport_helper_status;
-	transport->thelper.client_new = _apptransport_helper_client_new;
-	transport->thelper.client_delete = _apptransport_helper_client_delete;
-	transport->thelper.client_receive = _apptransport_helper_client_receive;
+	return apptransport;
 }
 
 
@@ -229,6 +184,75 @@ static String * _new_app_transport(String ** name)
 		return NULL;
 	}
 	return transport;
+}
+
+
+/* apptransport_new_plugin */
+static void _new_plugin_helper(AppTransport * apptransport,
+		AppTransportMode mode, Event * event);
+
+AppTransport * apptransport_new_plugin(AppTransportMode mode,
+		AppTransportHelper * helper, Plugin * plugin,
+		char const * name, Event * event)
+{
+	AppTransport * apptransport;
+
+#ifdef DEBUG
+	fprintf(stderr, "DEBUG: %s(%u, \"%s\", \"%s\", %p)\n", __func__, mode,
+			plugin, name, (void *)event);
+#endif
+	/* check the arguments */
+	if(plugin == NULL)
+	{
+		error_set_code(1, "%s", "Invalid transport plug-in");
+		return NULL;
+	}
+	if(name == NULL || event == NULL)
+	{
+		error_set_code(1, "%s", "Invalid arguments");
+		return NULL;
+	}
+	/* allocate the transport */
+	if((apptransport = object_new(sizeof(*apptransport))) == NULL)
+		return NULL;
+	memset(apptransport, 0, sizeof(*apptransport));
+	apptransport->mode = mode;
+	if(helper != NULL)
+		apptransport->helper = *helper;
+	apptransport->name = string_new(name);
+	/* initialize the plug-in helper */
+	_new_plugin_helper(apptransport, mode, event);
+	/* load the transport plug-in */
+	apptransport->plugin = plugin;
+	if(apptransport->name == NULL
+			|| (apptransport->definition = plugin_lookup(
+					apptransport->plugin, "transport"))
+			== NULL
+			|| apptransport->definition->init == NULL
+			|| apptransport->definition->destroy == NULL
+			|| (apptransport->tplugin
+				= apptransport->definition->init(
+					&apptransport->thelper, mode, name))
+			== NULL)
+	{
+		apptransport->plugin = NULL;
+		apptransport_delete(apptransport);
+		return NULL;
+	}
+	return apptransport;
+}
+
+static void _new_plugin_helper(AppTransport * apptransport,
+		AppTransportMode mode, Event * event)
+{
+	apptransport->thelper.transport = apptransport;
+	apptransport->thelper.event = event;
+	apptransport->thelper.status = _apptransport_helper_status;
+	apptransport->thelper.client_new = _apptransport_helper_client_new;
+	apptransport->thelper.client_delete
+		= _apptransport_helper_client_delete;
+	apptransport->thelper.client_receive
+		= _apptransport_helper_client_receive;
 }
 
 

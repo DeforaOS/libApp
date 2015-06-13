@@ -19,6 +19,7 @@
 # define LIBAPP_APPTRANSPORT_H
 
 # include <System/event.h>
+# include <System/plugin.h>
 # include "App/apptransport.h"
 
 
@@ -35,10 +36,13 @@ typedef struct _AppTransportHelper
 
 /* functions */
 AppTransport * apptransport_new(AppTransportMode mode,
-		AppTransportHelper * helper, char const * plugin,
+		AppTransportHelper * helper, char const * transport,
 		char const * name, Event * event);
 AppTransport * apptransport_new_app(AppTransportMode mode,
 		AppTransportHelper * helper, char const * app,
+		char const * name, Event * event);
+AppTransport * apptransport_new_plugin(AppTransportMode mode,
+		AppTransportHelper * helper, Plugin * plugin,
 		char const * name, Event * event);
 void apptransport_delete(AppTransport * transport);
 
