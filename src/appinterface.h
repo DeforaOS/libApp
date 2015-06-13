@@ -29,7 +29,9 @@ typedef struct _AppInterface AppInterface;
 
 
 /* functions */
-AppInterface * appinterface_new(AppTransportMode mode, char const * app);
+AppInterface * appinterface_new(AppTransportMode mode, String const * app);
+AppInterface * appinterface_new_interface(AppTransportMode mode,
+		String const * app, String const * pathname);
 void appinterface_delete(AppInterface * appinterface);
 
 /* accessors */

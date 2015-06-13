@@ -151,15 +151,51 @@ static int _string_enum(String const * string, StringEnum const * se)
 /* public */
 /* functions */
 /* appinterface_new */
-static int _new_append(AppInterface * ai, VariableType type,
-		char const * function);
-static int _new_append_arg(AppInterface * ai, char const * arg);
-AppInterface * _new_do(AppTransportMode mode, char const * app);
-static int _new_foreach(char const * key, Hash * value,
-		AppInterface * appinterface);
 static String * _new_interface(String const * app);
 
-AppInterface * appinterface_new(AppTransportMode mode, char const * app)
+AppInterface * appinterface_new(AppTransportMode mode, String const * app)
+{
+	AppInterface * ai;
+	String * pathname;
+
+	if((pathname = _new_interface(app)) == NULL)
+		return NULL;
+	ai = appinterface_new_interface(mode, app, pathname);
+	string_delete(pathname);
+	return ai;
+}
+
+static String * _new_interface(String const * app)
+{
+	String * var;
+	String const * interface;
+
+	if((var = string_new_append("APPINTERFACE_", app, NULL)) == NULL)
+		return NULL;
+	interface = getenv(var);
+#ifdef DEBUG
+	fprintf(stderr, "DEBUG: %s() \"%s\" \"%s\"\n", __func__, var,
+			interface);
+#endif
+	string_delete(var);
+	if(interface != NULL)
+		return string_new(interface);
+	return string_new_append(SYSCONFDIR "/AppInterface/", app,
+			".interface", NULL);
+}
+
+
+/* appinterface_new_interface */
+static int _new_interface_append(AppInterface * ai, VariableType type,
+		char const * function);
+static int _new_interface_append_arg(AppInterface * ai, char const * arg);
+AppInterface * _new_interface_do(AppTransportMode mode, String const * app,
+		String const * pathname);
+static int _new_interface_foreach(char const * key, Hash * value,
+		AppInterface * appinterface);
+
+AppInterface * appinterface_new_interface(AppTransportMode mode,
+		String const * app, String const * pathname)
 {
 	AppInterface * ai;
 	Plugin * handle;
@@ -168,7 +204,7 @@ AppInterface * appinterface_new(AppTransportMode mode, char const * app)
 
 	if((handle = plugin_new_self()) == NULL)
 		return NULL;
-	if((ai = _new_do(mode, app)) == NULL)
+	if((ai = _new_interface_do(mode, app, pathname)) == NULL)
 		return NULL;
 	for(i = 0; i < ai->calls_cnt; i++)
 	{
@@ -192,7 +228,7 @@ AppInterface * appinterface_new(AppTransportMode mode, char const * app)
 	return ai;
 }
 
-static int _new_append(AppInterface * ai, VariableType type,
+static int _new_interface_append(AppInterface * ai, VariableType type,
 		char const * function)
 {
 	AppInterfaceCall * p;
@@ -214,7 +250,7 @@ static int _new_append(AppInterface * ai, VariableType type,
 	return 0;
 }
 
-static int _new_append_arg(AppInterface * ai, char const * arg)
+static int _new_interface_append_arg(AppInterface * ai, char const * arg)
 {
 	char buf[16];
 	char * p;
@@ -244,10 +280,10 @@ static int _new_append_arg(AppInterface * ai, char const * arg)
 	return 0;
 }
 
-AppInterface * _new_do(AppTransportMode mode, char const * app)
+AppInterface * _new_interface_do(AppTransportMode mode, String const * app,
+		String const * pathname)
 {
 	AppInterface * appinterface;
-	String * pathname = NULL;
 
 	if(app == NULL)
 		return NULL; /* FIXME report error */
@@ -260,16 +296,14 @@ AppInterface * _new_do(AppTransportMode mode, char const * app)
 	appinterface->calls_cnt = 0;
 	appinterface->error = 0;
 	if(appinterface->name == NULL
-			|| (pathname = _new_interface(app)) == NULL
 			|| appinterface->config == NULL
 			|| config_load(appinterface->config, pathname) != 0)
 	{
-		string_delete(pathname);
 		appinterface_delete(appinterface);
 		return NULL;
 	}
 	appinterface->error = 0;
-	hash_foreach(appinterface->config, (HashForeach)_new_foreach,
+	hash_foreach(appinterface->config, (HashForeach)_new_interface_foreach,
 			appinterface);
 	if(appinterface->error != 0)
 	{
@@ -279,7 +313,7 @@ AppInterface * _new_do(AppTransportMode mode, char const * app)
 	return appinterface;
 }
 
-static int _new_foreach(char const * key, Hash * value,
+static int _new_interface_foreach(char const * key, Hash * value,
 		AppInterface * appinterface)
 {
 	String const * prefix = (appinterface->mode == ATM_SERVER)
@@ -299,7 +333,7 @@ static int _new_foreach(char const * key, Hash * value,
 				"Invalid return type");
 		return -appinterface->error;
 	}
-	if(_new_append(appinterface, type, key) != 0)
+	if(_new_interface_append(appinterface, type, key) != 0)
 	{
 		appinterface->error = 1;
 		return -appinterface->error;
@@ -309,7 +343,7 @@ static int _new_foreach(char const * key, Hash * value,
 		snprintf(buf, sizeof(buf), "arg%d", i + 1);
 		if((p = hash_get(value, buf)) == NULL)
 			break;
-		if(_new_append_arg(appinterface, p) != 0)
+		if(_new_interface_append_arg(appinterface, p) != 0)
 		{
 			/* FIXME may crash here? */
 			appinterface->error = 1;
@@ -317,25 +351,6 @@ static int _new_foreach(char const * key, Hash * value,
 		}
 	}
 	return 0;
-}
-
-static String * _new_interface(String const * app)
-{
-	String * var;
-	String const * interface;
-
-	if((var = string_new_append("APPINTERFACE_", app, NULL)) == NULL)
-		return NULL;
-	interface = getenv(var);
-#ifdef DEBUG
-	fprintf(stderr, "DEBUG: %s() \"%s\" \"%s\"\n", __func__, var,
-			interface);
-#endif
-	string_delete(var);
-	if(interface != NULL)
-		return interface;
-	return string_new_append(SYSCONFDIR "/AppInterface/", app,
-			".interface", NULL);
 }
 
 
