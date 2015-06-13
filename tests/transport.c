@@ -103,7 +103,8 @@ static int _transport(char const * protocol, char const * name)
 		? transport.plugind->init(helper, ATM_SERVER, name) : NULL;
 	transport.client = (helper->event != NULL)
 		? transport.plugind->init(helper, ATM_CLIENT, name) : NULL;
-	if(helper->event == NULL || transport.server == NULL
+	if(helper->event == NULL
+			|| transport.server == NULL
 			|| transport.client == NULL)
 	{
 		if(helper->event != NULL)
