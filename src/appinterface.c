@@ -151,12 +151,12 @@ static int _string_enum(String const * string, StringEnum const * se)
 /* public */
 /* functions */
 /* appinterface_new */
-AppInterface * _new_do(AppTransportMode mode, char const * app);
-static int _new_foreach(char const * key, Hash * value,
-		AppInterface * appinterface);
 static int _new_append(AppInterface * ai, VariableType type,
 		char const * function);
 static int _new_append_arg(AppInterface * ai, char const * arg);
+AppInterface * _new_do(AppTransportMode mode, char const * app);
+static int _new_foreach(char const * key, Hash * value,
+		AppInterface * appinterface);
 
 AppInterface * appinterface_new(AppTransportMode mode, char const * app)
 {
@@ -184,6 +184,58 @@ AppInterface * appinterface_new(AppTransportMode mode, char const * app)
 	}
 	plugin_delete(handle);
 	return ai;
+}
+
+static int _new_append(AppInterface * ai, VariableType type,
+		char const * function)
+{
+	AppInterfaceCall * p;
+
+#ifdef DEBUG
+	fprintf(stderr, "DEBUG: %s(%d, \"%s\")\n", __func__, type, function);
+#endif
+	if((p = realloc(ai->calls, sizeof(*p) * (ai->calls_cnt + 1))) == NULL)
+		return -1;
+	ai->calls = p;
+	p = &ai->calls[ai->calls_cnt];
+	if((p->name = string_new(function)) == NULL)
+		return -1;
+	p->type.type = type & AICT_MASK;
+	p->type.direction = type & AICD_MASK;
+	p->args = NULL;
+	p->args_cnt = 0;
+	ai->calls_cnt++;
+	return 0;
+}
+
+static int _new_append_arg(AppInterface * ai, char const * arg)
+{
+	char buf[16];
+	char * p;
+	int type;
+	AppInterfaceCall * q;
+	AppInterfaceCallArg * r;
+
+#ifdef DEBUG
+	fprintf(stderr, "DEBUG: %s(\"%s\")\n", __func__, arg);
+#endif
+	snprintf(buf, sizeof(buf), "%s", arg);
+	if((p = strchr(buf, ',')) != NULL)
+		*p = '\0';
+	if((type = _string_enum(buf, _string_type)) < 0)
+		return -1;
+	q = &ai->calls[ai->calls_cnt - 1];
+	if((r = realloc(q->args, sizeof(*r) * (q->args_cnt + 1))) == NULL)
+		return error_set_code(-errno, "%s", strerror(errno));
+	q->args = r;
+	r = &q->args[q->args_cnt++];
+	r->type = type & AICT_MASK;
+	r->direction = type & AICD_MASK;
+#ifdef DEBUG
+	fprintf(stderr, "DEBUG: type %s, direction: %d\n", AICTString[r->type],
+			r->direction);
+#endif
+	return 0;
 }
 
 AppInterface * _new_do(AppTransportMode mode, char const * app)
@@ -260,58 +312,6 @@ static int _new_foreach(char const * key, Hash * value,
 			return -1;
 		}
 	}
-	return 0;
-}
-
-static int _new_append(AppInterface * ai, VariableType type,
-		char const * function)
-{
-	AppInterfaceCall * p;
-
-#ifdef DEBUG
-	fprintf(stderr, "DEBUG: %s(%d, \"%s\")\n", __func__, type, function);
-#endif
-	if((p = realloc(ai->calls, sizeof(*p) * (ai->calls_cnt + 1))) == NULL)
-		return -1;
-	ai->calls = p;
-	p = &ai->calls[ai->calls_cnt];
-	if((p->name = string_new(function)) == NULL)
-		return -1;
-	p->type.type = type & AICT_MASK;
-	p->type.direction = type & AICD_MASK;
-	p->args = NULL;
-	p->args_cnt = 0;
-	ai->calls_cnt++;
-	return 0;
-}
-
-static int _new_append_arg(AppInterface * ai, char const * arg)
-{
-	char buf[16];
-	char * p;
-	int type;
-	AppInterfaceCall * q;
-	AppInterfaceCallArg * r;
-
-#ifdef DEBUG
-	fprintf(stderr, "DEBUG: %s(\"%s\")\n", __func__, arg);
-#endif
-	snprintf(buf, sizeof(buf), "%s", arg);
-	if((p = strchr(buf, ',')) != NULL)
-		*p = '\0';
-	if((type = _string_enum(buf, _string_type)) < 0)
-		return -1;
-	q = &ai->calls[ai->calls_cnt - 1];
-	if((r = realloc(q->args, sizeof(*r) * (q->args_cnt + 1))) == NULL)
-		return error_set_code(-errno, "%s", strerror(errno));
-	q->args = r;
-	r = &q->args[q->args_cnt++];
-	r->type = type & AICT_MASK;
-	r->direction = type & AICD_MASK;
-#ifdef DEBUG
-	fprintf(stderr, "DEBUG: type %s, direction: %d\n", AICTString[r->type],
-			r->direction);
-#endif
 	return 0;
 }
 
