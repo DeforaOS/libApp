@@ -34,15 +34,7 @@ _debug()
 #fail
 _fail()
 {
-	test="$1"
-	name="$2"
-
-	shift
-	shift
-	echo -n "$test:" 1>&2
-	(echo
-	echo "Testing: $test $name"
-	$DEBUG "./$test" "$@" 2>&1) >> "$target"
+	_run "$@"
 	res=$?
 	if [ $res -ne 0 ]; then
 		echo "./$test: $name: Failed with error code $res" >> "$target"
@@ -53,8 +45,8 @@ _fail()
 }
 
 
-#test
-_test()
+#run
+_run()
 {
 	test="$1"
 	name="$2"
@@ -64,7 +56,17 @@ _test()
 	echo -n "$test:" 1>&2
 	(echo
 	echo "Testing: $test $name"
-	$DEBUG "./$test" "$@" 2>&1) >> "$target"
+	LD_LIBRARY_PATH="$OBJDIR../src" $DEBUG "./$test" "$@" 2>&1) >> "$target"
+}
+
+
+#test
+_test()
+{
+	test="$1"
+	name="$2"
+
+	_run "$@"
 	res=$?
 	if [ $res -ne 0 ]; then
 		echo "./$test: $name: Failed with error code $res" >> "$target"
