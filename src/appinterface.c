@@ -157,6 +157,7 @@ static int _new_append_arg(AppInterface * ai, char const * arg);
 AppInterface * _new_do(AppTransportMode mode, char const * app);
 static int _new_foreach(char const * key, Hash * value,
 		AppInterface * appinterface);
+static String * _new_interface(String const * app);
 
 AppInterface * appinterface_new(AppTransportMode mode, char const * app)
 {
@@ -259,9 +260,7 @@ AppInterface * _new_do(AppTransportMode mode, char const * app)
 	appinterface->calls_cnt = 0;
 	appinterface->error = 0;
 	if(appinterface->name == NULL
-			|| (pathname = string_new_append(
-					SYSCONFDIR "/AppInterface/", app,
-					".interface", NULL)) == NULL
+			|| (pathname = _new_interface(app)) == NULL
 			|| appinterface->config == NULL
 			|| config_load(appinterface->config, pathname) != 0)
 	{
@@ -318,6 +317,21 @@ static int _new_foreach(char const * key, Hash * value,
 		}
 	}
 	return 0;
+}
+
+static String * _new_interface(String const * app)
+{
+	String * var;
+	String const * interface;
+
+	if((var = string_new_append("APPINTERFACE_", app, NULL)) == NULL)
+		return NULL;
+	interface = getenv(var);
+	string_delete(var);
+	if(interface != NULL)
+		return interface;
+	return string_new_append(SYSCONFDIR "/AppInterface/", app,
+			".interface", NULL);
 }
 
 
