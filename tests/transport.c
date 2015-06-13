@@ -23,6 +23,10 @@
 #include <System.h>
 #include "App.h"
 
+#ifndef PROGNAME
+# define PROGNAME	"transport"
+#endif
+
 
 /* private */
 /* types */
@@ -73,17 +77,17 @@ static int _transport(char const * protocol, char const * name)
 
 	/* load the transport plug-in */
 	if((cwd = getcwd(NULL, 0)) == NULL)
-		return error_set_print("transport", 2, "%s", strerror(errno));
+		return error_set_print(PROGNAME, 2, "%s", strerror(errno));
 	/* XXX rather ugly but does the trick */
 	plugin = plugin_new(cwd, "../src", "transport", protocol);
 	free(cwd);
 	if(plugin == NULL)
-		return error_print("transport");
+		return error_print(PROGNAME);
 	transport.ret = 0;
 	if((transport.plugind = plugin_lookup(plugin, "transport")) == NULL)
 	{
 		plugin_delete(plugin);
-		return error_print("transport");
+		return error_print(PROGNAME);
 	}
 	/* initialize the helper */
 	memset(helper, 0, sizeof(*helper));
@@ -109,7 +113,7 @@ static int _transport(char const * protocol, char const * name)
 		if(transport.server != NULL)
 			transport.plugind->destroy(transport.server);
 		plugin_delete(plugin);
-		return error_print("transport");
+		return error_print(PROGNAME);
 	}
 	transport.message = appmessage_new_callv("hello", -1);
 	tv.tv_sec = 1;
@@ -121,11 +125,11 @@ static int _transport(char const * protocol, char const * name)
 				_transport_callback_timeout, &transport) != 0
 			|| event_loop(helper->event) != 0)
 	{
-		error_print("transport");
+		error_print(PROGNAME);
 		transport.ret = -1;
 	}
 	else if(transport.ret != 0)
-		error_print("transport");
+		error_print(PROGNAME);
 	appmessage_delete(transport.message);
 	transport.plugind->destroy(transport.client);
 	transport.plugind->destroy(transport.server);
