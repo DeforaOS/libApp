@@ -171,15 +171,20 @@ AppInterface * appinterface_new(AppTransportMode mode, char const * app)
 		return NULL;
 	for(i = 0; i < ai->calls_cnt; i++)
 	{
-		name = string_new_append(ai->name, "_", ai->calls[i].name,
-				NULL);
+		if((name = string_new_append(ai->name, "_", ai->calls[i].name,
+						NULL)) == NULL)
+		{
+			appinterface_delete(ai);
+			ai = NULL;
+			break;
+		}
 		ai->calls[i].func = plugin_lookup(handle, name);
 		string_delete(name);
 		if(ai->calls[i].func == NULL)
 		{
 			appinterface_delete(ai);
-			plugin_delete(handle);
-			return NULL;
+			ai = NULL;
+			break;
 		}
 	}
 	plugin_delete(handle);
