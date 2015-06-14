@@ -20,13 +20,17 @@
 #include <System/error.h>
 #include "App/appclient.h"
 
+#ifndef PROGNAME
+# define PROGNAME	"appclient"
+#endif
+
 
 /* private */
 /* functions */
 /* usage */
 static int _usage(void)
 {
-	fputs("Usage: appclient [-a app][-n name]\n", stderr);
+	fputs("Usage: " PROGNAME " [-a app][-n name]\n", stderr);
 	return 1;
 }
 
@@ -54,7 +58,7 @@ int main(int argc, char * argv[])
 		}
 	if((appclient = appclient_new(NULL, app, name)) == NULL)
 	{
-		error_print("appclient");
+		error_print(PROGNAME);
 		return 2;
 	}
 	appclient_delete(appclient);
