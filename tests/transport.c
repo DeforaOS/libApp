@@ -235,7 +235,7 @@ static int _transport_callback_timeout(void * data)
 /* usage */
 static int _usage(void)
 {
-	fputs("Usage: transport [-p protocol] [name]\n", stderr);
+	fputs("Usage: " PROGNAME " [-p protocol] [name]\n", stderr);
 	return 1;
 }
 
