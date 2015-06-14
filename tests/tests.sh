@@ -114,7 +114,8 @@ target="$1"
 FAILED=
 echo "Performing tests:" 1>&2
 $DATE > "$target"
-_test "appclient" "appclient" -a "VFS" -n tcp:localhost:4242
+APPINTERFACE_Test=Test.interface \
+	_test "appclient" "appclient" -a "Test" -n tcp:localhost:4242
 _test "appmessage" "appmessage"
 APPINTERFACE_Dummy=../data/Dummy.interface \
 	_test "appserver" "appserver" -a "Dummy" -n tcp:localhost:4242
@@ -122,8 +123,10 @@ APPINTERFACE_Dummy=../data/Dummy.interface \
 	APPSERVER_Dummy="tcp:localhost:4242" \
 	_test "appserver" "appserver" -a "Dummy"
 _test "includes" "includes"
-_test "lookup" "lookup VFS tcp" -a "VFS" -n "tcp:localhost:4242"
-_test "lookup" "lookup VFS tcp4" -a "VFS" -n "tcp4:localhost:4242"
+APPINTERFACE_Test=Test.interface \
+	_test "lookup" "lookup Test tcp" -a "Test" -n "tcp:localhost:4242"
+APPINTERFACE_Test=Test.interface \
+	_test "lookup" "lookup Test tcp4" -a "Test" -n "tcp4:localhost:4242"
 APPSERVER_Session="tcp:localhost:4242" _test "lookup" "lookup Session" \
 	-a "Session"
 _test "transport" "tcp4 127.0.0.1:4242" -p tcp4 127.0.0.1:4242
@@ -141,7 +144,8 @@ _test "transport" "udp 127.0.0.1:4242" -p udp 127.0.0.1:4242
 _test "transport" "udp ::1.4242" -p udp ::1.4242
 _test "transport" "udp localhost:4242" -p udp localhost:4242
 echo "Expected failures:" 1>&2
-_fail "lookup" "lookup" -a "VFS" -n "localhost"
+APPINTERFACE_Test=Test.interface \
+	_fail "lookup" "lookup" -a "Test" -n "localhost"
 _fail "transport" "self" -p self
 _fail "transport" "tcp6 ::1:4242" -p tcp6 ::1:4242
 _fail "transport" "tcp ::1:4242" -p tcp ::1:4242
