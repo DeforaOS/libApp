@@ -20,6 +20,7 @@
 
 # include <System/event.h>
 # include "app.h"
+# include "appstatus.h"
 
 
 /* AppServer */
@@ -45,6 +46,7 @@ void appserver_delete(AppServer * appserver);
 
 /* accessors */
 char const * appserver_get_app(AppServer * appserver);
+AppStatus * appserver_get_status(AppServer * appserver);
 
 /* useful */
 int appserver_loop(AppServer * appserver);

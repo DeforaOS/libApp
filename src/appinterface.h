@@ -20,6 +20,7 @@
 
 # include <stdarg.h>
 # include <System/variable.h>
+# include "App/appstatus.h"
 # include "App/apptransport.h"
 
 
@@ -41,6 +42,7 @@ int appinterface_can_call(AppInterface * appinterface, char const * method,
 char const * appinterface_get_app(AppInterface * appinterface);
 int appinterface_get_args_count(AppInterface * appinterface, size_t * count,
 		char const * function);
+AppStatus * appinterface_get_status(AppInterface * appinterface);
 
 /* useful */
 int appinterface_callv(AppInterface * appinterface, App * app, void ** result,

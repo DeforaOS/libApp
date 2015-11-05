@@ -115,6 +115,13 @@ char const * appclient_get_app(AppClient * appclient)
 }
 
 
+/* appclient_get_status */
+AppStatus * appclient_get_status(AppClient * appclient)
+{
+	return appinterface_get_status(appclient->interface);
+}
+
+
 /* useful */
 /* appclient_call */
 int appclient_call(AppClient * appclient,

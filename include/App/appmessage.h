@@ -22,13 +22,16 @@
 # include <System/string.h>
 # include <System/variable.h>
 # include "app.h"
+# include "appstatus.h"
 
 
 /* AppMessage */
 /* types */
 typedef enum _AppMessageType
 {
-	AMT_CALL = 0,
+	AMT_STATUS_GET = 0,
+	AMT_STATUS_SET,
+	AMT_CALL,
 	AMT_ACKNOWLEDGEMENT
 } AppMessageType;
 # define AMT_CALLBACK	AMT_CALL
@@ -56,13 +59,15 @@ typedef struct _AppMessageCallArgument
 
 
 /* functions */
+AppMessage * appmessage_new_deserialize(Buffer * buffer);
 /* calls */
 AppMessage * appmessage_new_call(String const * method,
 		AppMessageCallArgument * args, size_t args_cnt);
 AppMessage * appmessage_new_callv(String const * method, ...);
 AppMessage * appmessage_new_callv_variables(String const * method, ...);
-/* generic */
-AppMessage * appmessage_new_deserialize(Buffer * buffer);
+/* status */
+AppMessage * appmessage_new_status(AppStatus * status);
+
 void appmessage_delete(AppMessage * appmessage);
 
 /* accessors */

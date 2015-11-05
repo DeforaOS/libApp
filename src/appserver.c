@@ -117,6 +117,13 @@ char const * appserver_get_app(AppServer * appserver)
 }
 
 
+/* appserver_get_status */
+AppStatus * appserver_get_status(AppServer * appserver)
+{
+	return appinterface_get_status(appserver->interface);
+}
+
+
 /* useful */
 /* appserver_loop */
 int appserver_loop(AppServer * appserver)

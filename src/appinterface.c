@@ -26,6 +26,7 @@
 #include <System.h>
 #include "App/appserver.h"
 #include "marshall.h"
+#include "appstatus.h"
 #include "appinterface.h"
 #include "../config.h"
 
@@ -83,6 +84,7 @@ struct _AppInterface
 	String * name;
 	Config * config;
 
+	AppStatus * status;
 	AppInterfaceCall * calls;
 	size_t calls_cnt;
 	int error;
@@ -191,6 +193,7 @@ static int _new_interface_append(AppInterface * ai, VariableType type,
 static int _new_interface_append_arg(AppInterface * ai, char const * arg);
 AppInterface * _new_interface_do(AppTransportMode mode, String const * app,
 		String const * pathname);
+static int _new_interface_do_appstatus(AppInterface * appinterface);
 static int _new_interface_foreach(char const * key, Hash * value,
 		AppInterface * appinterface);
 
@@ -292,12 +295,14 @@ AppInterface * _new_interface_do(AppTransportMode mode, String const * app,
 	appinterface->mode = mode;
 	appinterface->name = string_new(app);
 	appinterface->config = config_new();
+	appinterface->status = NULL;
 	appinterface->calls = NULL;
 	appinterface->calls_cnt = 0;
 	appinterface->error = 0;
 	if(appinterface->name == NULL
 			|| appinterface->config == NULL
-			|| config_load(appinterface->config, pathname) != 0)
+			|| config_load(appinterface->config, pathname) != 0
+			|| _new_interface_do_appstatus(appinterface) != 0)
 	{
 		appinterface_delete(appinterface);
 		return NULL;
@@ -311,6 +316,15 @@ AppInterface * _new_interface_do(AppTransportMode mode, String const * app,
 		return NULL;
 	}
 	return appinterface;
+}
+
+static int _new_interface_do_appstatus(AppInterface * appinterface)
+{
+	if((appinterface->status = appstatus_new_config(appinterface->config,
+					"status")) == NULL)
+		return -1;
+	/* XXX delete and set status to NULL if empty */
+	return 0;
 }
 
 static int _new_interface_foreach(char const * key, Hash * value,
@@ -367,6 +381,8 @@ void appinterface_delete(AppInterface * appinterface)
 		free(appinterface->calls[i].args);
 	}
 	free(appinterface->calls);
+	if(appinterface->status != NULL)
+		appstatus_delete(appinterface->status);
 	string_delete(appinterface->name);
 	object_delete(appinterface);
 }
@@ -445,6 +461,13 @@ int appinterface_get_args_count(AppInterface * appinterface, size_t * count,
 		return -1;
 	*count = aic->args_cnt;
 	return 0;
+}
+
+
+/* appinterface_get_status */
+AppStatus * appinterface_get_status(AppInterface * appinterface)
+{
+	return appinterface->status;
 }
 
 

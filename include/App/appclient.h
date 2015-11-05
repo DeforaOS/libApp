@@ -22,6 +22,7 @@
 # include <System/event.h>
 # include <System/variable.h>
 # include "app.h"
+# include "appstatus.h"
 
 
 /* AppClient */
@@ -34,6 +35,9 @@ AppClient * appclient_new(App * self, char const * app, char const * name);
 AppClient * appclient_new_event(App * self, char const * app,
 		char const * name, Event * event);
 void appclient_delete(AppClient * appclient);
+
+/* accessors */
+AppStatus * appclient_get_status(AppClient * appclient);
 
 /* useful */
 int appclient_call(AppClient * appclient,
