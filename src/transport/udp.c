@@ -45,8 +45,8 @@
 #endif
 
 /* for udp4 and udp6 */
-#ifndef UDP_FAMILY
-# define UDP_FAMILY AF_UNSPEC
+#ifndef UDP_DOMAIN
+# define UDP_DOMAIN AF_UNSPEC
 #endif
 
 
@@ -138,8 +138,8 @@ AppTransportPluginDefinition transport =
 /* functions */
 /* plug-in */
 /* udp_init */
-static int _init_client(UDP * udp, char const * name);
-static int _init_server(UDP * udp, char const * name);
+static int _init_client(UDP * udp, char const * name, int domain);
+static int _init_server(UDP * udp, char const * name, int domain);
 static int _init_socket(UDP * udp);
 
 static UDP * _udp_init(AppTransportPluginHelper * helper,
@@ -159,10 +159,10 @@ static UDP * _udp_init(AppTransportPluginHelper * helper,
 	switch((udp->mode) = mode)
 	{
 		case ATM_CLIENT:
-			res = _init_client(udp, name);
+			res = _init_client(udp, name, UDP_DOMAIN);
 			break;
 		case ATM_SERVER:
-			res = _init_server(udp, name);
+			res = _init_server(udp, name, UDP_DOMAIN);
 			break;
 		default:
 			res = -error_set_code(-EINVAL, "%s",
@@ -178,11 +178,11 @@ static UDP * _udp_init(AppTransportPluginHelper * helper,
 	return udp;
 }
 
-static int _init_client(UDP * udp, char const * name)
+static int _init_client(UDP * udp, char const * name, int domain)
 {
 	memset(&udp->u, 0, sizeof(udp->u));
 	/* obtain the remote address */
-	if((udp->ai = _init_address(name, UDP_FAMILY, 0)) == NULL)
+	if((udp->ai = _init_address(name, domain, 0)) == NULL)
 		return -1;
 	for(udp->aip = udp->ai; udp->aip != NULL; udp->aip = udp->aip->ai_next)
 	{
@@ -203,12 +203,12 @@ static int _init_client(UDP * udp, char const * name)
 	return 0;
 }
 
-static int _init_server(UDP * udp, char const * name)
+static int _init_server(UDP * udp, char const * name, int domain)
 {
 	udp->u.server.clients = NULL;
 	udp->u.server.clients_cnt = 0;
 	/* obtain the local address */
-	if((udp->ai = _init_address(name, UDP_FAMILY, AI_PASSIVE)) == NULL)
+	if((udp->ai = _init_address(name, domain, AI_PASSIVE)) == NULL)
 		return -1;
 	for(udp->aip = udp->ai; udp->aip != NULL; udp->aip = udp->aip->ai_next)
 	{
@@ -327,7 +327,7 @@ static int _udp_client_send(UDP * udp, AppTransportClient * client,
 				ntohs(sa->sin_port), buffer_get_size(buffer));
 	}
 	else
-		fprintf(stderr, "DEBUG: %s() %s family=%d size=%lu\n", __func__,
+		fprintf(stderr, "DEBUG: %s() %s domain=%d size=%lu\n", __func__,
 				"sendto()", udp->aip->ai_family,
 				buffer_get_size(buffer));
 #endif
@@ -366,7 +366,7 @@ static int _udp_send(UDP * udp, AppMessage * message)
 				ntohs(sa->sin_port), buffer_get_size(buffer));
 	}
 	else
-		fprintf(stderr, "DEBUG: %s() %s family=%d size=%lu\n", __func__,
+		fprintf(stderr, "DEBUG: %s() %s domain=%d size=%lu\n", __func__,
 				"sendto()", udp->aip->ai_family,
 				buffer_get_size(buffer));
 #endif

@@ -15,5 +15,5 @@
 
 
 
-#define UDP_FAMILY AF_INET
+#define UDP_DOMAIN AF_INET
 #include "udp.c"

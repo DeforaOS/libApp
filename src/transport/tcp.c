@@ -44,8 +44,8 @@
 #endif
 
 /* for tcp4 and tcp6 */
-#ifndef TCP_FAMILY
-# define TCP_FAMILY AF_UNSPEC
+#ifndef TCP_DOMAIN
+# define TCP_DOMAIN AF_UNSPEC
 #endif
 
 
@@ -155,8 +155,8 @@ AppTransportPluginDefinition transport =
 /* functions */
 /* plug-in */
 /* tcp_init */
-static int _init_client(TCP * tcp, char const * name);
-static int _init_server(TCP * tcp, char const * name);
+static int _init_client(TCP * tcp, char const * name, int domain);
+static int _init_server(TCP * tcp, char const * name, int domain);
 
 static TCP * _tcp_init(AppTransportPluginHelper * helper, AppTransportMode mode,
 		char const * name)
@@ -174,10 +174,10 @@ static TCP * _tcp_init(AppTransportPluginHelper * helper, AppTransportMode mode,
 	switch((tcp->mode = mode))
 	{
 		case ATM_CLIENT:
-			res = _init_client(tcp, name);
+			res = _init_client(tcp, name, TCP_DOMAIN);
 			break;
 		case ATM_SERVER:
-			res = _init_server(tcp, name);
+			res = _init_server(tcp, name, TCP_DOMAIN);
 			break;
 		default:
 			res = -error_set_code(-EINVAL, "%s",
@@ -197,7 +197,7 @@ static TCP * _tcp_init(AppTransportPluginHelper * helper, AppTransportMode mode,
 	return tcp;
 }
 
-static int _init_client(TCP * tcp, char const * name)
+static int _init_client(TCP * tcp, char const * name, int domain)
 {
 	struct addrinfo * aip;
 #ifdef DEBUG
@@ -207,7 +207,7 @@ static int _init_client(TCP * tcp, char const * name)
 	tcp->u.client.tcp = tcp;
 	tcp->u.client.fd = -1;
 	/* obtain the remote address */
-	if((tcp->ai = _init_address(name, TCP_FAMILY, 0)) == NULL)
+	if((tcp->ai = _init_address(name, domain, 0)) == NULL)
 		return -1;
 	/* connect to the remote host */
 	for(aip = tcp->ai; aip != NULL; aip = aip->ai_next)
@@ -257,7 +257,7 @@ static int _init_client(TCP * tcp, char const * name)
 	return (aip != NULL) ? 0 : -1;
 }
 
-static int _init_server(TCP * tcp, char const * name)
+static int _init_server(TCP * tcp, char const * name, int domain)
 {
 	struct addrinfo * aip;
 	TCPSocket tcpsocket;
@@ -267,7 +267,7 @@ static int _init_server(TCP * tcp, char const * name)
 
 	tcp->u.server.fd = -1;
 	/* obtain the local address */
-	if((tcp->ai = _init_address(name, TCP_FAMILY, AI_PASSIVE)) == NULL)
+	if((tcp->ai = _init_address(name, domain, AI_PASSIVE)) == NULL)
 		return -1;
 	for(aip = tcp->ai; aip != NULL; aip = aip->ai_next)
 	{
