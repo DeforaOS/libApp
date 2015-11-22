@@ -188,7 +188,7 @@ static TCP * _tcp_init(AppTransportPluginHelper * helper, AppTransportMode mode,
 	{
 #ifdef DEBUG
 		fprintf(stderr, "DEBUG: %s() => %d (%s)\n", __func__, res,
-				error_get());
+				error_get(NULL));
 #endif
 		_tcp_destroy(tcp);
 		return NULL;
