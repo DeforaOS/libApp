@@ -21,7 +21,7 @@ static struct addrinfo * _init_address(char const * name, int domain, int flags)
 	struct addrinfo * ai = NULL;
 	char * hostname;
 	char * servname;
-	char sep = ':';
+	char sep;
 	char * p;
 	char * q;
 	long l;
@@ -38,9 +38,22 @@ static struct addrinfo * _init_address(char const * name, int domain, int flags)
 		error_set_code(1, "%s", "Empty names are not allowed");
 		return NULL;
 	}
-	/* guess the port separator */
-	if((p = strchr(name, ':')) != NULL && strchr(++p, ':') != NULL)
-		sep = '.';
+	/* obtain the port separator */
+	switch(domain)
+	{
+		case AF_INET6:
+		case AF_UNSPEC:
+			if((p = strchr(name, ':')) != NULL
+					&& strchr(++p, ':') != NULL)
+				sep = '.';
+			else
+				sep = ':';
+			break;
+		case AF_INET:
+		default:
+			sep = ':';
+			break;
+	}
 	/* obtain the name */
 	if((p = strdup(name)) == NULL)
 	{
