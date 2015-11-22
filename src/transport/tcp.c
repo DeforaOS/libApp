@@ -114,7 +114,7 @@ static int _tcp_client_send(TCP * tcp, AppTransportClient * client,
 static int _tcp_send(TCP * tcp, AppMessage * message);
 
 /* useful */
-static int _tcp_error(char const * message, int code);
+static int _tcp_error(char const * message);
 
 /* servers */
 static int _tcp_server_add_client(TCP * tcp, TCPSocket * client);
@@ -180,7 +180,8 @@ static TCP * _tcp_init(AppTransportPluginHelper * helper, AppTransportMode mode,
 			res = _init_server(tcp, name);
 			break;
 		default:
-			res = -error_set_code(1, "Unknown transport mode");
+			res = -error_set_code(-EINVAL, "%s",
+					"Unknown transport mode");
 			break;
 	}
 	/* check for errors */
@@ -234,7 +235,7 @@ static int _init_client(TCP * tcp, char const * name)
 			{
 				close(tcp->u.client.fd);
 				tcp->u.client.fd = -1;
-				_tcp_error("socket", 1);
+				_tcp_error("socket");
 				continue;
 			}
 			event_register_io_write(tcp->helper->event,
@@ -290,7 +291,7 @@ static int _init_server(TCP * tcp, char const * name)
 #endif
 		if(bind(tcp->u.server.fd, aip->ai_addr, aip->ai_addrlen) != 0)
 		{
-			_tcp_error("bind", 1);
+			_tcp_error("bind");
 			close(tcp->u.server.fd);
 			tcp->u.server.fd = -1;
 			continue;
@@ -300,7 +301,7 @@ static int _init_server(TCP * tcp, char const * name)
 #endif
 		if(listen(tcp->u.server.fd, SOMAXCONN) != 0)
 		{
-			_tcp_error("listen", 1);
+			_tcp_error("listen");
 			close(tcp->u.server.fd);
 			tcp->u.server.fd = -1;
 			continue;
@@ -411,12 +412,13 @@ static int _tcp_send(TCP * tcp, AppMessage * message)
 
 /* useful */
 /* tcp_error */
-static int _tcp_error(char const * message, int code)
+static int _tcp_error(char const * message)
 {
 #ifdef DEBUG
 	fprintf(stderr, "DEBUG: %s(\"%s\", %d)\n", __func__, message, code);
 #endif
-	return error_set_code(code, "%s%s%s", (message != NULL) ? message : "",
+	return error_set_code(-errno, "%s%s%s",
+			(message != NULL) ? message : "",
 			(message != NULL) ? ": " : "", strerror(errno));
 }
 
@@ -460,14 +462,14 @@ static int _tcp_socket_init(TCPSocket * tcpsocket, int domain, TCP * tcp)
 	int flags;
 
 	if((tcpsocket->fd = socket(domain, SOCK_STREAM, 0)) < 0)
-		return -_tcp_error("socket", 1);
+		return -_tcp_error("socket");
 	_tcp_socket_init_fd(tcpsocket, tcp, tcpsocket->fd, NULL, 0);
 	/* set the socket as non-blocking */
 	if((flags = fcntl(tcpsocket->fd, F_GETFL)) == -1)
-		return -_tcp_error("fcntl", 1);
+		return -_tcp_error("fcntl");
 	if((flags & O_NONBLOCK) == 0)
 		if(fcntl(tcpsocket->fd, F_SETFL, flags | O_NONBLOCK) == -1)
-			return -_tcp_error("fcntl", 1);
+			return -_tcp_error("fcntl");
 #ifdef TCP_NODELAY
 	/* do not wait before sending any traffic */
 	flags = 1;
@@ -605,7 +607,7 @@ static int _tcp_callback_accept(int fd, TCP * tcp)
 	if((fd = accept(fd, sa, &sa_len)) < 0)
 	{
 		free(sa);
-		return _tcp_error("accept", 1);
+		return _tcp_error("accept");
 	}
 	if(_accept_client(tcp, fd, sa, sa_len) != 0)
 	{
@@ -662,7 +664,7 @@ static int _tcp_callback_connect(int fd, TCP * tcp)
 	/* obtain the connection status */
 	if(getsockopt(fd, SOL_SOCKET, SO_ERROR, &res, &s) != 0)
 	{
-		error_set_code(1, "%s: %s", "getsockopt", strerror(errno));
+		error_set_code(-errno, "%s: %s", "getsockopt", strerror(errno));
 		close(fd);
 		tcp->u.client.fd = -1;
 		/* FIXME report error */
@@ -674,7 +676,7 @@ static int _tcp_callback_connect(int fd, TCP * tcp)
 	if(res != 0)
 	{
 		/* the connection failed */
-		error_set_code(1, "%s: %s", "connect", strerror(res));
+		error_set_code(-res, "%s: %s", "connect", strerror(res));
 		close(fd);
 		tcp->u.client.fd = -1;
 		/* FIXME report error */
@@ -791,7 +793,7 @@ static int _socket_callback_recv(TCPSocket * tcpsocket)
 	if((ssize = recv(tcpsocket->fd, &tcpsocket->bufin[tcpsocket->bufin_cnt],
 					inc, 0)) < 0)
 	{
-		error_set_code(1, "%s", strerror(errno));
+		error_set_code(-errno, "%s", strerror(errno));
 		close(tcpsocket->fd);
 		tcpsocket->fd = -1;
 		/* FIXME report error */
@@ -827,7 +829,7 @@ static int _tcp_socket_callback_write(int fd, TCPSocket * tcpsocket)
 					tcpsocket->bufout_cnt, 0)) < 0)
 	{
 		/* XXX report error (and reconnect) */
-		error_set_code(1, "%s", strerror(errno));
+		error_set_code(-errno, "%s", strerror(errno));
 		close(tcpsocket->fd);
 		tcpsocket->fd = -1;
 		return -1;
@@ -837,7 +839,7 @@ static int _tcp_socket_callback_write(int fd, TCPSocket * tcpsocket)
 		close(tcpsocket->fd);
 		tcpsocket->fd = -1;
 		/* XXX report transfer interruption (and reconnect) */
-		return -error_set_code(1, "%s", strerror(errno));
+		return -error_set_code(-errno, "%s", strerror(errno));
 	}
 #ifdef DEBUG
 	fprintf(stderr, "DEBUG: %s() send() => %ld\n", __func__, ssize);

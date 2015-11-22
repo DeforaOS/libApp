@@ -110,7 +110,7 @@ static int _udp_client_send(UDP * udp, AppTransportClient * client,
 static int _udp_send(UDP * udp, AppMessage * message);
 
 /* useful */
-static int _udp_error(char const * message, int code);
+static int _udp_error(char const * message);
 
 /* clients */
 static int _udp_client_init(UDPClient * client, struct sockaddr * sa,
@@ -165,7 +165,7 @@ static UDP * _udp_init(AppTransportPluginHelper * helper,
 			res = _init_server(udp, name);
 			break;
 		default:
-			res = -error_set_code(1, "%s",
+			res = -error_set_code(-EINVAL, "%s",
 					"Unknown transport mode");
 			break;
 	}
@@ -218,7 +218,7 @@ static int _init_server(UDP * udp, char const * name)
 		/* accept incoming messages */
 		if(bind(udp->fd, udp->aip->ai_addr, udp->aip->ai_addrlen) != 0)
 		{
-			_udp_error("bind", 1);
+			_udp_error("bind");
 			close(udp->fd);
 			udp->fd = -1;
 			continue;
@@ -242,13 +242,13 @@ static int _init_socket(UDP * udp)
 	int flags;
 
 	if((udp->fd = socket(udp->aip->ai_family, SOCK_DGRAM, 0)) < 0)
-		return -_udp_error("socket", 1);
+		return -_udp_error("socket");
 	/* set the socket as non-blocking */
 	if((flags = fcntl(udp->fd, F_GETFL)) == -1)
-		return -_udp_error("fcntl", 1);
+		return -_udp_error("fcntl");
 	if((flags & O_NONBLOCK) == 0)
 		if(fcntl(udp->fd, F_SETFL, flags | O_NONBLOCK) == -1)
-			return -_udp_error("fcntl", 1);
+			return -_udp_error("fcntl");
 #ifdef DEBUG
 	fprintf(stderr, "DEBUG: %s() => %d\n", __func__, 0);
 #endif
@@ -309,7 +309,7 @@ static int _udp_client_send(UDP * udp, AppTransportClient * client,
 			break;
 	}
 	if(i == udp->u.server.clients_cnt)
-		return -error_set_code(1, "%s", "Unknown client");
+		return -error_set_code(-ENOENT, "%s", "Unknown client");
 	/* send the message */
 	if((buffer = buffer_new(0, NULL)) == NULL)
 		return -1;
@@ -348,7 +348,7 @@ static int _udp_send(UDP * udp, AppMessage * message)
 #endif
 
 	if(udp->mode != ATM_CLIENT)
-		return -error_set_code(1, "%s", "Not a client");
+		return -error_set_code(-EINVAL, "%s", "Not a client");
 	/* send the message */
 	if((buffer = buffer_new(0, NULL)) == NULL)
 		return -1;
@@ -379,9 +379,10 @@ static int _udp_send(UDP * udp, AppMessage * message)
 
 /* useful */
 /* udp_error */
-static int _udp_error(char const * message, int code)
+static int _udp_error(char const * message)
 {
-	return error_set_code(code, "%s%s%s", (message != NULL) ? message : "",
+	return error_set_code(-errno, "%s%s%s",
+			(message != NULL) ? message : "",
 			(message != NULL) ? ": " : "", strerror(errno));
 }
 
@@ -446,11 +447,11 @@ static int _udp_callback_read(int fd, UDP * udp)
 	if(fd != udp->fd)
 		return -1;
 	if((sa = malloc(sa_len)) == NULL)
-		return -_udp_error(NULL, 1);
+		return -_udp_error(NULL);
 	if((ssize = recvfrom(fd, buf, sizeof(buf), 0, sa, &sa_len)) < 0)
 	{
 		/* XXX report error (and re-open the socket) */
-		_udp_error("recvfrom", 1);
+		_udp_error("recvfrom");
 		free(sa);
 		close(udp->fd);
 		udp->fd = -1;

@@ -35,7 +35,7 @@ static struct addrinfo * _init_address(char const * name, int domain, int flags)
 	/* check the arguments */
 	if(name == NULL || strlen(name) == 0)
 	{
-		error_set_code(1, "%s", "Empty names are not allowed");
+		error_set_code(-EPERM, "%s", "Empty names are not allowed");
 		return NULL;
 	}
 	/* obtain the port separator */
@@ -57,7 +57,7 @@ static struct addrinfo * _init_address(char const * name, int domain, int flags)
 	/* obtain the name */
 	if((p = strdup(name)) == NULL)
 	{
-		error_set_code(1, "%s", strerror(errno));
+		error_set_code(-errno, "%s", strerror(errno));
 		return NULL;
 	}
 	hostname = p;
@@ -74,7 +74,7 @@ static struct addrinfo * _init_address(char const * name, int domain, int flags)
 			hostname = NULL;
 		l = strtol(servname, &q, 10);
 		if(servname[0] == '\0' || *q != '\0')
-			l = -error_set_code(1, "%s", strerror(EINVAL));
+			l = -error_set_code(-EINVAL, "%s", strerror(EINVAL));
 	}
 	/* FIXME perform this asynchronously */
 	memset(&hints, 0, sizeof(hints));
@@ -91,7 +91,7 @@ static struct addrinfo * _init_address(char const * name, int domain, int flags)
 	/* check for errors */
 	if(res != 0)
 	{
-		error_set_code(1, "%s", gai_strerror(res));
+		error_set_code(res, "%s", gai_strerror(res));
 		if(ai != NULL)
 			freeaddrinfo(ai);
 		return NULL;
