@@ -213,9 +213,11 @@ static void _appbroker_head(AppBroker * appbroker)
 				appbroker->prefix, "_H\n", "# define ",
 				appbroker->prefix, "_",
 				appbroker->prefix, "_H\n");
+	fputs("\n# include <stdbool.h>\n", appbroker->fp);
 	fputs("\n# include <stdint.h>\n", appbroker->fp);
 	fputs("# include <System/App.h>\n\n", appbroker->fp);
 	fputs("\n/* types */\n", appbroker->fp);
+	fputs("typedef bool BOOL;\n", appbroker->fp);
 	fputs("typedef Buffer * BUFFER;\n", appbroker->fp);
 	fputs("typedef double * DOUBLE;\n", appbroker->fp);
 	fputs("typedef float * FLOAT;\n", appbroker->fp);
@@ -225,16 +227,19 @@ static void _appbroker_head(AppBroker * appbroker)
 	fputs("typedef uint32_t UINT32;\n", appbroker->fp);
 	fputs("typedef String const * STRING;\n", appbroker->fp);
 	fputs("typedef void VOID;\n", appbroker->fp);
+	fputs("typedef bool BOOL_IN;\n", appbroker->fp);
 	fputs("\ntypedef BUFFER BUFFER_IN;\n", appbroker->fp);
 	fputs("\ntypedef DOUBLE DOUBLE_IN;\n", appbroker->fp);
 	fputs("\ntypedef FLOAT FLOAT_IN;\n", appbroker->fp);
 	fputs("typedef INT32 INT32_IN;\n", appbroker->fp);
 	fputs("typedef UINT32 UINT32_IN;\n", appbroker->fp);
 	fputs("typedef STRING STRING_IN;\n", appbroker->fp);
+	fputs("typedef bool * BOOL_OUT;\n", appbroker->fp);
 	fputs("\ntypedef Buffer * BUFFER_OUT;\n", appbroker->fp);
 	fputs("typedef int32_t * INT32_OUT;\n", appbroker->fp);
 	fputs("typedef uint32_t * UINT32_OUT;\n", appbroker->fp);
 	fputs("typedef String ** STRING_OUT;\n", appbroker->fp);
+	fputs("typedef bool * BOOL_INOUT;\n", appbroker->fp);
 	fputs("\ntypedef Buffer * BUFFER_INOUT;\n", appbroker->fp);
 	fputs("typedef int32_t * INT32_INOUT;\n", appbroker->fp);
 	fputs("typedef uint32_t * UINT32_INOUT;\n", appbroker->fp);
