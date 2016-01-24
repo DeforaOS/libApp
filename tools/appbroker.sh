@@ -28,13 +28,32 @@
 PROGNAME="appbroker.sh"
 #executables
 APPBROKER="AppBroker"
+DEBUG="_debug"
 
 
 #functions
+#appbroker
+_appbroker()
+{
+	target="$1"
+	appinterface="$2"
+
+	$DEBUG $APPBROKER -o "$target" "$appinterface"
+}
+
+
+#debug
+_debug()
+{
+	echo "$@" 1>&3
+	"$@"
+}
+
+
 #usage
 _usage()
 {
-	echo "Usage: $APPBROKER target" 1>&2
+	echo "Usage: $PROGNAME [-c] target..." 1>&2
 	return 1
 }
 
@@ -50,7 +69,7 @@ while getopts "cO:P:" name; do
 			export "${OPTARG%%=*}"="${OPTARG#*=}"
 			;;
 		P)
-			#we can ignore it
+			#XXX ignored for compatibility
 			;;
 		?)
 			_usage
@@ -58,16 +77,21 @@ while getopts "cO:P:" name; do
 			;;
 	esac
 done
-shift $(($OPTIND - 1))
-if [ $# -ne 1 ]; then
+shift $((OPTIND - 1))
+if [ $# -eq 0 ]; then
 	_usage
 	exit $?
 fi
 
 [ "$clean" -ne 0 ] && exit 0
 
-target="$1"
-source="${target#$OBJDIR}"
-APPINTERFACE="${source##*/}"
-APPINTERFACE="../data/${APPINTERFACE%%.h}.interface"
-LD_LIBRARY_PATH="${OBJDIR}../src" $APPBROKER -o "$target" "$APPINTERFACE"
+exec 3>&1
+while [ $# -gt 0 ]; do
+	target="$1"
+	shift
+
+	source="${target#$OBJDIR}"
+	appinterface="${source##*/}"
+	appinterface="../data/${appinterface%%.h}.interface"
+	_appbroker "$target" "$appinterface"			|| exit 2
+done
