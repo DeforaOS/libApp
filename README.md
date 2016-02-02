@@ -11,18 +11,33 @@ and work on any system, using any POSIX-compliant runtime as fallback if
 available.
 
 
-Compiling libApp
-----------------
+Dependencies for libApp
+-----------------------
+
+libApp depends on the following software components to build:
+- pkg-config, as found in most software distributions already; otherwise at
+  <http://www.freedesktop.org/wiki/Software/pkg-config/>
+- libSystem from the DeforaOS Project, as found at
+  <http://www.defora.org/os/project/27/libSystem> if not packaged for your
+  system.
+- configure from the DeforaOS Project, as found at
+  <http://www.defora.org/os/project/16/configure>
+
+
+Configuring libApp
+------------------
 
 Before being able to build libApp, it is necessary to generate Makefiles with
-`configure(1)` from the DeforaOS configure project, found at
-<http://www.defora.org/os/project/16/configure>. It should be enough to run
-this tool as follows:
+`configure(1)`. It should be enough to run this tool as follows:
 
     $ configure
 
 Please refer to the documentation of DeforaOS configure for further
 instructions.
+
+
+Compiling libApp
+----------------
 
 It is then possible to build the project with `make(1)` as usual. The following
 command should therefore be enough:
