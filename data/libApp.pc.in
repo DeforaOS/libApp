@@ -4,7 +4,7 @@ exec_prefix=${prefix}
 libdir=${exec_prefix}/lib
 
 Name: @PACKAGE@
-Description: DeforaOS System essential library
+Description: DeforaOS System message-passing library
 Version: @VERSION@
 Requires: libSystem
 Cflags: -I${includedir}
