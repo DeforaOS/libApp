@@ -21,6 +21,9 @@ libApp depends on the following software components to build:
 - libSystem from the DeforaOS Project, as found at
   <http://www.defora.org/os/project/27/libSystem> if not packaged for your
   system.
+- libMarshall from the DeforaOS Project, as found at
+  <http://www.defora.org/os/project/4400/libMarshall> if not packaged for your
+  system.
 - configure from the DeforaOS Project, likewise found at
   <http://www.defora.org/os/project/16/configure>
 
