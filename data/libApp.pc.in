@@ -6,6 +6,6 @@ libdir=${exec_prefix}/lib
 Name: @PACKAGE@
 Description: DeforaOS System message-passing library
 Version: @VERSION@
-Requires: libSystem
+Requires: libSystem libMarshall
 Cflags: -I${includedir}
 Libs: -L${libdir} @RPATH@ -lApp -rdynamic
