@@ -18,14 +18,15 @@
 
 
 #include <stdarg.h>
+#include <stdbool.h>
 #include <stdint.h>
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
 #include <errno.h>
 #include <System.h>
+#include <System/Marshall.h>
 #include "App/appserver.h"
-#include "marshall.h"
 #include "appstatus.h"
 #include "appinterface.h"
 #include "../config.h"
@@ -75,7 +76,7 @@ typedef struct _AppInterfaceCall
 	AppInterfaceCallArg type;
 	AppInterfaceCallArg * args;
 	size_t args_cnt;
-	void * (*func)(void *);
+	MarshallCallback func;
 } AppInterfaceCall;
 
 struct _AppInterface
@@ -131,6 +132,10 @@ static int _string_enum(String const * string, StringEnum const * se);
 /* accessors */
 static AppInterfaceCall * _appinterface_get_call(AppInterface * appinterface,
 		char const * method);
+
+/* useful */
+static int _appinterface_call(App * app, Variable * result,
+		AppInterfaceCall * call, size_t argc, Variable ** argv);
 
 
 /* functions */
@@ -189,7 +194,7 @@ static String * _new_interface(String const * app)
 
 /* appinterface_new_interface */
 static int _new_interface_append(AppInterface * ai, VariableType type,
-		char const * function);
+		char const * method);
 static int _new_interface_append_arg(AppInterface * ai, char const * arg);
 AppInterface * _new_interface_do(AppTransportMode mode, String const * app,
 		String const * pathname);
@@ -232,18 +237,18 @@ AppInterface * appinterface_new_interface(AppTransportMode mode,
 }
 
 static int _new_interface_append(AppInterface * ai, VariableType type,
-		char const * function)
+		char const * method)
 {
 	AppInterfaceCall * p;
 
 #ifdef DEBUG
-	fprintf(stderr, "DEBUG: %s(%d, \"%s\")\n", __func__, type, function);
+	fprintf(stderr, "DEBUG: %s(%d, \"%s\")\n", __func__, type, method);
 #endif
 	if((p = realloc(ai->calls, sizeof(*p) * (ai->calls_cnt + 1))) == NULL)
 		return -1;
 	ai->calls = p;
 	p = &ai->calls[ai->calls_cnt];
-	if((p->name = string_new(function)) == NULL)
+	if((p->name = string_new(method)) == NULL)
 		return -1;
 	p->type.type = type & AICT_MASK;
 	p->type.direction = type & AICD_MASK;
@@ -453,11 +458,11 @@ char const * appinterface_get_app(AppInterface * appinterface)
 
 /* appinterface_get_args_count */
 int appinterface_get_args_count(AppInterface * appinterface, size_t * count,
-		char const * function)
+		String const * method)
 {
 	AppInterfaceCall * aic;
 
-	if((aic = _appinterface_get_call(appinterface, function)) == NULL)
+	if((aic = _appinterface_get_call(appinterface, method)) == NULL)
 		return -1;
 	*count = aic->args_cnt;
 	return 0;
@@ -474,28 +479,117 @@ AppStatus * appinterface_get_status(AppInterface * appinterface)
 /* useful */
 /* appinterface_callv */
 int appinterface_callv(AppInterface * appinterface, App * app, void ** result,
-		char const * method, va_list args)
+		String const * method, va_list args)
 {
-	int ret;
+	int ret = 0;
 	AppInterfaceCall * call;
 	Variable * r;
+	size_t argc;
+	Variable ** argv;
+	union
+	{
+		bool b;
+		int8_t i8;
+		uint8_t u8;
+		int16_t i16;
+		uint16_t u16;
+		int32_t i32;
+		uint32_t u32;
+		int64_t i64;
+		uint64_t u64;
+		char * str;
+		Buffer * buf;
+		float f;
+		double d;
+	} u;
+	void * p;
 
 	if((call = _appinterface_get_call(appinterface, method)) == NULL)
 		return -1;
-	/* FIXME implement argv */
 	if(call->type.type == VT_NULL)
 		r = NULL;
 	else if((r = variable_new(call->type.type, NULL)) == NULL)
 		return -1;
-	if((ret = marshall_call(app, call->type.type, r, call->func,
-					call->args_cnt, NULL)) == 0
-			&& r != NULL)
+	if((argv = malloc(sizeof(*argv) * (call->args_cnt))) == NULL)
 	{
-		if(result != NULL)
-			/* XXX return 0 anyway? */
-			ret = variable_get_as(r, call->type.type, *result);
-		variable_delete(r);
+		if(r != NULL)
+			variable_delete(r);
+		return -1;
 	}
+	for(argc = 0; argc < call->args_cnt; argc++)
+	{
+		/* FIXME also implement AICD_{,IN}OUT */
+		switch(call->args[argc].type)
+		{
+			case VT_BOOL:
+				u.b = va_arg(args, bool);
+				p = &u.b;
+				break;
+			case VT_INT8:
+				u.i8 = va_arg(args, int8_t);
+				p = &u.i8;
+				break;
+			case VT_UINT8:
+				u.u8 = va_arg(args, uint8_t);
+				p = &u.u8;
+				break;
+			case VT_INT16:
+				u.i16 = va_arg(args, int16_t);
+				p = &u.i16;
+				break;
+			case VT_UINT16:
+				u.u16 = va_arg(args, uint16_t);
+				p = &u.u16;
+				break;
+			case VT_INT32:
+				u.i32 = va_arg(args, int32_t);
+				p = &u.i32;
+				break;
+			case VT_UINT32:
+				u.u32 = va_arg(args, uint32_t);
+				p = &u.u32;
+				break;
+			case VT_INT64:
+				u.i64 = va_arg(args, int64_t);
+				p = &u.i64;
+				break;
+			case VT_UINT64:
+				u.u64 = va_arg(args, uint64_t);
+				p = &u.u64;
+				break;
+			case VT_STRING:
+				u.str = va_arg(args, char *);
+				p = u.str;
+				break;
+			case VT_BUFFER:
+				u.buf = va_arg(args, Buffer *);
+				p = u.buf;
+				break;
+			case VT_FLOAT:
+				u.f = va_arg(args, double);
+				p = &u.f;
+				break;
+			case VT_DOUBLE:
+				u.d = va_arg(args, double);
+				p = &u.d;
+				break;
+			case VT_NULL:
+			default:
+				p = NULL;
+				break;
+		}
+		argv[argc] = (p != NULL)
+			? variable_new(call->args[argc].type, p) : NULL;
+		if(p == NULL || argv[argc] == NULL)
+			ret = -1;
+	}
+	if(ret == 0)
+		ret = _appinterface_call(app, r, call, argc, argv);
+	if(ret == 0 && result != NULL)
+		/* XXX return 0 anyway? */
+		ret = variable_get_as(r, call->type.type, *result);
+	if(r != NULL)
+		variable_delete(r);
 	return ret;
 }
 
@@ -509,15 +603,12 @@ int appinterface_call_variablev(AppInterface * appinterface, App * app,
 
 	if((call = _appinterface_get_call(appinterface, method)) == NULL)
 		return -1;
-	if(argc != call->args_cnt)
-		return -1;
-	/* FIXME implement argv */
-	return marshall_call(app, call->type.type, result, call->func, argc,
-			NULL);
+	return _appinterface_call(app, result, call, argc, argv);
 }
 
 
 /* private */
+/* accessors */
 /* appinterface_get_call */
 static AppInterfaceCall * _appinterface_get_call(AppInterface * appinterface,
 		String const * method)
@@ -530,4 +621,32 @@ static AppInterfaceCall * _appinterface_get_call(AppInterface * appinterface,
 	error_set_code(1, "%s%s%s%s", "Unknown call \"", method,
 			"\" for interface ", appinterface->name);
 	return NULL;
+}
+
+
+/* useful */
+/* appinterface_call */
+static int _appinterface_call(App * app, Variable * result,
+		AppInterfaceCall * call, size_t argc, Variable ** argv)
+{
+	int ret;
+	Variable ** p;
+	size_t i;
+
+	if(argc != call->args_cnt)
+		return -1;
+	if((p = malloc(sizeof(*p) * (argc + 1))) == NULL)
+		return -1;
+	/* XXX really is a VT_POINTER (void *) */
+	if((p[0] = variable_new(VT_BUFFER, app)) == NULL)
+	{
+		free(p);
+		return -1;
+	}
+	for(i = 0; i < argc; i++)
+		p[i + 1] = argv[i];
+	ret = marshall_call(result, call->func, argc, argv);
+	variable_delete(p[0]);
+	free(p);
+	return ret;
 }
