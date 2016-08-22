@@ -81,7 +81,7 @@ _test()
 #usage
 _usage()
 {
-	echo "Usage: $PROGNAME [-c][-P prefix] target" 1>&2
+	echo "Usage: $PROGNAME [-c][-P prefix] target..." 1>&2
 	return 1
 }
 
@@ -103,57 +103,63 @@ while getopts "cP:" name; do
 	esac
 done
 shift $((OPTIND - 1))
-if [ $# -ne 1 ]; then
+if [ $# -eq 0 ]; then
 	_usage
 	exit $?
 fi
-target="$1"
 
-[ "$clean" -ne 0 ] && exit 0
+while [ $# -ne 0 ]; do
+	target="$1"
+	shift
 
-FAILED=
-echo "Performing tests:" 1>&2
-$DATE > "$target"
-APPINTERFACE_Test=Test.interface \
-	_test "appclient" "appclient" -a "Test" -n tcp:localhost:4242
-_test "appmessage" "appmessage"
-APPINTERFACE_Dummy=../data/Dummy.interface \
-	_test "appserver" "appserver" -a "Dummy" -n tcp:localhost:4242
-APPINTERFACE_Dummy=../data/Dummy.interface \
-	APPSERVER_Dummy="tcp:localhost:4242" \
-	_test "appserver" "appserver" -a "Dummy"
-_test "includes" "includes"
-APPINTERFACE_Test=Test.interface \
-	_test "lookup" "lookup Test tcp" -a "Test" -n "tcp:localhost:4242"
-APPINTERFACE_Test=Test.interface \
-	_test "lookup" "lookup Test tcp4" -a "Test" -n "tcp4:localhost:4242"
-APPSERVER_Session="tcp:localhost:4242" _test "lookup" "lookup Session" \
-	-a "Session"
-_test "pkgconfig.sh" "pkg-config"
-_test "transport" "tcp4 127.0.0.1:4242" -p tcp4 127.0.0.1:4242
-_test "transport" "tcp4 localhost:4242" -p tcp4 localhost:4242
-_test "transport" "tcp6 ::1.4242" -p tcp6 ::1.4242
-_test "transport" "tcp6 localhost:4242" -p tcp6 localhost:4242
-_test "transport" "tcp 127.0.0.1:4242" -p tcp 127.0.0.1:4242
-_test "transport" "tcp ::1.4242" -p tcp ::1.4242
-_test "transport" "tcp localhost:4242" -p tcp localhost:4242
-_test "transport" "udp4 127.0.0.1:4242" -p udp4 127.0.0.1:4242
-_test "transport" "udp4 localhost:4242" -p udp4 localhost:4242
-_test "transport" "udp6 ::1.4242" -p udp6 ::1.4242
-_test "transport" "udp6 localhost:4242" -p udp6 localhost:4242
-_test "transport" "udp 127.0.0.1:4242" -p udp 127.0.0.1:4242
-_test "transport" "udp ::1.4242" -p udp ::1.4242
-_test "transport" "udp localhost:4242" -p udp localhost:4242
-echo "Expected failures:" 1>&2
-APPINTERFACE_Test=Test.interface \
-	_fail "lookup" "lookup" -a "Test" -n "localhost"
-_fail "transport" "self" -p self
-_fail "transport" "tcp6 ::1:4242" -p tcp6 ::1:4242
-_fail "transport" "tcp ::1:4242" -p tcp ::1:4242
-_fail "transport" "udp6 ::1:4242" -p udp6 ::1:4242
-_fail "transport" "udp ::1:4242" -p udp ::1:4242
-if [ -n "$FAILED" ]; then
-	echo "Failed tests:$FAILED" 1>&2
-	exit 2
-fi
-echo "All tests completed" 1>&2
+	[ "$clean" -ne 0 ] && exit 0
+
+	FAILED=
+	echo "Performing tests:" 1>&2
+	$DATE > "$target"
+	APPINTERFACE_Test=Test.interface \
+		_test "appclient" "appclient" -a "Test" -n tcp:localhost:4242
+	_test "appmessage" "appmessage"
+	APPINTERFACE_Dummy=../data/Dummy.interface \
+		_test "appserver" "appserver" -a "Dummy" -n tcp:localhost:4242
+	APPINTERFACE_Dummy=../data/Dummy.interface \
+		APPSERVER_Dummy="tcp:localhost:4242" \
+		_test "appserver" "appserver" -a "Dummy"
+	_test "includes" "includes"
+	APPINTERFACE_Test=Test.interface \
+		_test "lookup" "lookup Test tcp" -a "Test" \
+		-n "tcp:localhost:4242"
+	APPINTERFACE_Test=Test.interface \
+		_test "lookup" "lookup Test tcp4" -a "Test" \
+		-n "tcp4:localhost:4242"
+	APPSERVER_Session="tcp:localhost:4242" _test "lookup" "lookup Session" \
+		-a "Session"
+	_test "pkgconfig.sh" "pkg-config"
+	_test "transport" "tcp4 127.0.0.1:4242" -p tcp4 127.0.0.1:4242
+	_test "transport" "tcp4 localhost:4242" -p tcp4 localhost:4242
+	_test "transport" "tcp6 ::1.4242" -p tcp6 ::1.4242
+	_test "transport" "tcp6 localhost:4242" -p tcp6 localhost:4242
+	_test "transport" "tcp 127.0.0.1:4242" -p tcp 127.0.0.1:4242
+	_test "transport" "tcp ::1.4242" -p tcp ::1.4242
+	_test "transport" "tcp localhost:4242" -p tcp localhost:4242
+	_test "transport" "udp4 127.0.0.1:4242" -p udp4 127.0.0.1:4242
+	_test "transport" "udp4 localhost:4242" -p udp4 localhost:4242
+	_test "transport" "udp6 ::1.4242" -p udp6 ::1.4242
+	_test "transport" "udp6 localhost:4242" -p udp6 localhost:4242
+	_test "transport" "udp 127.0.0.1:4242" -p udp 127.0.0.1:4242
+	_test "transport" "udp ::1.4242" -p udp ::1.4242
+	_test "transport" "udp localhost:4242" -p udp localhost:4242
+	echo "Expected failures:" 1>&2
+	APPINTERFACE_Test=Test.interface \
+		_fail "lookup" "lookup" -a "Test" -n "localhost"
+	_fail "transport" "self" -p self
+	_fail "transport" "tcp6 ::1:4242" -p tcp6 ::1:4242
+	_fail "transport" "tcp ::1:4242" -p tcp ::1:4242
+	_fail "transport" "udp6 ::1:4242" -p udp6 ::1:4242
+	_fail "transport" "udp ::1:4242" -p udp ::1:4242
+	if [ -n "$FAILED" ]; then
+		echo "Failed tests:$FAILED" 1>&2
+		exit 2
+	fi
+	echo "All tests completed" 1>&2
+done
