@@ -133,8 +133,8 @@ while [ $# -ne 0 ]; do
 	APPINTERFACE_Test=Test.interface \
 		_test "lookup" "lookup Test tcp4" -a "Test" \
 		-n "tcp4:localhost:4242"
-	APPSERVER_Session="tcp:localhost:4242" _test "lookup" "lookup Session" \
-		-a "Session"
+	APPSERVER_Session="tcp:localhost:4242" _test "lookup" \
+		"lookup Session" -a "Session"
 	_test "pkgconfig.sh" "pkg-config"
 	_test "transport" "tcp4 127.0.0.1:4242" -p tcp4 127.0.0.1:4242
 	_test "transport" "tcp4 localhost:4242" -p tcp4 localhost:4242
