@@ -17,10 +17,9 @@
 
 
 #variables
-DEVNULL="/dev/null"
 PROGNAME="appbroker.sh"
 #executables
-CMP="cmp"
+DIFF="diff"
 DEBUG="_debug"
 MKTEMP="mktemp"
 RM="rm -f"
@@ -35,7 +34,7 @@ expected="${interface%.interface}.expected"
 $OBJDIR../tools/AppBroker$EXEEXT -o "$tmpfile" "$interface"
 ret=$?
 if [ $ret -eq 0 ]; then
-	$CMP -- "$tmpfile" "$expected" #> "$DEVNULL"
+	$DIFF -- "$tmpfile" "$expected"
 	ret=$?
 fi
 $RM -- "$tmpfile"
