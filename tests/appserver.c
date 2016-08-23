@@ -19,6 +19,7 @@
 #include <stdio.h>
 #include <System/error.h>
 #include "App/appserver.h"
+/* FIXME does not survive OBJDIR */
 #include "Dummy.h"
 
 
