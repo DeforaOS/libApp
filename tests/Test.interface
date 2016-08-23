@@ -3,4 +3,4 @@ service=Test
 
 [call::Test]
 #ret=void
-arg1=int32,i32
+arg1=INT32,i32

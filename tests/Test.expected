@@ -6,47 +6,71 @@
 # define Test_Test_H
 
 # include <stdbool.h>
-
 # include <stdint.h>
 # include <System/App.h>
 
 
 /* types */
-typedef bool BOOL;
-typedef Buffer * BUFFER;
-typedef double * DOUBLE;
-typedef float * FLOAT;
-typedef int16_t INT16;
-typedef int32_t INT32;
-typedef uint16_t UINT16;
-typedef uint32_t UINT32;
-typedef String const * STRING;
 typedef void VOID;
-typedef bool BOOL_IN;
 
-typedef BUFFER BUFFER_IN;
+typedef bool BOOL;
+typedef int8_t INT8;
+typedef uint8_t UINT8;
+typedef int16_t INT16;
+typedef uint16_t UINT16;
+typedef int32_t INT32;
+typedef uint32_t UINT32;
+typedef int64_t INT64;
+typedef uint64_t UINT64;
+typedef float FLOAT;
+typedef double DOUBLE;
+typedef Buffer * BUFFER;
+typedef String const * STRING;
 
-typedef DOUBLE DOUBLE_IN;
-
-typedef FLOAT FLOAT_IN;
+typedef BOOL BOOL_IN;
+typedef INT8 INT8_IN;
+typedef UINT8 UINT8_IN;
+typedef INT16 INT16_IN;
+typedef UINT16 UINT16_IN;
 typedef INT32 INT32_IN;
 typedef UINT32 UINT32_IN;
+typedef INT64 INT64_IN;
+typedef UINT64 UINT64_IN;
+typedef FLOAT FLOAT_IN;
+typedef DOUBLE DOUBLE_IN;
+typedef BUFFER BUFFER_IN;
 typedef STRING STRING_IN;
-typedef bool * BOOL_OUT;
 
-typedef Buffer * BUFFER_OUT;
+typedef bool * BOOL_OUT;
+typedef int8_t * INT8_OUT;
+typedef uint8_t * UINT8_OUT;
+typedef int16_t * INT16_OUT;
+typedef uint16_t * UINT16_OUT;
 typedef int32_t * INT32_OUT;
 typedef uint32_t * UINT32_OUT;
+typedef int64_t * INT64_OUT;
+typedef uint64_t * UINT64_OUT;
+typedef float * FLOAT_OUT;
+typedef double * DOUBLE_OUT;
+typedef Buffer * BUFFER_OUT;
 typedef String ** STRING_OUT;
-typedef bool * BOOL_INOUT;
 
-typedef Buffer * BUFFER_INOUT;
+typedef bool * BOOL_INOUT;
+typedef int8_t * INT8_INOUT;
+typedef uint8_t * UINT8_INOUT;
+typedef int16_t * INT16_INOUT;
+typedef uint16_t * UINT16_INOUT;
 typedef int32_t * INT32_INOUT;
 typedef uint32_t * UINT32_INOUT;
+typedef int64_t * INT64_INOUT;
+typedef uint64_t * UINT64_INOUT;
+typedef float * FLOAT_INOUT;
+typedef double * DOUBLE_INOUT;
+typedef Buffer * BUFFER_INOUT;
 typedef String ** STRING_INOUT;
 
 
 /* calls */
-void Test_Test(App * app, AppServerClient * client, int32 i32);
+void Test_Test(App * app, AppServerClient * client, INT32 i32);
 
 #endif /* !Test_Test_H */
