@@ -23,6 +23,17 @@ DEBUG="_debug"
 
 
 #functions
+#date
+_date()
+{
+	if [ -n "$SOURCE_EPOCH" ]; then
+		$DATE -d "@$SOURCE_EPOCH" '+%a %b %d %T %Z %Y'
+	else
+		$DATE
+	fi
+}
+
+
 #debug
 _debug()
 {
@@ -116,7 +127,7 @@ while [ $# -ne 0 ]; do
 
 	FAILED=
 	echo "Performing tests:" 1>&2
-	$DATE > "$target"
+	_date > "$target"
 	_test "appbroker.sh" "Test" "Test.interface"
 	APPINTERFACE_Test=Test.interface \
 		_test "appclient" "appclient" -a "Test" -n tcp:localhost:4242
