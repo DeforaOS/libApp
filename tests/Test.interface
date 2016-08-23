@@ -1,0 +1,6 @@
+#$Id$
+service=Test
+
+[call::Test]
+#ret=void
+arg1=int32,i32
