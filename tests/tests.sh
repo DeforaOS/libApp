@@ -119,6 +119,9 @@ if [ $# -eq 0 ]; then
 	exit $?
 fi
 
+#XXX cross-compiling
+[ -n "$PKG_CONFIG_SYSROOT_DIR" ] && exit 0
+
 while [ $# -ne 0 ]; do
 	target="$1"
 	shift
