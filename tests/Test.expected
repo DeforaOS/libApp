@@ -72,5 +72,6 @@ typedef String ** STRING_INOUT;
 
 /* calls */
 void Test_Test(App * app, AppServerClient * client, INT32 i32);
+void Test_Test2(App * app, AppServerClient * client, INT32_INOUT i32);
 
 #endif /* !Test_Test_H */

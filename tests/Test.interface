@@ -4,3 +4,7 @@ service=Test
 [call::Test]
 #ret=void
 arg1=INT32,i32
+
+[call::Test2]
+#ret=void
+arg1=INT32_INOUT,i32
