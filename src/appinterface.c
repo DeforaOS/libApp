@@ -375,8 +375,10 @@ static int _new_interface_foreach(char const * key, Hash * value,
 	if((p = hash_get(value, "ret")) != NULL
 			&& (type = _string_enum(p, _string_type)) < 0)
 	{
-		appinterface->error = error_set_code(1, "%s",
-				"Invalid return type");
+		appinterface->error = error_set_code(1, "%s: %s%s", p,
+				"Invalid return type for ",
+				(appinterface->mode == ATM_SERVER)
+				? "call" : "callback");
 		return -appinterface->error;
 	}
 	if(_new_interface_append(appinterface, type, key) != 0)
