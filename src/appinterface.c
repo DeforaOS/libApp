@@ -57,9 +57,9 @@ static const String * AICTString[VT_COUNT] =
 
 typedef enum _AppInterfaceCallDirection
 {
-	AICD_IN		= 0000,
-	AICD_IN_OUT	= 0100,
-	AICD_OUT	= 0200
+	AICD_IN		= 0100,
+	AICD_OUT	= 0200,
+	AICD_IN_OUT	= 0300,
 } AppInterfaceCallDirection;
 #define AICD_MASK 0700
 
