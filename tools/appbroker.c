@@ -190,6 +190,7 @@ static char const * _appbroker_ctype(char const * type)
 static int _appbroker_foreach_call(char const * key, Hash * value, void * data)
 {
 	AppBroker * appbroker = data;
+	const char prefix[] = "call::";
 	unsigned int i;
 	char buf[8];
 	char const * p;
@@ -197,9 +198,9 @@ static int _appbroker_foreach_call(char const * key, Hash * value, void * data)
 
 	if(key == NULL || key[0] == '\0')
 		return 0;
-	if(strncmp(key, "call::", 6) != 0)
+	if(strncmp(key, prefix, sizeof(prefix) - 1) != 0)
 		return 0;
-	key += 6;
+	key += sizeof(prefix) - 1;
 	if((p = hash_get(value, "ret")) == NULL)
 		p = "VOID";
 	if((p = _appbroker_ctype(p)) == NULL)
@@ -246,16 +247,17 @@ static int _appbroker_foreach_callback(char const * key, Hash * value,
 {
 	/* XXX some code duplication with _appbroker_foreach_call() */
 	AppBroker * appbroker = data;
-	unsigned int i;
+	const char prefix[] = "callback::";
+	int i;
 	char buf[8];
 	char const * p;
 	const char sep[] = ", ";
 
 	if(key == NULL || key[0] == '\0')
 		return 0;
-	if(strncmp(key, "callback::", 6) != 0)
+	if(strncmp(key, prefix, sizeof(prefix) - 1) != 0)
 		return 0;
-	key += 6;
+	key += sizeof(prefix) - 1;
 	if((p = hash_get(value, "ret")) == NULL)
 		p = "VOID";
 	if((p = _appbroker_ctype(p)) == NULL)
