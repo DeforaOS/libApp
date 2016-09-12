@@ -34,6 +34,7 @@ typedef struct _AppBroker
 	char const * prefix;
 	char const * outfile;
 	FILE * fp;
+	int error;
 } AppBroker;
 
 
@@ -47,6 +48,7 @@ static int _usage(void);
 static void _appbroker_calls(AppBroker * appbroker);
 static void _appbroker_callbacks(AppBroker * appbroker);
 static void _appbroker_constants(AppBroker * appbroker);
+static char const * _appbroker_ctype(char const * type);
 static int _appbroker_foreach_call(char const * key, Hash * value, void * data);
 static int _appbroker_foreach_call_arg(AppBroker * appbroker, char const * sep,
 		char const * arg);
@@ -79,6 +81,7 @@ static int _appbroker(AppTransportMode mode, char const * outfile,
 		return error_set_print(APPBROKER_PROGNAME, 1, "%s: %s", outfile,
 				strerror(errno));
 	}
+	appbroker.error = 0;
 	_appbroker_head(&appbroker);
 	_appbroker_constants(&appbroker);
 	(mode == ATM_SERVER) ? _appbroker_calls(&appbroker)
@@ -87,7 +90,7 @@ static int _appbroker(AppTransportMode mode, char const * outfile,
 	if(outfile != NULL)
 		fclose(appbroker.fp);
 	config_delete(appbroker.config);
-	return 0;
+	return appbroker.error;
 }
 
 static void _appbroker_calls(AppBroker * appbroker)
@@ -114,6 +117,76 @@ static void _appbroker_constants(AppBroker * appbroker)
 	hash_foreach(hash, (HashForeach)_appbroker_foreach_constant, appbroker);
 }
 
+static char const * _appbroker_ctype(char const * type)
+{
+	struct
+	{
+		char const * type;
+		char const * ctype;
+	} ctypes[] =
+	{
+		{ "VOID", "void", },
+		{ "BOOL", "bool", },
+		{ "INT8", "int8_t", },
+		{ "UINT8", "uint8_t", },
+		{ "INT16", "int16_t", },
+		{ "UINT16", "uint16_t", },
+		{ "INT32", "int32_t", },
+		{ "UINT32", "uint32_t", },
+		{ "INT64", "int64_t", },
+		{ "UINT64", "uint64_t", },
+		{ "FLOAT", "float", },
+		{ "DOUBLE", "double", },
+		{ "BUFFER", "Buffer const *", },
+		{ "STRING", "String const *", },
+		{ "BOOL_IN", "bool", },
+		{ "INT8_IN", "int8_t", },
+		{ "UINT8_IN", "uint8_t", },
+		{ "INT16_IN", "int16_t", },
+		{ "UINT16_IN", "uint16_t", },
+		{ "INT32_IN", "int32_t", },
+		{ "UINT32_IN", "uint32_t", },
+		{ "INT64_IN", "int64_t", },
+		{ "UINT64_IN", "uint64_t", },
+		{ "FLOAT_IN", "float", },
+		{ "DOUBLE_IN", "double", },
+		{ "BUFFER_IN", "Buffer const *", },
+		{ "STRING_IN", "String const *", },
+		{ "BOOL_OUT", "bool *", },
+		{ "INT8_OUT", "int8_t *", },
+		{ "UINT8_OUT", "uint8_t *", },
+		{ "INT16_OUT", "int16_t *", },
+		{ "UINT16_OUT", "uint16_t *", },
+		{ "INT32_OUT", "int32_t *", },
+		{ "UINT32_OUT", "uint32_t *", },
+		{ "INT64_OUT", "int64_t *", },
+		{ "UINT64_OUT", "uint64_t *", },
+		{ "FLOAT_OUT", "float *", },
+		{ "DOUBLE_OUT", "double *", },
+		{ "BUFFER_OUT", "Buffer *", },
+		{ "STRING_OUT", "String **", },
+		{ "BOOL_INOUT", "bool *", },
+		{ "INT8_INOUT", "int8_t *", },
+		{ "UINT8_INOUT", "uint8_t *", },
+		{ "INT16_INOUT", "int16_t *", },
+		{ "UINT16_INOUT", "uint16_t *", },
+		{ "INT32_INOUT", "int32_t *", },
+		{ "UINT32_INOUT", "uint32_t *", },
+		{ "INT64_INOUT", "int64_t *", },
+		{ "UINT64_INOUT", "uint64_t *", },
+		{ "FLOAT_INOUT", "float *", },
+		{ "DOUBLE_INOUT", "double *", },
+		{ "BUFFER_INOUT", "Buffer *", },
+		{ "STRING_INOUT", "String **" }
+	};
+	size_t i;
+
+	for(i = 0; i < sizeof(ctypes) / sizeof(*ctypes); i++)
+		if(strcmp(ctypes[i].type, type) == 0)
+			return ctypes[i].ctype;
+	return NULL;
+}
+
 static int _appbroker_foreach_call(char const * key, Hash * value, void * data)
 {
 	AppBroker * appbroker = data;
@@ -128,7 +201,10 @@ static int _appbroker_foreach_call(char const * key, Hash * value, void * data)
 		return 0;
 	key += 6;
 	if((p = hash_get(value, "ret")) == NULL)
-		p = "void";
+		p = "VOID";
+	if((p = _appbroker_ctype(p)) == NULL)
+		appbroker->error = -error_set_print(APPBROKER_PROGNAME, 1,
+				"%s: %s", key, "Invalid return type for call");
 	fprintf(appbroker->fp, "%s%s%s%s%s%s", p, " ", appbroker->prefix, "_",
 			key, "(App * app, AppServerClient * client");
 	for(i = 0; i < APPSERVER_MAX_ARGUMENTS; i++)
@@ -137,7 +213,7 @@ static int _appbroker_foreach_call(char const * key, Hash * value, void * data)
 		if((p = hash_get(value, buf)) == NULL)
 			break;
 		if(_appbroker_foreach_call_arg(appbroker, sep, p) != 0)
-			return 1;
+			return -1;
 	}
 	fprintf(appbroker->fp, "%s", ");\n");
 	return 0;
@@ -146,20 +222,22 @@ static int _appbroker_foreach_call(char const * key, Hash * value, void * data)
 static int _appbroker_foreach_call_arg(AppBroker * appbroker, char const * sep,
 		char const * arg)
 {
+	char const * ctype;
 	char * p;
-	size_t size;
 
 	if((p = strchr(arg, ',')) == NULL)
+		ctype = _appbroker_ctype(arg);
+	else if((p = string_new_length(arg, p - arg)) != NULL)
 	{
-		fprintf(appbroker->fp, "%s%s", sep, arg);
-		return 0;
+		ctype = _appbroker_ctype(p);
+		string_delete(p);
 	}
-	fputs(sep, appbroker->fp);
-	size = p - arg;
-	if(fwrite(arg, sizeof(*arg), size, appbroker->fp) != size)
-		return 1;
-	if(*(++p) != '\0')
-		fprintf(appbroker->fp, " %s", p);
+	else
+	{
+		appbroker->error = -1;
+		return -1;
+	}
+	fprintf(appbroker->fp, "%s%s", sep, ctype);
 	return 0;
 }
 
@@ -179,16 +257,20 @@ static int _appbroker_foreach_callback(char const * key, Hash * value,
 		return 0;
 	key += 6;
 	if((p = hash_get(value, "ret")) == NULL)
-		p = "void";
+		p = "VOID";
+	if((p = _appbroker_ctype(p)) == NULL)
+		appbroker->error = -error_set_print(APPBROKER_PROGNAME, 1,
+				"%s: %s", key, "Unknown return type for"
+				" callback");
 	fprintf(appbroker->fp, "%s%s%s%s%s%s", p, " ", appbroker->prefix, "_",
-			key, "(AppClient * client");
+				key, "(AppClient * client");
 	for(i = 0; i < APPSERVER_MAX_ARGUMENTS; i++)
 	{
 		snprintf(buf, sizeof(buf), "arg%u", i + 1);
 		if((p = hash_get(value, buf)) == NULL)
 			break;
 		if(_appbroker_foreach_call_arg(appbroker, sep, p) != 0)
-			return 1;
+			return -1;
 	}
 	fprintf(appbroker->fp, "%s", ");\n");
 	return 0;
@@ -216,63 +298,6 @@ static void _appbroker_head(AppBroker * appbroker)
 	fputs("\n# include <stdbool.h>\n", appbroker->fp);
 	fputs("# include <stdint.h>\n", appbroker->fp);
 	fputs("# include <System/App.h>\n\n", appbroker->fp);
-	fputs("\n/* types */\n", appbroker->fp);
-	fputs("typedef void VOID;\n", appbroker->fp);
-	fputs("\ntypedef bool BOOL;\n", appbroker->fp);
-	fputs("typedef int8_t INT8;\n", appbroker->fp);
-	fputs("typedef uint8_t UINT8;\n", appbroker->fp);
-	fputs("typedef int16_t INT16;\n", appbroker->fp);
-	fputs("typedef uint16_t UINT16;\n", appbroker->fp);
-	fputs("typedef int32_t INT32;\n", appbroker->fp);
-	fputs("typedef uint32_t UINT32;\n", appbroker->fp);
-	fputs("typedef int64_t INT64;\n", appbroker->fp);
-	fputs("typedef uint64_t UINT64;\n", appbroker->fp);
-	fputs("typedef float FLOAT;\n", appbroker->fp);
-	fputs("typedef double DOUBLE;\n", appbroker->fp);
-	fputs("typedef Buffer * BUFFER;\n", appbroker->fp);
-	fputs("typedef String const * STRING;\n", appbroker->fp);
-	fputs("\n", appbroker->fp);
-	fputs("typedef BOOL BOOL_IN;\n", appbroker->fp);
-	fputs("typedef INT8 INT8_IN;\n", appbroker->fp);
-	fputs("typedef UINT8 UINT8_IN;\n", appbroker->fp);
-	fputs("typedef INT16 INT16_IN;\n", appbroker->fp);
-	fputs("typedef UINT16 UINT16_IN;\n", appbroker->fp);
-	fputs("typedef INT32 INT32_IN;\n", appbroker->fp);
-	fputs("typedef UINT32 UINT32_IN;\n", appbroker->fp);
-	fputs("typedef INT64 INT64_IN;\n", appbroker->fp);
-	fputs("typedef UINT64 UINT64_IN;\n", appbroker->fp);
-	fputs("typedef FLOAT FLOAT_IN;\n", appbroker->fp);
-	fputs("typedef DOUBLE DOUBLE_IN;\n", appbroker->fp);
-	fputs("typedef BUFFER BUFFER_IN;\n", appbroker->fp);
-	fputs("typedef STRING STRING_IN;\n", appbroker->fp);
-	fputs("\n", appbroker->fp);
-	fputs("typedef bool * BOOL_OUT;\n", appbroker->fp);
-	fputs("typedef int8_t * INT8_OUT;\n", appbroker->fp);
-	fputs("typedef uint8_t * UINT8_OUT;\n", appbroker->fp);
-	fputs("typedef int16_t * INT16_OUT;\n", appbroker->fp);
-	fputs("typedef uint16_t * UINT16_OUT;\n", appbroker->fp);
-	fputs("typedef int32_t * INT32_OUT;\n", appbroker->fp);
-	fputs("typedef uint32_t * UINT32_OUT;\n", appbroker->fp);
-	fputs("typedef int64_t * INT64_OUT;\n", appbroker->fp);
-	fputs("typedef uint64_t * UINT64_OUT;\n", appbroker->fp);
-	fputs("typedef float * FLOAT_OUT;\n", appbroker->fp);
-	fputs("typedef double * DOUBLE_OUT;\n", appbroker->fp);
-	fputs("typedef Buffer * BUFFER_OUT;\n", appbroker->fp);
-	fputs("typedef String ** STRING_OUT;\n", appbroker->fp);
-	fputs("\n", appbroker->fp);
-	fputs("typedef bool * BOOL_INOUT;\n", appbroker->fp);
-	fputs("typedef int8_t * INT8_INOUT;\n", appbroker->fp);
-	fputs("typedef uint8_t * UINT8_INOUT;\n", appbroker->fp);
-	fputs("typedef int16_t * INT16_INOUT;\n", appbroker->fp);
-	fputs("typedef uint16_t * UINT16_INOUT;\n", appbroker->fp);
-	fputs("typedef int32_t * INT32_INOUT;\n", appbroker->fp);
-	fputs("typedef uint32_t * UINT32_INOUT;\n", appbroker->fp);
-	fputs("typedef int64_t * INT64_INOUT;\n", appbroker->fp);
-	fputs("typedef uint64_t * UINT64_INOUT;\n", appbroker->fp);
-	fputs("typedef float * FLOAT_INOUT;\n", appbroker->fp);
-	fputs("typedef double * DOUBLE_INOUT;\n", appbroker->fp);
-	fputs("typedef Buffer * BUFFER_INOUT;\n", appbroker->fp);
-	fputs("typedef String ** STRING_INOUT;\n", appbroker->fp);
 }
 
 static void _appbroker_tail(AppBroker * appbroker)
