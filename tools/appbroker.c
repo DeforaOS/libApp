@@ -117,7 +117,7 @@ static void _appbroker_constants(AppBroker * appbroker)
 static int _appbroker_foreach_call(char const * key, Hash * value, void * data)
 {
 	AppBroker * appbroker = data;
-	int i;
+	unsigned int i;
 	char buf[8];
 	char const * p;
 	const char sep[] = ", ";
@@ -133,7 +133,7 @@ static int _appbroker_foreach_call(char const * key, Hash * value, void * data)
 			key, "(App * app, AppServerClient * client");
 	for(i = 0; i < APPSERVER_MAX_ARGUMENTS; i++)
 	{
-		snprintf(buf, sizeof(buf), "arg%d", i + 1);
+		snprintf(buf, sizeof(buf), "arg%u", i + 1);
 		if((p = hash_get(value, buf)) == NULL)
 			break;
 		if(_appbroker_foreach_call_arg(appbroker, sep, p) != 0)
@@ -168,7 +168,7 @@ static int _appbroker_foreach_callback(char const * key, Hash * value,
 {
 	/* XXX some code duplication with _appbroker_foreach_call() */
 	AppBroker * appbroker = data;
-	int i;
+	unsigned int i;
 	char buf[8];
 	char const * p;
 	const char sep[] = ", ";
@@ -184,7 +184,7 @@ static int _appbroker_foreach_callback(char const * key, Hash * value,
 			key, "(AppClient * client");
 	for(i = 0; i < APPSERVER_MAX_ARGUMENTS; i++)
 	{
-		snprintf(buf, sizeof(buf), "arg%d", i + 1);
+		snprintf(buf, sizeof(buf), "arg%u", i + 1);
 		if((p = hash_get(value, buf)) == NULL)
 			break;
 		if(_appbroker_foreach_call_arg(appbroker, sep, p) != 0)

@@ -364,7 +364,7 @@ static int _new_interface_foreach(char const * key, Hash * value,
 {
 	String const * prefix = (appinterface->mode == ATM_SERVER)
 		? APPINTERFACE_CALL_PREFIX : APPINTERFACE_CALLBACK_PREFIX;
-	int i;
+	unsigned int i;
 	char buf[8];
 	int type = VT_NULL;
 	char const * p;
@@ -388,7 +388,7 @@ static int _new_interface_foreach(char const * key, Hash * value,
 	}
 	for(i = 0; i < APPSERVER_MAX_ARGUMENTS; i++)
 	{
-		snprintf(buf, sizeof(buf), "arg%d", i + 1);
+		snprintf(buf, sizeof(buf), "arg%u", i + 1);
 		if((p = hash_get(value, buf)) == NULL)
 			break;
 		if(_new_interface_append_arg(appinterface, p) != 0)
