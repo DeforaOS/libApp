@@ -107,6 +107,7 @@ typedef struct _StringEnum
 static const StringEnum _string_type[] =
 {
 	{ "VOID",	VT_NULL		| AICD_IN	},
+	/* implicit input */
 	{ "BOOL",	VT_BOOL		| AICD_IN	},
 	{ "INT8",	VT_INT8		| AICD_IN	},
 	{ "UINT8",	VT_UINT8	| AICD_IN	},
@@ -117,11 +118,37 @@ static const StringEnum _string_type[] =
 	{ "INT64",	VT_INT64	| AICD_IN	},
 	{ "UINT64",	VT_UINT64	| AICD_IN	},
 	{ "STRING",	VT_STRING	| AICD_IN	},
-	{ "STRING_OUT",	VT_STRING	| AICD_OUT	},
 	{ "BUFFER",	VT_BUFFER	| AICD_IN	},
-	{ "BUFFER_OUT",	VT_BUFFER	| AICD_OUT	},
 	{ "FLOAT",	VT_FLOAT	| AICD_IN	},
 	{ "DOUBLE",	VT_DOUBLE	| AICD_IN	},
+	/* input aliases */
+	{ "BOOL_IN",	VT_BOOL		| AICD_IN	},
+	{ "INT8_IN",	VT_INT8		| AICD_IN	},
+	{ "UINT8_IN",	VT_UINT8	| AICD_IN	},
+	{ "INT16_IN",	VT_INT16	| AICD_IN	},
+	{ "UINT16_IN",	VT_UINT16	| AICD_IN	},
+	{ "INT32_IN",	VT_INT32	| AICD_IN	},
+	{ "UINT32_IN",	VT_UINT32	| AICD_IN	},
+	{ "INT64_IN",	VT_INT64	| AICD_IN	},
+	{ "UINT64_IN",	VT_UINT64	| AICD_IN	},
+	{ "STRING_IN",	VT_STRING	| AICD_IN	},
+	{ "BUFFER_IN",	VT_BUFFER	| AICD_IN	},
+	{ "FLOAT_IN",	VT_FLOAT	| AICD_IN	},
+	{ "DOUBLE_IN",	VT_DOUBLE	| AICD_IN	},
+	/* output only */
+	{ "BOOL_OUT",	VT_BOOL		| AICD_OUT	},
+	{ "INT8_OUT",	VT_INT8		| AICD_OUT	},
+	{ "UINT8_OUT",	VT_UINT8	| AICD_OUT	},
+	{ "INT16_OUT",	VT_INT16	| AICD_OUT	},
+	{ "UINT16_OUT",	VT_UINT16	| AICD_OUT	},
+	{ "INT32_OUT",	VT_INT32	| AICD_OUT	},
+	{ "UINT32_OUT",	VT_UINT32	| AICD_OUT	},
+	{ "INT64_OUT",	VT_INT64	| AICD_OUT	},
+	{ "UINT64_OUT",	VT_UINT64	| AICD_OUT	},
+	{ "STRING_OUT",	VT_STRING	| AICD_OUT	},
+	{ "BUFFER_OUT",	VT_BUFFER	| AICD_OUT	},
+	{ "FLOAT_OUT",	VT_FLOAT	| AICD_OUT	},
+	{ "DOUBLE_OUT",	VT_DOUBLE	| AICD_OUT	},
 	{ NULL,		0				}
 };
 
