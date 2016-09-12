@@ -95,14 +95,16 @@ static int _appbroker(AppTransportMode mode, char const * outfile,
 
 static void _appbroker_calls(AppBroker * appbroker)
 {
-	fputs("\n\n/* calls */\n", appbroker->fp);
+	if(appbroker->fp != NULL)
+		fputs("\n\n/* calls */\n", appbroker->fp);
 	hash_foreach(appbroker->config,
 			(HashForeach)_appbroker_foreach_call, appbroker);
 }
 
 static void _appbroker_callbacks(AppBroker * appbroker)
 {
-	fputs("\n\n/* callbacks */\n", appbroker->fp);
+	if(appbroker->fp != NULL)
+		fputs("\n\n/* callbacks */\n", appbroker->fp);
 	hash_foreach(appbroker->config,
 			(HashForeach)_appbroker_foreach_callback, appbroker);
 }
@@ -113,7 +115,8 @@ static void _appbroker_constants(AppBroker * appbroker)
 
 	if((hash = hash_get(appbroker->config, "constants")) == NULL)
 		return;
-	fputs("\n\n/* constants */\n", appbroker->fp);
+	if(appbroker->fp != NULL)
+		fputs("\n\n/* constants */\n", appbroker->fp);
 	hash_foreach(hash, (HashForeach)_appbroker_foreach_constant, appbroker);
 }
 
@@ -206,8 +209,10 @@ static int _appbroker_foreach_call(char const * key, Hash * value, void * data)
 	if((p = _appbroker_ctype(p)) == NULL)
 		appbroker->error = -error_set_print(APPBROKER_PROGNAME, 1,
 				"%s: %s", key, "Invalid return type for call");
-	fprintf(appbroker->fp, "%s%s%s%s%s%s", p, " ", appbroker->prefix, "_",
-			key, "(App * app, AppServerClient * client");
+	if(appbroker->fp != NULL)
+		fprintf(appbroker->fp, "%s%s%s%s%s%s", p, " ",
+				appbroker->prefix, "_", key,
+				"(App * app, AppServerClient * client");
 	for(i = 0; i < APPSERVER_MAX_ARGUMENTS; i++)
 	{
 		snprintf(buf, sizeof(buf), "arg%u", i + 1);
@@ -216,7 +221,8 @@ static int _appbroker_foreach_call(char const * key, Hash * value, void * data)
 		if(_appbroker_foreach_call_arg(appbroker, sep, p) != 0)
 			return -1;
 	}
-	fprintf(appbroker->fp, "%s", ");\n");
+	if(appbroker->fp != NULL)
+		fprintf(appbroker->fp, "%s", ");\n");
 	return 0;
 }
 
@@ -238,7 +244,8 @@ static int _appbroker_foreach_call_arg(AppBroker * appbroker, char const * sep,
 		appbroker->error = -1;
 		return -1;
 	}
-	fprintf(appbroker->fp, "%s%s", sep, ctype);
+	if(appbroker->fp != NULL)
+		fprintf(appbroker->fp, "%s%s", sep, ctype);
 	return 0;
 }
 
@@ -264,8 +271,10 @@ static int _appbroker_foreach_callback(char const * key, Hash * value,
 		appbroker->error = -error_set_print(APPBROKER_PROGNAME, 1,
 				"%s: %s", key, "Unknown return type for"
 				" callback");
-	fprintf(appbroker->fp, "%s%s%s%s%s%s", p, " ", appbroker->prefix, "_",
-				key, "(AppClient * client");
+	if(appbroker->fp != NULL)
+		fprintf(appbroker->fp, "%s%s%s%s%s%s", p, " ",
+				appbroker->prefix, "_", key,
+				"(AppClient * client");
 	for(i = 0; i < APPSERVER_MAX_ARGUMENTS; i++)
 	{
 		snprintf(buf, sizeof(buf), "arg%u", i + 1);
@@ -274,7 +283,8 @@ static int _appbroker_foreach_callback(char const * key, Hash * value,
 		if(_appbroker_foreach_call_arg(appbroker, sep, p) != 0)
 			return -1;
 	}
-	fprintf(appbroker->fp, "%s", ");\n");
+	if(appbroker->fp != NULL)
+		fprintf(appbroker->fp, "%s", ");\n");
 	return 0;
 }
 
@@ -283,13 +293,16 @@ static int _appbroker_foreach_constant(char const * key, char const * value,
 {
 	AppBroker * appbroker = data;
 
-	fprintf(appbroker->fp, "# define %s_%s\t%s\n", appbroker->prefix,
-			key, value);
+	if(appbroker->fp != NULL)
+		fprintf(appbroker->fp, "# define %s_%s\t%s\n",
+				appbroker->prefix, key, value);
 	return 0;
 }
 
 static void _appbroker_head(AppBroker * appbroker)
 {
+	if(appbroker->fp == NULL)
+		return;
 	fputs("/* $""Id$ */\n\n\n\n", appbroker->fp);
 	if(appbroker->prefix != NULL)
 		fprintf(appbroker->fp, "%s%s%s%s%s%s%s%s%s%s", "#ifndef ",
@@ -304,7 +317,7 @@ static void _appbroker_head(AppBroker * appbroker)
 
 static void _appbroker_tail(AppBroker * appbroker)
 {
-	if(appbroker->prefix != NULL)
+	if(appbroker->prefix != NULL && appbroker->fp != NULL)
 		fprintf(appbroker->fp, "%s%s%s%s%s", "\n#endif /* !",
 				appbroker->prefix, "_",
 				appbroker->prefix, "_H */\n");
