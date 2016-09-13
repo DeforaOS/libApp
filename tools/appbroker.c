@@ -28,19 +28,25 @@
 /* AppBroker */
 /* private */
 /* types */
+typedef struct _AppBrokerPrefs
+{
+	AppTransportMode mode;
+	char const * outfile;
+	int dryrun;
+} AppBrokerPrefs;
+
 typedef struct _AppBroker
 {
+	AppBrokerPrefs prefs;
 	Config * config;
 	char const * prefix;
-	char const * outfile;
 	FILE * fp;
 	int error;
 } AppBroker;
 
 
 /* prototypes */
-static int _appbroker(AppTransportMode mode, char const * outfile,
-		char const * filename);
+static int _appbroker(AppBrokerPrefs * prefs, char const * filename);
 static int _usage(void);
 
 
@@ -60,11 +66,17 @@ static int _appbroker_foreach_constant(char const * key, char const * value,
 static void _appbroker_head(AppBroker * appbroker);
 static void _appbroker_tail(AppBroker * appbroker);
 
-static int _appbroker(AppTransportMode mode, char const * outfile,
-		char const * filename)
+static int _appbroker(AppBrokerPrefs * prefs, char const * filename)
 {
 	AppBroker appbroker;
 
+	if(prefs != NULL)
+		appbroker.prefs = *prefs;
+	else
+	{
+		memset(&appbroker.prefs, 0, sizeof(appbroker.prefs));
+		appbroker.prefs.mode = ATM_SERVER;
+	}
 	if((appbroker.config = config_new()) == NULL)
 		return error_print(APPBROKER_PROGNAME);
 	if(config_load(appbroker.config, filename) != 0
@@ -75,19 +87,22 @@ static int _appbroker(AppTransportMode mode, char const * outfile,
 		return error_print(APPBROKER_PROGNAME);
 	}
 	appbroker.fp = NULL;
-	if(_appbroker_do(&appbroker, mode) == 0)
+	if(_appbroker_do(&appbroker, appbroker.prefs.mode) == 0
+			&& appbroker.prefs.dryrun == 0)
 	{
-		if((appbroker.outfile = outfile) == NULL)
+		if(appbroker.prefs.outfile == NULL)
 			appbroker.fp = stdout;
-		else if((appbroker.fp = fopen(outfile, "w")) == NULL)
+		else if((appbroker.fp = fopen(appbroker.prefs.outfile, "w"))
+				== NULL)
 		{
 			config_delete(appbroker.config);
 			return error_set_print(APPBROKER_PROGNAME, 1, "%s: %s",
-					outfile, strerror(errno));
+					appbroker.prefs.outfile,
+					strerror(errno));
 		}
-		_appbroker_do(&appbroker, mode);
+		_appbroker_do(&appbroker, appbroker.prefs.mode);
 	}
-	if(outfile != NULL)
+	if(appbroker.fp != NULL && appbroker.prefs.outfile != NULL)
 		fclose(appbroker.fp);
 	config_delete(appbroker.config);
 	return appbroker.error;
@@ -341,8 +356,8 @@ static void _appbroker_tail(AppBroker * appbroker)
 /* usage */
 static int _usage(void)
 {
-	fputs("Usage: " APPBROKER_PROGNAME " [-cs][-o outfile] filename\n",
-			stderr);
+	fputs("Usage: " APPBROKER_PROGNAME " [-cns][-o outfile] filename\n"
+"  -n	Only check for errors (dry-run)\n", stderr);
 	return 1;
 }
 
@@ -351,25 +366,29 @@ static int _usage(void)
 int main(int argc, char * argv[])
 {
 	int o;
-	AppTransportMode mode = ATM_SERVER;
-	char const * outfile = NULL;
+	AppBrokerPrefs prefs;
 
-	while((o = getopt(argc, argv, "co:s")) != -1)
+	memset(&prefs, 0, sizeof(prefs));
+	prefs.mode = ATM_SERVER;
+	while((o = getopt(argc, argv, "cno:s")) != -1)
 		switch(o)
 		{
 			case 'c':
-				mode = ATM_CLIENT;
+				prefs.mode = ATM_CLIENT;
+				break;
+			case 'n':
+				prefs.dryrun = 1;
 				break;
 			case 'o':
-				outfile = optarg;
+				prefs.outfile = optarg;
 				break;
 			case 's':
-				mode = ATM_SERVER;
+				prefs.mode = ATM_SERVER;
 				break;
 			default:
 				return _usage();
 		}
 	if(optind + 1 != argc)
 		return _usage();
-	return (_appbroker(mode, outfile, argv[optind]) == 0) ? 0 : 2;
+	return (_appbroker(&prefs, argv[optind]) == 0) ? 0 : 2;
 }
