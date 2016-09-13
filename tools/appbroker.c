@@ -49,6 +49,7 @@ static void _appbroker_calls(AppBroker * appbroker);
 static void _appbroker_callbacks(AppBroker * appbroker);
 static void _appbroker_constants(AppBroker * appbroker);
 static char const * _appbroker_ctype(char const * type);
+static int _appbroker_do(AppBroker * appbroker, AppTransportMode mode);
 static int _appbroker_foreach_call(char const * key, Hash * value, void * data);
 static int _appbroker_foreach_call_arg(AppBroker * appbroker, char const * sep,
 		char const * arg);
@@ -73,20 +74,19 @@ static int _appbroker(AppTransportMode mode, char const * outfile,
 		config_delete(appbroker.config);
 		return error_print(APPBROKER_PROGNAME);
 	}
-	if((appbroker.outfile = outfile) == NULL)
-		appbroker.fp = stdout;
-	else if((appbroker.fp = fopen(outfile, "w")) == NULL)
+	appbroker.fp = NULL;
+	if(_appbroker_do(&appbroker, mode) == 0)
 	{
-		config_delete(appbroker.config);
-		return error_set_print(APPBROKER_PROGNAME, 1, "%s: %s", outfile,
-				strerror(errno));
+		if((appbroker.outfile = outfile) == NULL)
+			appbroker.fp = stdout;
+		else if((appbroker.fp = fopen(outfile, "w")) == NULL)
+		{
+			config_delete(appbroker.config);
+			return error_set_print(APPBROKER_PROGNAME, 1, "%s: %s",
+					outfile, strerror(errno));
+		}
+		_appbroker_do(&appbroker, mode);
 	}
-	appbroker.error = 0;
-	_appbroker_head(&appbroker);
-	_appbroker_constants(&appbroker);
-	(mode == ATM_SERVER) ? _appbroker_calls(&appbroker)
-		: _appbroker_callbacks(&appbroker);
-	_appbroker_tail(&appbroker);
 	if(outfile != NULL)
 		fclose(appbroker.fp);
 	config_delete(appbroker.config);
@@ -188,6 +188,17 @@ static char const * _appbroker_ctype(char const * type)
 		if(strcmp(ctypes[i].type, type) == 0)
 			return ctypes[i].ctype;
 	return NULL;
+}
+
+static int _appbroker_do(AppBroker * appbroker, AppTransportMode mode)
+{
+	appbroker->error = 0;
+	_appbroker_head(appbroker);
+	_appbroker_constants(appbroker);
+	(mode == ATM_SERVER) ? _appbroker_calls(appbroker)
+		: _appbroker_callbacks(appbroker);
+	_appbroker_tail(appbroker);
+	return appbroker->error;
 }
 
 static int _appbroker_foreach_call(char const * key, Hash * value, void * data)
