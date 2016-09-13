@@ -22,7 +22,7 @@
 #include <System.h>
 #include "App.h"
 
-#define APPBROKER_PROGNAME "AppBroker"
+#define PROGNAME_APPBROKER "AppBroker"
 
 
 /* AppBroker */
@@ -78,13 +78,13 @@ static int _appbroker(AppBrokerPrefs * prefs, char const * filename)
 		appbroker.prefs.mode = ATM_SERVER;
 	}
 	if((appbroker.config = config_new()) == NULL)
-		return error_print(APPBROKER_PROGNAME);
+		return error_print(PROGNAME_APPBROKER);
 	if(config_load(appbroker.config, filename) != 0
 			|| (appbroker.prefix = config_get(appbroker.config,
 					NULL, "service")) == NULL)
 	{
 		config_delete(appbroker.config);
-		return error_print(APPBROKER_PROGNAME);
+		return error_print(PROGNAME_APPBROKER);
 	}
 	appbroker.fp = NULL;
 	if(_appbroker_do(&appbroker, appbroker.prefs.mode) == 0
@@ -96,7 +96,7 @@ static int _appbroker(AppBrokerPrefs * prefs, char const * filename)
 				== NULL)
 		{
 			config_delete(appbroker.config);
-			return error_set_print(APPBROKER_PROGNAME, 1, "%s: %s",
+			return error_set_print(PROGNAME_APPBROKER, 1, "%s: %s",
 					appbroker.prefs.outfile,
 					strerror(errno));
 		}
@@ -233,7 +233,7 @@ static int _appbroker_foreach_call(char const * key, Hash * value, void * data)
 	if((p = hash_get(value, "ret")) == NULL)
 		p = "VOID";
 	if((p = _appbroker_ctype(p)) == NULL)
-		appbroker->error = -error_set_print(APPBROKER_PROGNAME, 1,
+		appbroker->error = -error_set_print(PROGNAME_APPBROKER, 1,
 				"%s: %s", key, "Invalid return type for call");
 	if(appbroker->fp != NULL)
 		fprintf(appbroker->fp, "%s%s%s%s%s%s", p, " ",
@@ -297,7 +297,7 @@ static int _appbroker_foreach_callback(char const * key, Hash * value,
 	if((p = hash_get(value, "ret")) == NULL)
 		p = "VOID";
 	if((p = _appbroker_ctype(p)) == NULL)
-		appbroker->error = -error_set_print(APPBROKER_PROGNAME, 1,
+		appbroker->error = -error_set_print(PROGNAME_APPBROKER, 1,
 				"%s: %s", key, "Unknown return type for"
 				" callback");
 	if(appbroker->fp != NULL)
@@ -356,7 +356,7 @@ static void _appbroker_tail(AppBroker * appbroker)
 /* usage */
 static int _usage(void)
 {
-	fputs("Usage: " APPBROKER_PROGNAME " [-cns][-o outfile] filename\n"
+	fputs("Usage: " PROGNAME_APPBROKER " [-cns][-o outfile] filename\n"
 "  -n	Only check for errors (dry-run)\n", stderr);
 	return 1;
 }
