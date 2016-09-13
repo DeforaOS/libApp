@@ -258,7 +258,8 @@ static int _appbroker_foreach_call_arg(AppBroker * appbroker, char const * sep,
 	}
 	if(appbroker->fp != NULL)
 		fprintf(appbroker->fp, "%s%s%s%s", sep, ctype,
-				string_length(p + 1) ? " " : "", p + 1);
+				(p != NULL && string_length(p + 1)) ? " " : "",
+				(p != NULL) ? p + 1 : "");
 	return 0;
 }
 
