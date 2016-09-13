@@ -96,7 +96,7 @@ static int _appbroker(AppTransportMode mode, char const * outfile,
 static void _appbroker_calls(AppBroker * appbroker)
 {
 	if(appbroker->fp != NULL)
-		fputs("\n\n/* calls */\n", appbroker->fp);
+		fputs("\n/* calls */\n", appbroker->fp);
 	hash_foreach(appbroker->config,
 			(HashForeach)_appbroker_foreach_call, appbroker);
 }
@@ -231,13 +231,14 @@ static int _appbroker_foreach_call_arg(AppBroker * appbroker, char const * sep,
 {
 	char const * ctype;
 	char * p;
+	String * q;
 
 	if((p = strchr(arg, ',')) == NULL)
 		ctype = _appbroker_ctype(arg);
-	else if((p = string_new_length(arg, p - arg)) != NULL)
+	else if((q = string_new_length(arg, p - arg)) != NULL)
 	{
-		ctype = _appbroker_ctype(p);
-		string_delete(p);
+		ctype = _appbroker_ctype(q);
+		string_delete(q);
 	}
 	else
 	{
@@ -245,7 +246,8 @@ static int _appbroker_foreach_call_arg(AppBroker * appbroker, char const * sep,
 		return -1;
 	}
 	if(appbroker->fp != NULL)
-		fprintf(appbroker->fp, "%s%s", sep, ctype);
+		fprintf(appbroker->fp, "%s%s%s%s", sep, ctype,
+				string_length(p + 1) ? " " : "", p + 1);
 	return 0;
 }
 
