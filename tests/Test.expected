@@ -12,6 +12,7 @@
 
 /* calls */
 void Test_Test(App * app, AppServerClient * client, int32_t i32);
-void Test_Test2(App * app, AppServerClient * client, int32_t * i32);
+bool Test_Test2(App * app, AppServerClient * client, int32_t * i32);
+String const * Test_Test3(App * app, AppServerClient * client, int32_t *);
 
 #endif /* !Test_Test_H */

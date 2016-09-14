@@ -2,9 +2,13 @@
 service=Test
 
 [call::Test]
-#ret=void
+ret=VOID
 arg1=INT32,i32
 
 [call::Test2]
-#ret=void
+ret=BOOL
 arg1=INT32_INOUT,i32
+
+[call::Test3]
+ret=STRING
+arg1=INT32_INOUT
