@@ -35,7 +35,7 @@ expected="${interface%.interface}.expected"
 $APPBROKER -o "$tmpfile" "$interface"
 ret=$?
 if [ $ret -eq 0 ]; then
-	$DIFF -- "$tmpfile" "$expected"
+	$DIFF -- "$expected" "$tmpfile"
 	ret=$?
 fi
 $RM -- "$tmpfile"
