@@ -19,6 +19,7 @@
 #variables
 PROGNAME="appbroker.sh"
 #executables
+APPBROKER="$OBJDIR../tools/AppBroker$EXEEXT"
 DIFF="diff"
 DEBUG="_debug"
 MKTEMP="mktemp"
@@ -31,7 +32,7 @@ tmpfile=$($MKTEMP)
 [ $? -eq 0 ]							|| exit 2
 interface="$1"
 expected="${interface%.interface}.expected"
-$OBJDIR../tools/AppBroker$EXEEXT -o "$tmpfile" "$interface"
+$APPBROKER -o "$tmpfile" "$interface"
 ret=$?
 if [ $ret -eq 0 ]; then
 	$DIFF -- "$tmpfile" "$expected"
