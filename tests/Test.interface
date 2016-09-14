@@ -7,8 +7,11 @@ arg1=INT32,i32
 
 [call::Test2]
 ret=BOOL
-arg1=INT32_INOUT,i32
+arg1=INT32_INOUT
 
 [call::Test3]
 ret=STRING
-arg1=INT32_INOUT
+
+[call::Test4]
+arg1=INT8
+arg2=UINT16
