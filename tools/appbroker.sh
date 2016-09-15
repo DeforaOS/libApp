@@ -27,7 +27,7 @@
 #variables
 PROGNAME="appbroker.sh"
 #executables
-APPBROKER="AppBroker"
+APPBROKER=
 DEBUG="_debug"
 
 
@@ -84,6 +84,15 @@ if [ $# -eq 0 ]; then
 fi
 
 [ "$clean" -ne 0 ] && exit 0
+
+if [ -n "$PKG_CONFIG_SYSROOT_DIR" ]; then
+	#XXX cross-compiling (requires AppBroker(1) installed)
+	APPBROKER="AppBroker$EXEEXT"
+elif [ -z "$APPBROKER" ]; then
+	APPBROKER="$OBJDIR../tools/AppBroker$EXEEXT"
+	#XXX ugly workaround
+	export LD_LIBRARY_PATH="$OBJDIR../src"
+fi
 
 exec 3>&1
 while [ $# -gt 0 ]; do
