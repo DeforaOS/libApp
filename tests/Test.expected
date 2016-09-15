@@ -15,5 +15,6 @@ void Test_Test(App * app, AppServerClient * client, int32_t i32);
 bool Test_Test2(App * app, AppServerClient * client, int32_t *);
 String const * Test_Test3(App * app, AppServerClient * client);
 void Test_Test4(App * app, AppServerClient * client, int8_t, uint16_t);
+void Test_Test5(App * app, AppServerClient * client, int8_t *, uint16_t *);
 
 #endif /* !Test_Test_H */
