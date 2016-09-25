@@ -439,7 +439,6 @@ static int _udp_callback_read(int fd, UDP * udp)
 	ssize_t ssize;
 	struct sockaddr * sa;
 	socklen_t sa_len = udp->aip->ai_addrlen;
-	size_t size;
 	Buffer * buffer;
 	AppMessage * message = NULL;
 
@@ -463,7 +462,6 @@ static int _udp_callback_read(int fd, UDP * udp)
 #ifdef DEBUG
 	fprintf(stderr, "DEBUG: %s() ssize=%ld\n", __func__, ssize);
 #endif
-	size = ssize;
 	if((buffer = buffer_new(ssize, buf)) == NULL)
 	{
 		free(sa);
