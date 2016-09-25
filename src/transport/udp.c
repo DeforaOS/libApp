@@ -300,6 +300,9 @@ static int _udp_client_send(UDP * udp, AppTransportClient * client,
 	size_t i;
 	UDPClient * c;
 	Buffer * buffer;
+#ifdef DEBUG
+	struct sockaddr_in * sa;
+#endif
 
 	/* lookup the client */
 	for(i = 0; i < udp->u.server.clients_cnt; i++)

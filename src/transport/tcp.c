@@ -415,7 +415,7 @@ static int _tcp_send(TCP * tcp, AppMessage * message)
 static int _tcp_error(char const * message)
 {
 #ifdef DEBUG
-	fprintf(stderr, "DEBUG: %s(\"%s\", %d)\n", __func__, message, code);
+	fprintf(stderr, "DEBUG: %s(\"%s\")\n", __func__, message);
 #endif
 	return error_set_code(-errno, "%s%s%s",
 			(message != NULL) ? message : "",

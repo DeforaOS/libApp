@@ -53,7 +53,7 @@ AppMessage * appmessage_new_acknowledgement(AppMessageID id)
 	AppMessage * message;
 
 #ifdef DEBUG
-	fprintf(stderr, "DEBUG: %s(\"%s\")\n", __func__, method);
+	fprintf(stderr, "DEBUG: %s(%u)\n", __func__, id);
 #endif
 	if((message = object_new(sizeof(*message))) == NULL)
 		return NULL;
