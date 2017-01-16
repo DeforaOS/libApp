@@ -19,3 +19,6 @@ arg2=UINT16
 [call::Test5]
 arg1=INT8[]
 arg2=UINT16_IN[]
+
+[call::Test6]
+ret=STRING[]
