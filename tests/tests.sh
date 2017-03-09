@@ -26,8 +26,8 @@ DEBUG="_debug"
 #date
 _date()
 {
-	if [ -n "$SOURCE_EPOCH" ]; then
-		$DATE -d "@$SOURCE_EPOCH" '+%a %b %d %T %Z %Y'
+	if [ -n "$SOURCE_DATE_EPOCH" ]; then
+		TZ=UTC $DATE -d "@$SOURCE_DATE_EPOCH" '+%a %b %d %T %Z %Y'
 	else
 		$DATE
 	fi
