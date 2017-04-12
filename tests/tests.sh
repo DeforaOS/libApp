@@ -134,6 +134,7 @@ while [ $# -ne 0 ]; do
 	_test "appbroker.sh" "Test" "Test.interface"
 	APPINTERFACE_Test=Test.interface \
 		_test "appclient" "appclient" -a "Test" -n tcp:localhost:4242
+	_test "appinterface" "appinterface" -a "Dummy"
 	_test "appmessage" "appmessage"
 	APPINTERFACE_Dummy=../data/Dummy.interface \
 		_test "appserver" "appserver" -a "Dummy" -n tcp:localhost:4242
