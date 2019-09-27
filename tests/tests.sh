@@ -45,6 +45,9 @@ _debug()
 #fail
 _fail()
 {
+	test="$1"
+	name="$2"
+
 	_run "$@"
 	res=$?
 	if [ $res -ne 0 ]; then
@@ -66,8 +69,14 @@ _run()
 	shift
 	echo -n "$test:" 1>&2
 	(echo
-	echo "Testing: $test $name"
-	LD_LIBRARY_PATH="$OBJDIR../src" $DEBUG "./$test" "$@" 2>&1) >> "$target"
+	echo "Testing: $test $name ($OBJDIR)"
+	[ -n "$OBJDIR" ] || OBJDIR="./"
+	if [ -x "$OBJDIR$test" ]; then
+		test="$OBJDIR$test"
+	elif [ -x "./$test" ]; then
+		test="./$test"
+	fi
+	LD_LIBRARY_PATH="$OBJDIR../src" $DEBUG "$test" "$@" 2>&1) >> "$target"
 }
 
 
