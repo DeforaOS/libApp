@@ -70,6 +70,7 @@ static int _usage(void);
 static int _transport(char const * protocol, char const * name)
 {
 	char * cwd;
+	char const * p;
 	Plugin * plugin;
 	AppTransport transport;
 	AppTransportPluginHelper * helper = &transport.helper;
@@ -79,7 +80,10 @@ static int _transport(char const * protocol, char const * name)
 	if((cwd = getcwd(NULL, 0)) == NULL)
 		return error_set_print(PROGNAME, 2, "%s", strerror(errno));
 	/* XXX rather ugly but does the trick */
-	plugin = plugin_new(cwd, "../src", "transport", protocol);
+	if((p = getenv("OBJDIR")) != NULL)
+		plugin = plugin_new(p, "../src", "transport", protocol);
+	else
+		plugin = plugin_new(cwd, "../src", "transport", protocol);
 	free(cwd);
 	if(plugin == NULL)
 		return error_print(PROGNAME);
