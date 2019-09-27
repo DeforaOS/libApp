@@ -92,6 +92,6 @@ while [ $# -gt 0 ]; do
 
 	source="${target#$OBJDIR}"
 	appinterface="${source##*/}"
-	appinterface="../data/${appinterface%%.h}.interface"
+	appinterface="${appinterface%%.h}.interface"
 	_appbroker "$target" "$appinterface"			|| exit 2
 done

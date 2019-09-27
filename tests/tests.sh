@@ -131,7 +131,7 @@ while [ $# -ne 0 ]; do
 	FAILED=
 	echo "Performing tests:" 1>&2
 	_date > "$target"
-	_test "appbroker.sh" "Test" "Test.interface"
+	_test "appbroker.sh" "Test" "Test.h"
 	APPINTERFACE_Test=Test.interface \
 		_test "appclient" "appclient" -a "Test" -n tcp:localhost:4242
 	_test "appinterface" "appinterface" -a "Dummy"
