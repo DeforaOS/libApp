@@ -551,23 +551,23 @@ int appinterface_callv(AppInterface * appinterface, App * app, void ** result,
 		switch(call->args[argc].type)
 		{
 			case VT_BOOL:
-				u.b = va_arg(args, bool);
+				u.b = va_arg(args, unsigned int);
 				p = &u.b;
 				break;
 			case VT_INT8:
-				u.i8 = va_arg(args, int8_t);
+				u.i8 = va_arg(args, int);
 				p = &u.i8;
 				break;
 			case VT_UINT8:
-				u.u8 = va_arg(args, uint8_t);
+				u.u8 = va_arg(args, unsigned int);
 				p = &u.u8;
 				break;
 			case VT_INT16:
-				u.i16 = va_arg(args, int16_t);
+				u.i16 = va_arg(args, int);
 				p = &u.i16;
 				break;
 			case VT_UINT16:
-				u.u16 = va_arg(args, uint16_t);
+				u.u16 = va_arg(args, unsigned int);
 				p = &u.u16;
 				break;
 			case VT_INT32:
