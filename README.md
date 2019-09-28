@@ -17,15 +17,14 @@ Dependencies for libApp
 libApp depends on the following software components to build:
 - pkg-config from the freedesktop software collection, as found in most
   software distributions already; otherwise at
-  <http://www.freedesktop.org/wiki/Software/pkg-config/>
+  <https://www.freedesktop.org/wiki/Software/pkg-config/> (or a compatible
+  replacement)
 - libSystem from the DeforaOS Project, as found at
-  <http://www.defora.org/os/project/27/libSystem> if not packaged for your
-  system.
+  <https://www.defora.org/os/project/27/libSystem>
 - libMarshall from the DeforaOS Project, as found at
-  <http://www.defora.org/os/project/4400/libMarshall> if not packaged for your
-  system.
+  <https://www.defora.org/os/project/4400/libMarshall>
 - configure from the DeforaOS Project, likewise found at
-  <http://www.defora.org/os/project/16/configure>
+  <https://www.defora.org/os/project/16/configure>
 
 
 Configuring libApp
