@@ -1,4 +1,6 @@
+/AppBroker
 /Dummy.h
+/Test.h
 /appclient
 /appinterface
 /appmessage
@@ -6,5 +8,6 @@
 /fixme.log
 /includes
 /lookup
+/shlint.log
 /tests.log
 /transport
