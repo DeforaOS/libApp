@@ -27,7 +27,7 @@
 #variables
 PROGNAME="appbroker.sh"
 #executables
-APPBROKER="AppBroker"
+APPBROKER=
 DEBUG="_debug"
 
 
@@ -85,6 +85,11 @@ fi
 
 [ "$clean" -ne 0 ] && exit 0
 
+if [ -z "$APPBROKER" ]; then
+	APPBROKER="./AppBroker$EXEEXT"
+	[ -n "$OBJDIR" ] && APPBROKER="${OBJDIR}AppBroker"
+fi
+
 exec 3>&1
 while [ $# -gt 0 ]; do
 	target="$1"
@@ -93,5 +98,7 @@ while [ $# -gt 0 ]; do
 	source="${target#$OBJDIR}"
 	appinterface="${source##*/}"
 	appinterface="${appinterface%%.h}.interface"
+	#XXX also look in ../data
+	[ ! -f "$appinterface" ] && appinterface="../data/$appinterface"
 	_appbroker "$target" "$appinterface"			|| exit 2
 done
