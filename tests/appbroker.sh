@@ -86,8 +86,14 @@ fi
 [ "$clean" -ne 0 ] && exit 0
 
 if [ -z "$APPBROKER" ]; then
-	APPBROKER="./AppBroker$EXEEXT"
-	[ -n "$OBJDIR" ] && APPBROKER="${OBJDIR}AppBroker"
+	if [ -n "$PKG_CONFIG_SYSROOT_DIR" ]; then
+		#XXX cross-compiling (requires AppBroker(1) installed)
+		APPBROKER="AppBroker$EXEEXT"
+	elif [ -n "$OBJDIR" ]; then
+		APPBROKER="${OBJDIR}AppBroker$EXEEXT"
+	else
+		APPBROKER="./AppBroker$EXEEXT"
+	fi
 fi
 
 exec 3>&1
