@@ -89,13 +89,13 @@ static Template * _template_init(AppTransportPluginHelper * helper,
 
 static int _init_client(Template * template, char const * name)
 {
-	/* FIXME really implement */
+	/* TODO implement */
 	return -1;
 }
 
 static int _init_server(Template * template, char const * name)
 {
-	/* FIXME really implement */
+	/* TODO implement */
 	return -1;
 }
 
@@ -103,6 +103,6 @@ static int _init_server(Template * template, char const * name)
 /* template_destroy */
 static void _template_destroy(Template * template)
 {
-	/* FIXME really implement */
+	/* TODO implement */
 	object_delete(template);
 }
