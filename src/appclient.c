@@ -79,7 +79,8 @@ AppClient * appclient_new_event(App * self, char const * app,
 	appclient->transport = apptransport_new_app(ATM_CLIENT,
 			&appclient->helper, app, name, appclient->event);
 	/* check for errors */
-	if(appclient->interface == NULL || appclient->transport == NULL
+	if(appclient->interface == NULL
+			|| appclient->transport == NULL
 			|| appclient->event == NULL)
 	{
 		appclient_delete(appclient);
