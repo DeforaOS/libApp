@@ -87,9 +87,17 @@ AppMessage * appmessage_new_call(char const * method,
 	}
 	for(i = 0; i < args_cnt; i++)
 	{
-		/* FIXME check for errors */
 		message->t.call.args[i].direction = args[i].direction;
-		message->t.call.args[i].arg = variable_new_copy(args[i].arg);
+		if((message->t.call.args[i].arg = variable_new_copy(
+						args[i].arg)) == NULL)
+			break;
+	}
+	/* check for errors */
+	if(i != args_cnt)
+	{
+		message->t.call.args_cnt = i;
+		appmessage_delete(message);
+		return NULL;
 	}
 	return message;
 }
