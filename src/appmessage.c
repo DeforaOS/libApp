@@ -21,6 +21,8 @@
 #ifdef DEBUG
 # include <stdio.h>
 #endif
+#include <string.h>
+#include <errno.h>
 #include <System.h>
 #include "appmessage.h"
 
@@ -79,12 +81,14 @@ AppMessage * appmessage_new_call(char const * method,
 	message->id = 0;
 	message->t.call.method = string_new(method);
 	message->t.call.args = malloc(sizeof(*args) * args_cnt);
-	message->t.call.args_cnt = args_cnt;
 	if(message->t.call.args == NULL)
 	{
+		error_set_code(-errno, "%s", strerror(errno));
+		message->t.call.args_cnt = 0;
 		appmessage_delete(message);
 		return NULL;
 	}
+	message->t.call.args_cnt = args_cnt;
 	for(i = 0; i < args_cnt; i++)
 	{
 		message->t.call.args[i].direction = args[i].direction;
@@ -133,6 +137,7 @@ AppMessage * appmessage_new_callv(char const * method, ...)
 		if((p = realloc(message->t.call.args, sizeof(*p) * (i + 1)))
 				== NULL)
 		{
+			error_set_code(-errno, "%s", strerror(errno));
 			appmessage_delete(message);
 			message = NULL;
 			break;
@@ -181,7 +186,12 @@ AppMessage * appmessage_new_callv_variables(char const * method, ...)
 	{
 		if((p = realloc(message->t.call.args, sizeof(*p) * (i + 1)))
 				== NULL)
+		{
+			error_set_code(-errno, "%s", strerror(errno));
+			appmessage_delete(message);
+			message = NULL;
 			break;
+		}
 		message->t.call.args = p;
 		if((v = variable_new_copy(v)) == NULL)
 		{
@@ -189,7 +199,7 @@ AppMessage * appmessage_new_callv_variables(char const * method, ...)
 			message = NULL;
 			break;
 		}
-		message->t.call.args[i].direction = AMCD_IN; /* XXX */
+		message->t.call.args[i].direction = AMCD_IN; /* FIXME */
 		message->t.call.args[i].arg = v;
 		message->t.call.args_cnt = i + 1;
 	}
@@ -299,6 +309,7 @@ static AppMessage * _new_deserialize_call(AppMessage * message,
 		if((p = realloc(message->t.call.args, sizeof(*p) * (i + 1)))
 				== NULL)
 		{
+			error_set_code(-errno, "%s", strerror(errno));
 			appmessage_delete(message);
 			return NULL;
 		}
@@ -368,6 +379,11 @@ void appmessage_delete(AppMessage * message)
 
 static void _delete_call(AppMessage * message)
 {
+	size_t i;
+
+	for(i = 0; i < message->t.call.args_cnt; i++)
+		variable_delete(message->t.call.args[i].arg);
+	free(message->t.call.args);
 	string_delete(message->t.call.method);
 }
 
