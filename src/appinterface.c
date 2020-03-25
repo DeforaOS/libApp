@@ -44,7 +44,7 @@
 /* private */
 /* types */
 /* XXX get rid of this */
-#define VT_LAST VT_STRING
+#define VT_LAST VT_COMPOUND
 #define VT_COUNT (VT_LAST + 1)
 #define AICT_MASK 077
 
@@ -52,7 +52,8 @@
 static const String * AICTString[VT_COUNT] =
 {
 	"void", "bool", "int8", "uint8", "int16", "uint16", "int32", "uint32",
-	"int64", "uint64", "String", "Buffer", "float", "double"
+	"int64", "uint64", "float", "double", "Buffer", "String", "Array",
+	"Compound"
 };
 #endif
 
