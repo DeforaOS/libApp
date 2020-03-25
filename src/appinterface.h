@@ -51,4 +51,11 @@ int appinterface_call_variablev(AppInterface * appinterface, App * app,
 		Variable * result, char const * method,
 		size_t argc, Variable ** argv);
 
+AppMessage * appinterface_messagev(AppInterface * appinterface,
+		char const * method, va_list args);
+AppMessage * appinterface_message_variables(AppInterface * appinterface,
+		char const * method, Variable ** args);
+AppMessage * appinterface_message_variablev(AppInterface * appinterface,
+		char const * method, va_list args);
+
 #endif /* !LIBAPP_APPINTERFACE_H */

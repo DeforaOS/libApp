@@ -18,6 +18,7 @@
 #ifndef LIBAPP_APP_APPCLIENT_H
 # define LIBAPP_APP_APPCLIENT_H
 
+# include <stdarg.h>
 # include <stdint.h>
 # include <System/event.h>
 # include <System/variable.h>
@@ -42,7 +43,13 @@ AppStatus * appclient_get_status(AppClient * appclient);
 /* useful */
 int appclient_call(AppClient * appclient,
 		void ** result, char const * method, ...);
+int appclient_callv(AppClient * appclient,
+		void ** result, char const * method, va_list args);
 int appclient_call_variable(AppClient * appclient,
 		Variable * result, char const * method, ...);
+int appclient_call_variables(AppClient * appclient,
+		Variable * result, char const * method, Variable ** args);
+int appclient_call_variablev(AppClient * appclient,
+		Variable * result, char const * method, va_list args);
 
 #endif /* !LIBAPP_APP_APPCLIENT_H */

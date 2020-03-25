@@ -83,6 +83,9 @@ AppClient * appclient_new_event(App * self, char const * app,
 			|| appclient->event == NULL)
 	{
 		appclient_delete(appclient);
+#ifdef DEBUG
+		fprintf(stderr, "DEBUG: %s() => NULL\n", __func__);
+#endif
 		return NULL;
 	}
 #ifdef DEBUG
@@ -131,9 +134,25 @@ int appclient_call(AppClient * appclient,
 	va_list ap;
 
 	va_start(ap, method);
-	ret = appinterface_callv(appclient->interface, appclient->app, result,
-			method, ap);
+	ret = appclient_callv(appclient, result, method, ap);
 	va_end(ap);
+	return ret;
+}
+
+
+/* appclient_callv */
+int appclient_callv(AppClient * appclient,
+		void ** result, char const * method, va_list args)
+{
+	int ret;
+	AppMessage * message;
+
+	if((message = appinterface_messagev(appclient->interface, method, args))
+			== NULL)
+		return -1;
+	/* FIXME obtain the answer (AICD_{,IN}OUT) */
+	ret = apptransport_client_send(appclient->transport, message, 1);
+	appmessage_delete(message);
 	return ret;
 }
 
@@ -143,22 +162,45 @@ int appclient_call_variable(AppClient * appclient,
 		Variable * result, char const * method, ...)
 {
 	int ret;
-	size_t cnt;
-	size_t i;
 	va_list ap;
-	Variable ** argv;
 
-	if(appinterface_get_args_count(appclient->interface, &cnt, method) != 0)
-		return -1;
-	if((argv = malloc(sizeof(*argv) * cnt)) == NULL)
-		return error_set_code(-errno, "%s", strerror(errno));
 	va_start(ap, method);
-	for(i = 0; i < cnt; i++)
-		argv[i] = va_arg(ap, Variable *);
+	ret = appclient_call_variablev(appclient, result, method, ap);
 	va_end(ap);
-	ret = appinterface_call_variablev(appclient->interface, appclient->app,
-			result, method, cnt, argv);
-	free(argv);
+	return ret;
+}
+
+
+/* appclient_call_variables */
+int appclient_call_variables(AppClient * appclient,
+		Variable * result, char const * method, Variable ** args)
+{
+	int ret;
+	AppMessage * message;
+
+	if((message = appinterface_message_variables(appclient->interface,
+					method, args)) == NULL)
+		return -1;
+	/* FIXME obtain the answer (AICD_{,IN}OUT) */
+	ret = apptransport_client_send(appclient->transport, message, 1);
+	appmessage_delete(message);
+	return ret;
+}
+
+
+/* appclient_call_variablev */
+int appclient_call_variablev(AppClient * appclient,
+		Variable * result, char const * method, va_list args)
+{
+	int ret;
+	AppMessage * message;
+
+	if((message = appinterface_message_variablev(appclient->interface,
+					method, args)) == NULL)
+		return -1;
+	/* FIXME obtain the answer (AICD_{,IN}OUT) */
+	ret = apptransport_client_send(appclient->transport, message, 1);
+	appmessage_delete(message);
 	return ret;
 }
 

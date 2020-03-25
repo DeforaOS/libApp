@@ -26,6 +26,7 @@
 #include <errno.h>
 #include <System.h>
 #include <System/Marshall.h>
+#include "App/appmessage.h"
 #include "App/appserver.h"
 #include "appstatus.h"
 #include "appinterface.h"
@@ -161,8 +162,12 @@ static AppInterfaceCall * _appinterface_get_call(AppInterface * appinterface,
 		char const * method);
 
 /* useful */
+static Variable ** _appinterface_argv(AppInterfaceCall * call, va_list args);
+static void _appinterface_argv_free(Variable ** argv, size_t argc);
 static int _appinterface_call(App * app, Variable * result,
 		AppInterfaceCall * call, size_t argc, Variable ** argv);
+static AppMessage * _appinterface_message(AppInterfaceCall * call,
+		size_t argc, Variable ** argv);
 
 
 /* functions */
@@ -513,8 +518,125 @@ int appinterface_callv(AppInterface * appinterface, App * app, void ** result,
 	int ret = 0;
 	AppInterfaceCall * call;
 	Variable * r;
-	size_t argc;
 	Variable ** argv;
+
+	if((call = _appinterface_get_call(appinterface, method)) == NULL)
+		return -1;
+	if(call->type.type == VT_NULL)
+		r = NULL;
+	else if((r = variable_new(call->type.type, NULL)) == NULL)
+		return -1;
+	if((argv = _appinterface_argv(call, args)) == NULL)
+	{
+		if(r != NULL)
+			variable_delete(r);
+		return -1;
+	}
+	if(ret == 0)
+		ret = _appinterface_call(app, r, call, call->args_cnt, argv);
+	if(r != NULL)
+	{
+		if(ret == 0 && result != NULL)
+			/* XXX return 0 anyway? */
+			ret = variable_get_as(r, call->type.type, *result);
+		variable_delete(r);
+	}
+	/* FIXME also implement AICD_{,IN}OUT */
+	_appinterface_argv_free(argv, call->args_cnt);
+	return ret;
+}
+
+
+/* appinterface_call_variablev */
+int appinterface_call_variablev(AppInterface * appinterface, App * app,
+		Variable * result, char const * method,
+		size_t argc, Variable ** argv)
+{
+	AppInterfaceCall * call;
+
+	if((call = _appinterface_get_call(appinterface, method)) == NULL)
+		return -1;
+	return _appinterface_call(app, result, call, argc, argv);
+}
+
+
+/* appinterface_messagev */
+AppMessage * appinterface_messagev(AppInterface * appinterface,
+		char const * method, va_list args)
+{
+	AppInterfaceCall * call;
+	Variable ** argv;
+	AppMessage * message;
+
+	if((call = _appinterface_get_call(appinterface, method)) == NULL)
+		return NULL;
+	if((argv = _appinterface_argv(call, args)) == NULL)
+		return NULL;
+	message = _appinterface_message(call, call->args_cnt, argv);
+	_appinterface_argv_free(argv, call->args_cnt);
+	return message;
+}
+
+
+/* appinterface_message_variables */
+AppMessage * appinterface_message_variables(AppInterface * appinterface,
+		char const * method, Variable ** args)
+{
+	AppInterfaceCall * call;
+
+	if((call = _appinterface_get_call(appinterface, method)) == NULL)
+		return NULL;
+	return _appinterface_message(call, call->args_cnt, args);
+}
+
+
+/* appinterface_message_variablev */
+AppMessage * appinterface_message_variablev(AppInterface * appinterface,
+		char const * method, va_list args)
+{
+	AppInterfaceCall * call;
+	Variable ** argv;
+	size_t i;
+	AppMessage * message;
+
+	if((call = _appinterface_get_call(appinterface, method)) == NULL)
+		return NULL;
+	if(call->args_cnt == 0)
+		argv = NULL;
+	else if((argv = malloc(sizeof(*argv) * call->args_cnt)) == NULL)
+		/* XXX report error */
+		return NULL;
+	for(i = 0; i < call->args_cnt; i++)
+		argv[i] = va_arg(args, Variable *);
+	message = _appinterface_message(call, call->args_cnt, argv);
+	free(argv);
+	return message;
+}
+
+
+/* private */
+/* accessors */
+/* appinterface_get_call */
+static AppInterfaceCall * _appinterface_get_call(AppInterface * appinterface,
+		String const * method)
+{
+	size_t i;
+
+	for(i = 0; i < appinterface->calls_cnt; i++)
+		if(string_compare(appinterface->calls[i].name, method) == 0)
+			return &appinterface->calls[i];
+	error_set_code(1, "%s%s%s%s", "Unknown call \"", method,
+			"\" for interface ", appinterface->name);
+	return NULL;
+}
+
+
+/* useful */
+/* appinterface_argv */
+static Variable ** _appinterface_argv(AppInterfaceCall * call, va_list args)
+{
+	Variable ** argv;
+	size_t argc;
 	union
 	{
 		bool b;
@@ -533,18 +655,9 @@ int appinterface_callv(AppInterface * appinterface, App * app, void ** result,
 	} u;
 	void * p;
 
-	if((call = _appinterface_get_call(appinterface, method)) == NULL)
-		return -1;
-	if(call->type.type == VT_NULL)
-		r = NULL;
-	else if((r = variable_new(call->type.type, NULL)) == NULL)
-		return -1;
 	if((argv = malloc(sizeof(*argv) * (call->args_cnt))) == NULL)
-	{
-		if(r != NULL)
-			variable_delete(r);
-		return -1;
-	}
+		/* XXX set the error */
+		return NULL;
 	for(argc = 0; argc < call->args_cnt; argc++)
 	{
 		/* FIXME also implement AICD_{,IN}OUT */
@@ -610,50 +723,26 @@ int appinterface_callv(AppInterface * appinterface, App * app, void ** result,
 		argv[argc] = (p != NULL)
 			? variable_new(call->args[argc].type, p) : NULL;
 		if(p == NULL || argv[argc] == NULL)
-			ret = -1;
+		{
+			_appinterface_argv_free(argv, argc);
+			return NULL;
+		}
 	}
-	if(ret == 0)
-		ret = _appinterface_call(app, r, call, argc, argv);
-	if(ret == 0 && result != NULL)
-		/* XXX return 0 anyway? */
-		ret = variable_get_as(r, call->type.type, *result);
-	if(r != NULL)
-		variable_delete(r);
-	return ret;
+	return argv;
 }
 
 
-/* appinterface_call_variablev */
-int appinterface_call_variablev(AppInterface * appinterface, App * app,
-		Variable * result, char const * method,
-		size_t argc, Variable ** argv)
-{
-	AppInterfaceCall * call;
-
-	if((call = _appinterface_get_call(appinterface, method)) == NULL)
-		return -1;
-	return _appinterface_call(app, result, call, argc, argv);
-}
-
-
-/* private */
-/* accessors */
-/* appinterface_get_call */
-static AppInterfaceCall * _appinterface_get_call(AppInterface * appinterface,
-		String const * method)
+/* appinterface_argv_free */
+static void _appinterface_argv_free(Variable ** argv, size_t argc)
 {
 	size_t i;
 
-	for(i = 0; i < appinterface->calls_cnt; i++)
-		if(string_compare(appinterface->calls[i].name, method) == 0)
-			return &appinterface->calls[i];
-	error_set_code(1, "%s%s%s%s", "Unknown call \"", method,
-			"\" for interface ", appinterface->name);
-	return NULL;
+	for(i = 0; i < argc; i++)
+		variable_delete(argv[argc]);
+	free(argv);
 }
 
 
-/* useful */
 /* appinterface_call */
 static int _appinterface_call(App * app, Variable * result,
 		AppInterfaceCall * call, size_t argc, Variable ** argv)
@@ -663,8 +752,10 @@ static int _appinterface_call(App * app, Variable * result,
 	size_t i;
 
 	if(argc != call->args_cnt)
+		/* XXX set the error */
 		return -1;
 	if((p = malloc(sizeof(*p) * (argc + 1))) == NULL)
+		/* XXX set the error */
 		return -1;
 	/* XXX really is a VT_POINTER (void *) */
 	if((p[0] = variable_new(VT_BUFFER, app)) == NULL)
@@ -678,4 +769,32 @@ static int _appinterface_call(App * app, Variable * result,
 	variable_delete(p[0]);
 	free(p);
 	return ret;
+}
+
+
+/* appinterface_message */
+static AppMessage * _appinterface_message(AppInterfaceCall * call,
+		size_t argc, Variable ** argv)
+{
+	AppMessage * message;
+	AppMessageCallArgument * args;
+	size_t i;
+
+	if(argc != call->args_cnt)
+		/* XXX set the error */
+		return NULL;
+	if(argc == 0)
+		args = NULL;
+	else if((args = malloc(sizeof(*args) * argc)) == NULL)
+		/* XXX set the error */
+		return NULL;
+	else
+		for(i = 0; i < argc; i++)
+		{
+			args[i].direction = call->args[i].direction;
+			args[i].arg = argv[i];
+		}
+	message = appmessage_new_call(call->name, args, argc);
+	free(args);
+	return message;
 }

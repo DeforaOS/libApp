@@ -408,7 +408,16 @@ static AppTransportClient * _apptransport_helper_client_new(
 	if((client = object_new(sizeof(*client))) == NULL)
 		return NULL;
 	client->transport = transport;
-	client->name = (name != NULL) ? string_new(name) : NULL;
+	if(name != NULL)
+	{
+		if((client->name = string_new(name)) == NULL)
+		{
+			object_delete(client);
+			return NULL;
+		}
+	}
+	else
+		client->name = NULL;
 	return client;
 }
 

@@ -109,9 +109,9 @@ static TCP * _tcp_init(AppTransportPluginHelper * helper, AppTransportMode mode,
 		char const * name);
 static void _tcp_destroy(TCP * tcp);
 
-static int _tcp_client_send(TCP * tcp, AppTransportClient * client,
+static int _tcp_client_send(TCP * tcp, AppMessage * message);
+static int _tcp_server_send(TCP * tcp, AppTransportClient * client,
 		AppMessage * message);
-static int _tcp_send(TCP * tcp, AppMessage * message);
 
 /* useful */
 static int _tcp_error(char const * message);
@@ -120,7 +120,8 @@ static int _tcp_error(char const * message);
 static int _tcp_server_add_client(TCP * tcp, TCPSocket * client);
 
 /* sockets */
-static int _tcp_socket_init(TCPSocket * tcpsocket, int domain, TCP * tcp);
+static int _tcp_socket_init(TCPSocket * tcpsocket, int domain, int flags,
+		TCP * tcp);
 static void _tcp_socket_init_fd(TCPSocket * tcpsocket, TCP * tcp, int fd,
 		struct sockaddr * sa, socklen_t sa_len);
 static TCPSocket * _tcp_socket_new_fd(TCP * tcp, int fd, struct sockaddr * sa,
@@ -146,8 +147,8 @@ AppTransportPluginDefinition transport =
 	NULL,
 	_tcp_init,
 	_tcp_destroy,
-	_tcp_send,
-	_tcp_client_send
+	_tcp_client_send,
+	_tcp_server_send
 };
 
 
@@ -214,19 +215,20 @@ static int _init_client(TCP * tcp, char const * name, int domain)
 	{
 		tcp->u.client.fd = -1;
 		/* initialize the client socket */
-		if(_tcp_socket_init(&tcp->u.client, aip->ai_family, tcp) != 0)
+		if(_tcp_socket_init(&tcp->u.client, aip->ai_family, O_NONBLOCK,
+					tcp) != 0)
 			continue;
 #ifdef DEBUG
 		if(aip->ai_family == AF_INET)
 		{
 			sa = (struct sockaddr_in *)aip->ai_addr;
-			fprintf(stderr, "DEBUG: %s() %s (%s:%u)\n", __func__,
-					"connect()", inet_ntoa(sa->sin_addr),
+			fprintf(stderr, "DEBUG: %s() connect(%s:%u)\n", __func__,
+					inet_ntoa(sa->sin_addr),
 					ntohs(sa->sin_port));
 		}
 		else
-			fprintf(stderr, "DEBUG: %s() %s %d\n", __func__,
-					"connect()", aip->ai_family);
+			fprintf(stderr, "DEBUG: %s() connect(%d)\n", __func__,
+					aip->ai_family);
 #endif
 		if(connect(tcp->u.client.fd, aip->ai_addr, aip->ai_addrlen)
 				!= 0)
@@ -242,14 +244,25 @@ static int _init_client(TCP * tcp, char const * name, int domain)
 					tcp->u.client.fd,
 					(EventIOFunc)_tcp_callback_connect,
 					tcp);
+			event_loop(tcp->helper->event);
 		}
-		else
-			/* listen for any incoming message */
-			event_register_io_read(tcp->helper->event,
-					tcp->u.client.fd,
-					(EventIOFunc)_tcp_socket_callback_read,
-					&tcp->u.client);
+#ifdef DEBUG
+		fprintf(stderr, "DEBUG: %s() connect() => 0\n", __func__);
+#endif
 		tcp->ai_addrlen = aip->ai_addrlen;
+		/* listen for any incoming message */
+		event_register_io_read(tcp->helper->event, tcp->u.client.fd,
+				(EventIOFunc)_tcp_socket_callback_read,
+				&tcp->u.client);
+		/* write pending messages if any */
+		if(tcp->u.client.bufout_cnt > 0)
+		{
+			event_register_io_write(tcp->helper->event,
+					tcp->u.client.fd,
+					(EventIOFunc)_tcp_socket_callback_write,
+					&tcp->u.client);
+			event_loop(tcp->helper->event);
+		}
 		break;
 	}
 	freeaddrinfo(tcp->ai);
@@ -272,7 +285,8 @@ static int _init_server(TCP * tcp, char const * name, int domain)
 	for(aip = tcp->ai; aip != NULL; aip = aip->ai_next)
 	{
 		/* create the socket */
-		if(_tcp_socket_init(&tcpsocket, aip->ai_family, tcp) != 0)
+		if(_tcp_socket_init(&tcpsocket, aip->ai_family, O_NONBLOCK,
+					tcp) != 0)
 			continue;
 		/* XXX ugly */
 		tcp->u.server.fd = tcpsocket.fd;
@@ -358,7 +372,26 @@ static void _destroy_server(TCP * tcp)
 
 
 /* tcp_client_send */
-static int _tcp_client_send(TCP * tcp, AppTransportClient * client,
+static int _tcp_client_send(TCP * tcp, AppMessage * message)
+{
+	int ret;
+	Buffer * buffer;
+
+	if(tcp->mode != ATM_CLIENT)
+		return -error_set_code(1, "%s", "Not a client");
+	/* send the message */
+	if((buffer = buffer_new(0, NULL)) == NULL)
+		return -1;
+	if((ret = appmessage_serialize(message, buffer)) == 0
+			&& (ret = _tcp_socket_queue(&tcp->u.client, buffer)) == 0)
+		event_loop(tcp->helper->event);
+	buffer_delete(buffer);
+	return ret;
+}
+
+
+/* tcp_server_send */
+static int _tcp_server_send(TCP * tcp, AppTransportClient * client,
 		AppMessage * message)
 {
 	size_t i;
@@ -385,27 +418,6 @@ static int _tcp_client_send(TCP * tcp, AppTransportClient * client,
 		buffer_delete(buffer);
 		return -1;
 	}
-	return 0;
-}
-
-
-/* tcp_send */
-static int _tcp_send(TCP * tcp, AppMessage * message)
-{
-	Buffer * buffer;
-
-	if(tcp->mode != ATM_CLIENT)
-		return -error_set_code(1, "%s", "Not a client");
-	/* send the message */
-	if((buffer = buffer_new(0, NULL)) == NULL)
-		return -1;
-	if(appmessage_serialize(message, buffer) != 0
-			|| _tcp_socket_queue(&tcp->u.client, buffer) != 0)
-	{
-		buffer_delete(buffer);
-		return -1;
-	}
-	buffer_delete(buffer);
 	return 0;
 }
 
@@ -457,23 +469,27 @@ static int _tcp_server_add_client(TCP * tcp, TCPSocket * client)
 
 /* sockets */
 /* tcp_socket_init */
-static int _tcp_socket_init(TCPSocket * tcpsocket, int domain, TCP * tcp)
+static int _tcp_socket_init(TCPSocket * tcpsocket, int domain, int flags,
+		TCP * tcp)
 {
-	int flags;
+	int f;
 
 	if((tcpsocket->fd = socket(domain, SOCK_STREAM, 0)) < 0)
 		return -_tcp_error("socket");
 	_tcp_socket_init_fd(tcpsocket, tcp, tcpsocket->fd, NULL, 0);
-	/* set the socket as non-blocking */
-	if((flags = fcntl(tcpsocket->fd, F_GETFL)) == -1)
-		return -_tcp_error("fcntl");
-	if((flags & O_NONBLOCK) == 0)
-		if(fcntl(tcpsocket->fd, F_SETFL, flags | O_NONBLOCK) == -1)
+	/* set the socket flags */
+	if(flags != 0)
+	{
+		if((f = fcntl(tcpsocket->fd, F_GETFL)) == -1)
 			return -_tcp_error("fcntl");
+		if((f & flags) != flags)
+			if(fcntl(tcpsocket->fd, F_SETFL, f | flags) == -1)
+				return -_tcp_error("fcntl");
+	}
 #ifdef TCP_NODELAY
 	/* do not wait before sending any traffic */
-	flags = 1;
-	setsockopt(fd, SOL_SOCKET, TCP_NODELAY, &flags, sizeof(flags));
+	f = 1;
+	setsockopt(fd, SOL_SOCKET, TCP_NODELAY, &f, sizeof(f));
 #endif
 	return 0;
 }
@@ -652,8 +668,8 @@ static int _accept_client(TCP * tcp, int fd, struct sockaddr * sa,
 /* tcp_callback_connect */
 static int _tcp_callback_connect(int fd, TCP * tcp)
 {
-	int res;
-	socklen_t s = sizeof(res);
+	int ret;
+	socklen_t s = sizeof(ret);
 
 #ifdef DEBUG
 	fprintf(stderr, "DEBUG: %s(%d)\n", __func__, fd);
@@ -662,7 +678,7 @@ static int _tcp_callback_connect(int fd, TCP * tcp)
 	if(tcp->u.client.fd != fd)
 		return -1;
 	/* obtain the connection status */
-	if(getsockopt(fd, SOL_SOCKET, SO_ERROR, &res, &s) != 0)
+	if(getsockopt(fd, SOL_SOCKET, SO_ERROR, &ret, &s) != 0)
 	{
 		error_set_code(-errno, "%s: %s", "getsockopt", strerror(errno));
 		close(fd);
@@ -671,33 +687,28 @@ static int _tcp_callback_connect(int fd, TCP * tcp)
 #ifdef DEBUG
 		fprintf(stderr, "DEBUG: %s() %s\n", __func__, strerror(errno));
 #endif
-		return -1;
+		ret = -1;
 	}
-	if(res != 0)
+	else if(ret != 0)
 	{
 		/* the connection failed */
-		error_set_code(-res, "%s: %s", "connect", strerror(res));
+		error_set_code(-ret, "%s: %s", "connect", strerror(ret));
 		close(fd);
 		tcp->u.client.fd = -1;
 		/* FIXME report error */
 #ifdef DEBUG
-		fprintf(stderr, "DEBUG: %s() %s\n", __func__, strerror(res));
+		fprintf(stderr, "DEBUG: %s() %s\n", __func__, strerror(ret));
 #endif
-		return -1;
+		ret = -1;
 	}
-	/* listen for any incoming message */
-	event_register_io_read(tcp->helper->event, fd,
-			(EventIOFunc)_tcp_socket_callback_read,
-			&tcp->u.client);
-	/* write pending messages if any */
-	if(tcp->u.client.bufout_cnt > 0)
-	{
-		event_register_io_write(tcp->helper->event, fd,
-				(EventIOFunc)_tcp_socket_callback_write,
-				&tcp->u.client);
-		return 0;
-	}
-	return 1;
+	else
+		/* deregister this callback */
+		ret = 1;
+	event_loop_quit(tcp->helper->event);
+#ifdef DEBUG
+	fprintf(stderr, "DEBUG: %s() => %d\n", __func__, ret);
+#endif
+	return ret;
 }
 
 
@@ -850,6 +861,9 @@ static int _tcp_socket_callback_write(int fd, TCPSocket * tcpsocket)
 	tcpsocket->bufout_cnt -= ssize;
 	/* unregister the callback if there is nothing left to write */
 	if(tcpsocket->bufout_cnt == 0)
+	{
+		event_loop_quit(tcpsocket->tcp->helper->event);
 		return 1;
+	}
 	return 0;
 }
