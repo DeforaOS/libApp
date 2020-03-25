@@ -77,7 +77,7 @@ struct _AppTransportPlugin
 	AppTransportMode mode;
 
 	struct addrinfo * ai;
-	socklen_t ai_addrlen;
+	struct addrinfo * aip;
 
 	union
 	{
@@ -200,7 +200,6 @@ static TCP * _tcp_init(AppTransportPluginHelper * helper, AppTransportMode mode,
 
 static int _init_client(TCP * tcp, char const * name, int domain)
 {
-	struct addrinfo * aip;
 #ifdef DEBUG
 	struct sockaddr_in * sa;
 #endif
@@ -211,27 +210,27 @@ static int _init_client(TCP * tcp, char const * name, int domain)
 	if((tcp->ai = _init_address(name, domain, 0)) == NULL)
 		return -1;
 	/* connect to the remote host */
-	for(aip = tcp->ai; aip != NULL; aip = aip->ai_next)
+	for(tcp->aip = tcp->ai; tcp->aip != NULL; tcp->aip = tcp->aip->ai_next)
 	{
 		tcp->u.client.fd = -1;
 		/* initialize the client socket */
-		if(_tcp_socket_init(&tcp->u.client, aip->ai_family, O_NONBLOCK,
-					tcp) != 0)
+		if(_tcp_socket_init(&tcp->u.client, tcp->aip->ai_family,
+					O_NONBLOCK, tcp) != 0)
 			continue;
 #ifdef DEBUG
-		if(aip->ai_family == AF_INET)
+		if(tcp->aip->ai_family == AF_INET)
 		{
-			sa = (struct sockaddr_in *)aip->ai_addr;
+			sa = (struct sockaddr_in *)tcp->aip->ai_addr;
 			fprintf(stderr, "DEBUG: %s() connect(%s:%u)\n", __func__,
 					inet_ntoa(sa->sin_addr),
 					ntohs(sa->sin_port));
 		}
 		else
 			fprintf(stderr, "DEBUG: %s() connect(%d)\n", __func__,
-					aip->ai_family);
+					tcp->aip->ai_family);
 #endif
-		if(connect(tcp->u.client.fd, aip->ai_addr, aip->ai_addrlen)
-				!= 0)
+		if(connect(tcp->u.client.fd, tcp->aip->ai_addr,
+					tcp->aip->ai_addrlen) != 0)
 		{
 			if(errno != EINPROGRESS)
 			{
@@ -249,7 +248,6 @@ static int _init_client(TCP * tcp, char const * name, int domain)
 #ifdef DEBUG
 		fprintf(stderr, "DEBUG: %s() connect() => 0\n", __func__);
 #endif
-		tcp->ai_addrlen = aip->ai_addrlen;
 		/* listen for any incoming message */
 		event_register_io_read(tcp->helper->event, tcp->u.client.fd,
 				(EventIOFunc)_tcp_socket_callback_read,
@@ -265,14 +263,11 @@ static int _init_client(TCP * tcp, char const * name, int domain)
 		}
 		break;
 	}
-	freeaddrinfo(tcp->ai);
-	tcp->ai = NULL;
-	return (aip != NULL) ? 0 : -1;
+	return (tcp->aip != NULL) ? 0 : -1;
 }
 
 static int _init_server(TCP * tcp, char const * name, int domain)
 {
-	struct addrinfo * aip;
 	TCPSocket tcpsocket;
 #ifdef DEBUG
 	struct sockaddr_in * sa;
@@ -282,28 +277,29 @@ static int _init_server(TCP * tcp, char const * name, int domain)
 	/* obtain the local address */
 	if((tcp->ai = _init_address(name, domain, AI_PASSIVE)) == NULL)
 		return -1;
-	for(aip = tcp->ai; aip != NULL; aip = aip->ai_next)
+	for(tcp->aip = tcp->ai; tcp->aip != NULL; tcp->aip = tcp->aip->ai_next)
 	{
 		/* create the socket */
-		if(_tcp_socket_init(&tcpsocket, aip->ai_family, O_NONBLOCK,
+		if(_tcp_socket_init(&tcpsocket, tcp->aip->ai_family, O_NONBLOCK,
 					tcp) != 0)
 			continue;
 		/* XXX ugly */
 		tcp->u.server.fd = tcpsocket.fd;
 		/* accept incoming connections */
 #ifdef DEBUG
-		if(aip->ai_family == AF_INET)
+		if(tcp->aip->ai_family == AF_INET)
 		{
-			sa = (struct sockaddr_in *)aip->ai_addr;
+			sa = (struct sockaddr_in *)tcp->aip->ai_addr;
 			fprintf(stderr, "DEBUG: %s() %s (%s:%u)\n", __func__,
 					"bind()", inet_ntoa(sa->sin_addr),
 					ntohs(sa->sin_port));
 		}
 		else
 			fprintf(stderr, "DEBUG: %s() %s %d\n", __func__,
-					"bind()", aip->ai_family);
+					"bind()", tcp->aip->ai_family);
 #endif
-		if(bind(tcp->u.server.fd, aip->ai_addr, aip->ai_addrlen) != 0)
+		if(bind(tcp->u.server.fd, tcp->aip->ai_addr,
+					tcp->aip->ai_addrlen) != 0)
 		{
 			_tcp_error("bind");
 			close(tcp->u.server.fd);
@@ -320,14 +316,11 @@ static int _init_server(TCP * tcp, char const * name, int domain)
 			tcp->u.server.fd = -1;
 			continue;
 		}
-		tcp->ai_addrlen = aip->ai_addrlen;
 		event_register_io_read(tcp->helper->event, tcp->u.server.fd,
 				(EventIOFunc)_tcp_callback_accept, tcp);
 		break;
 	}
-	freeaddrinfo(tcp->ai);
-	tcp->ai = NULL;
-	return (aip != NULL) ? 0 : -1;
+	return (tcp->aip != NULL) ? 0 : -1;
 }
 
 
@@ -609,7 +602,7 @@ static int _accept_client(TCP * tcp, int fd, struct sockaddr * sa,
 static int _tcp_callback_accept(int fd, TCP * tcp)
 {
 	struct sockaddr * sa;
-	socklen_t sa_len = tcp->ai_addrlen;
+	socklen_t sa_len = tcp->aip->ai_addrlen;
 
 #ifdef DEBUG
 	fprintf(stderr, "DEBUG: %s(%d)\n", __func__, fd);
