@@ -697,7 +697,8 @@ static int _tcp_callback_connect(int fd, TCP * tcp)
 	else
 		/* deregister this callback */
 		ret = 1;
-	event_loop_quit(tcp->helper->event);
+	if(tcp->mode == ATM_CLIENT)
+		event_loop_quit(tcp->helper->event);
 #ifdef DEBUG
 	fprintf(stderr, "DEBUG: %s() => %d\n", __func__, ret);
 #endif
@@ -855,7 +856,8 @@ static int _tcp_socket_callback_write(int fd, TCPSocket * tcpsocket)
 	/* unregister the callback if there is nothing left to write */
 	if(tcpsocket->bufout_cnt == 0)
 	{
-		event_loop_quit(tcpsocket->tcp->helper->event);
+		if(tcpsocket->tcp->mode == ATM_CLIENT)
+			event_loop_quit(tcpsocket->tcp->helper->event);
 		return 1;
 	}
 	return 0;
