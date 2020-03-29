@@ -90,6 +90,9 @@ struct _AppInterface
 	AppStatus * status;
 	AppInterfaceCall * calls;
 	size_t calls_cnt;
+	AppInterfaceCall * callbacks;
+	size_t callbacks_cnt;
+	/* XXX for hash_foreach() in _new_interface_do() */
 	int error;
 };
 
@@ -226,51 +229,38 @@ static String * _new_interface(String const * app)
 
 
 /* appinterface_new_interface */
-static int _new_interface_append(AppInterface * ai, VariableType type,
-		char const * method);
-static int _new_interface_append_arg(AppInterface * ai, char const * arg);
+static AppInterfaceCall * _new_interface_append_call(AppInterface * ai,
+		VariableType type, char const * method);
+static AppInterfaceCall * _new_interface_append_callback(AppInterface * ai,
+		VariableType type, char const * method);
+static int _new_interface_append_arg(AppInterfaceCall * call, char const * arg);
 AppInterface * _new_interface_do(AppTransportMode mode, String const * app,
 		String const * pathname);
 static int _new_interface_do_appstatus(AppInterface * appinterface);
-static int _new_interface_foreach(char const * key, Hash * value,
+static int _new_interface_foreach_calls(char const * key, Hash * value,
 		AppInterface * appinterface);
+static int _new_interface_foreach_callbacks(char const * key, Hash * value,
+		AppInterface * appinterface);
+static AppInterface * _new_interface_mode_client(AppTransportMode mode,
+		String const * app, String const * pathname);
+static AppInterface * _new_interface_mode_server(AppTransportMode mode,
+		String const * app, String const * pathname);
 
 AppInterface * appinterface_new_interface(AppTransportMode mode,
 		String const * app, String const * pathname)
 {
-	AppInterface * ai;
-	Plugin * handle;
-	size_t i;
-	String * name;
-
-	if((handle = plugin_new_self()) == NULL)
-		return NULL;
-	if((ai = _new_interface_do(mode, app, pathname)) == NULL)
-		return NULL;
-	for(i = 0; i < ai->calls_cnt; i++)
+	switch(mode)
 	{
-		if((name = string_new_append(ai->name, "_", ai->calls[i].name,
-						NULL)) == NULL)
-		{
-			appinterface_delete(ai);
-			ai = NULL;
-			break;
-		}
-		ai->calls[i].func = plugin_lookup(handle, name);
-		string_delete(name);
-		if(ai->calls[i].func == NULL)
-		{
-			appinterface_delete(ai);
-			ai = NULL;
-			break;
-		}
+		case ATM_CLIENT:
+			return _new_interface_mode_client(mode, app, pathname);
+		case ATM_SERVER:
+			return _new_interface_mode_server(mode, app, pathname);
 	}
-	plugin_delete(handle);
-	return ai;
+	return NULL;
 }
 
-static int _new_interface_append(AppInterface * ai, VariableType type,
-		char const * method)
+static AppInterfaceCall * _new_interface_append_call(AppInterface * ai,
+		VariableType type, char const * method)
 {
 	AppInterfaceCall * p;
 
@@ -278,25 +268,47 @@ static int _new_interface_append(AppInterface * ai, VariableType type,
 	fprintf(stderr, "DEBUG: %s(%d, \"%s\")\n", __func__, type, method);
 #endif
 	if((p = realloc(ai->calls, sizeof(*p) * (ai->calls_cnt + 1))) == NULL)
-		return -1;
+		return NULL;
 	ai->calls = p;
 	p = &ai->calls[ai->calls_cnt];
 	if((p->name = string_new(method)) == NULL)
-		return -1;
+		return NULL;
 	p->type.type = type & AICT_MASK;
 	p->type.direction = type & AICD_MASK;
 	p->args = NULL;
 	p->args_cnt = 0;
 	ai->calls_cnt++;
-	return 0;
+	return p;
 }
 
-static int _new_interface_append_arg(AppInterface * ai, char const * arg)
+static AppInterfaceCall * _new_interface_append_callback(AppInterface * ai,
+		VariableType type, char const * method)
+{
+	AppInterfaceCall * p;
+
+#ifdef DEBUG
+	fprintf(stderr, "DEBUG: %s(%d, \"%s\")\n", __func__, type, method);
+#endif
+	if((p = realloc(ai->callbacks, sizeof(*p) * (ai->callbacks_cnt + 1)))
+			== NULL)
+		return NULL;
+	ai->callbacks = p;
+	p = &ai->callbacks[ai->callbacks_cnt];
+	if((p->name = string_new(method)) == NULL)
+		return NULL;
+	p->type.type = type & AICT_MASK;
+	p->type.direction = type & AICD_MASK;
+	p->args = NULL;
+	p->args_cnt = 0;
+	ai->callbacks_cnt++;
+	return p;
+}
+
+static int _new_interface_append_arg(AppInterfaceCall * call, char const * arg)
 {
 	char buf[16];
 	char * p;
 	int type;
-	AppInterfaceCall * q;
 	AppInterfaceCallArg * r;
 
 #ifdef DEBUG
@@ -307,11 +319,10 @@ static int _new_interface_append_arg(AppInterface * ai, char const * arg)
 		*p = '\0';
 	if((type = _string_enum(buf, _string_type)) < 0)
 		return -1;
-	q = &ai->calls[ai->calls_cnt - 1];
-	if((r = realloc(q->args, sizeof(*r) * (q->args_cnt + 1))) == NULL)
+	if((r = realloc(call->args, sizeof(*r) * (call->args_cnt + 1))) == NULL)
 		return error_set_code(-errno, "%s", strerror(errno));
-	q->args = r;
-	r = &q->args[q->args_cnt++];
+	call->args = r;
+	r = &call->args[call->args_cnt++];
 	r->type = type & AICT_MASK;
 	r->direction = type & AICD_MASK;
 #ifdef DEBUG
@@ -336,6 +347,8 @@ AppInterface * _new_interface_do(AppTransportMode mode, String const * app,
 	appinterface->status = NULL;
 	appinterface->calls = NULL;
 	appinterface->calls_cnt = 0;
+	appinterface->callbacks = NULL;
+	appinterface->callbacks_cnt = 0;
 	appinterface->error = 0;
 	if(appinterface->name == NULL
 			|| appinterface->config == NULL
@@ -346,7 +359,11 @@ AppInterface * _new_interface_do(AppTransportMode mode, String const * app,
 		return NULL;
 	}
 	appinterface->error = 0;
-	hash_foreach(appinterface->config, (HashForeach)_new_interface_foreach,
+	hash_foreach(appinterface->config,
+			(HashForeach)_new_interface_foreach_calls,
+			appinterface);
+	hash_foreach(appinterface->config,
+			(HashForeach)_new_interface_foreach_callbacks,
 			appinterface);
 	if(appinterface->error != 0)
 	{
@@ -365,15 +382,15 @@ static int _new_interface_do_appstatus(AppInterface * appinterface)
 	return 0;
 }
 
-static int _new_interface_foreach(char const * key, Hash * value,
+static int _new_interface_foreach_callbacks(char const * key, Hash * value,
 		AppInterface * appinterface)
 {
-	String const * prefix = (appinterface->mode == ATM_SERVER)
-		? APPINTERFACE_CALL_PREFIX : APPINTERFACE_CALLBACK_PREFIX;
+	String const * prefix = APPINTERFACE_CALLBACK_PREFIX;
 	unsigned int i;
 	char buf[8];
 	int type = VT_NULL;
 	char const * p;
+	AppInterfaceCall * callback;
 
 	if(key == NULL || strncmp(prefix, key, string_length(prefix)) != 0)
 		return 0;
@@ -381,13 +398,12 @@ static int _new_interface_foreach(char const * key, Hash * value,
 	if((p = hash_get(value, "ret")) != NULL
 			&& (type = _string_enum(p, _string_type)) < 0)
 	{
-		appinterface->error = error_set_code(1, "%s: %s%s", p,
-				"Invalid return type for ",
-				(appinterface->mode == ATM_SERVER)
-				? "call" : "callback");
+		appinterface->error = error_set_code(1, "%s: %s", p,
+				"Invalid return type for callback");
 		return -appinterface->error;
 	}
-	if(_new_interface_append(appinterface, type, key) != 0)
+	if((callback = _new_interface_append_callback(appinterface, type, key))
+			== NULL)
 	{
 		appinterface->error = 1;
 		return -appinterface->error;
@@ -397,7 +413,7 @@ static int _new_interface_foreach(char const * key, Hash * value,
 		snprintf(buf, sizeof(buf), "arg%u", i + 1);
 		if((p = hash_get(value, buf)) == NULL)
 			break;
-		if(_new_interface_append_arg(appinterface, p) != 0)
+		if(_new_interface_append_arg(callback, p) != 0)
 		{
 			/* FIXME may crash here? */
 			appinterface->error = 1;
@@ -405,6 +421,123 @@ static int _new_interface_foreach(char const * key, Hash * value,
 		}
 	}
 	return 0;
+}
+
+static int _new_interface_foreach_calls(char const * key, Hash * value,
+		AppInterface * appinterface)
+{
+	String const * prefix = APPINTERFACE_CALL_PREFIX;
+	unsigned int i;
+	char buf[8];
+	int type = VT_NULL;
+	char const * p;
+	AppInterfaceCall * call;
+
+	if(key == NULL || strncmp(prefix, key, string_length(prefix)) != 0)
+		return 0;
+	key += string_length(prefix);
+	if((p = hash_get(value, "ret")) != NULL
+			&& (type = _string_enum(p, _string_type)) < 0)
+	{
+		appinterface->error = error_set_code(1, "%s: %s", p,
+				"Invalid return type for call");
+		return -appinterface->error;
+	}
+	if((call = _new_interface_append_call(appinterface, type, key)) == NULL)
+	{
+		appinterface->error = 1;
+		return -appinterface->error;
+	}
+	for(i = 0; i < APPSERVER_MAX_ARGUMENTS; i++)
+	{
+		snprintf(buf, sizeof(buf), "arg%u", i + 1);
+		if((p = hash_get(value, buf)) == NULL)
+			break;
+		if(_new_interface_append_arg(call, p) != 0)
+		{
+			/* FIXME may crash here? */
+			appinterface->error = 1;
+			return -1;
+		}
+	}
+	return 0;
+}
+
+AppInterface * _new_interface_mode_client(AppTransportMode mode,
+		String const * app, String const * pathname)
+{
+	AppInterface * ai;
+	Plugin * plugin;
+	size_t i;
+	String * name;
+
+#ifdef DEBUG
+	fprintf(stderr, "DEBUG: %s(%u, \"%s\", \"%s\")\n", __func__, mode, app,
+			pathname);
+#endif
+	if((plugin = plugin_new_self()) == NULL)
+		return NULL;
+	if((ai = _new_interface_do(mode, app, pathname)) == NULL)
+	{
+		plugin_delete(plugin);
+		return NULL;
+	}
+	for(i = 0; i < ai->callbacks_cnt; i++)
+	{
+		if((name = string_new_append(ai->name, "_",
+						ai->callbacks[i].name, NULL))
+				== NULL)
+			break;
+		ai->callbacks[i].func = plugin_lookup(plugin, name);
+		string_delete(name);
+		if(ai->callbacks[i].func == NULL)
+			break;
+	}
+	plugin_delete(plugin);
+	if(i != ai->callbacks_cnt)
+	{
+		appinterface_delete(ai);
+		return NULL;
+	}
+	return ai;
+}
+
+AppInterface * _new_interface_mode_server(AppTransportMode mode,
+		String const * app, String const * pathname)
+{
+	AppInterface * ai;
+	Plugin * plugin;
+	size_t i;
+	String * name;
+
+#ifdef DEBUG
+	fprintf(stderr, "DEBUG: %s(%u, \"%s\", \"%s\")\n", __func__, mode, app,
+			pathname);
+#endif
+	if((plugin = plugin_new_self()) == NULL)
+		return NULL;
+	if((ai = _new_interface_do(mode, app, pathname)) == NULL)
+	{
+		plugin_delete(plugin);
+		return NULL;
+	}
+	for(i = 0; i < ai->calls_cnt; i++)
+	{
+		if((name = string_new_append(ai->name, "_", ai->calls[i].name,
+						NULL)) == NULL)
+			break;
+		ai->calls[i].func = plugin_lookup(plugin, name);
+		string_delete(name);
+		if(ai->calls[i].func == NULL)
+			break;
+	}
+	plugin_delete(plugin);
+	if(i != ai->calls_cnt)
+	{
+		appinterface_delete(ai);
+		return NULL;
+	}
+	return ai;
 }
 
 
