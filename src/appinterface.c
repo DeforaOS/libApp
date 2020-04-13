@@ -78,7 +78,7 @@ typedef struct _AppInterfaceCall
 	AppInterfaceCallArg type;
 	AppInterfaceCallArg * args;
 	size_t args_cnt;
-	MarshallCallback func;
+	MarshallCall func;
 } AppInterfaceCall;
 
 struct _AppInterface
@@ -899,7 +899,7 @@ static int _appinterface_call(App * app, Variable * result,
 	}
 	for(i = 0; i < argc; i++)
 		p[i + 1] = argv[i];
-	ret = marshall_call(result, call->func, argc, argv);
+	ret = marshall_callp(result, call->func, argc, argv);
 	variable_delete(p[0]);
 	free(p);
 	return ret;
