@@ -246,24 +246,26 @@ static int _init_client(TCP * tcp, char const * name, int domain)
 			event_loop(tcp->helper->event);
 		}
 #ifdef DEBUG
-		fprintf(stderr, "DEBUG: %s() connect() => 0\n", __func__);
+		fprintf(stderr, "DEBUG: %s() connect() => %d\n", __func__,
+				tcp->u.client.fd);
 #endif
-		/* listen for any incoming message */
-		event_register_io_read(tcp->helper->event, tcp->u.client.fd,
-				(EventIOFunc)_tcp_socket_callback_read,
-				&tcp->u.client);
-		/* write pending messages if any */
-		if(tcp->u.client.bufout_cnt > 0)
-		{
-			event_register_io_write(tcp->helper->event,
-					tcp->u.client.fd,
-					(EventIOFunc)_tcp_socket_callback_write,
-					&tcp->u.client);
-			event_loop(tcp->helper->event);
-		}
-		break;
+		if(tcp->u.client.fd >= 0)
+			break;
 	}
-	return (tcp->aip != NULL) ? 0 : -1;
+	if(tcp->aip == NULL)
+		return -1;
+	/* listen for any incoming message */
+	event_register_io_read(tcp->helper->event, tcp->u.client.fd,
+			(EventIOFunc)_tcp_socket_callback_read, &tcp->u.client);
+	/* write pending messages if any */
+	if(tcp->u.client.bufout_cnt > 0)
+	{
+		event_register_io_write(tcp->helper->event, tcp->u.client.fd,
+				(EventIOFunc)_tcp_socket_callback_write,
+				&tcp->u.client);
+		event_loop(tcp->helper->event);
+	}
+	return 0;
 }
 
 static int _init_server(TCP * tcp, char const * name, int domain)
