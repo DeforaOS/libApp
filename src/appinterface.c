@@ -789,8 +789,7 @@ static Variable ** _appinterface_argv(AppInterfaceCall * call, va_list args)
 	} u;
 	void * p;
 
-	if((argv = malloc(sizeof(*argv) * (call->args_cnt))) == NULL)
-		/* XXX set the error */
+	if((argv = object_new(sizeof(*argv) * (call->args_cnt))) == NULL)
 		return NULL;
 	for(argc = 0; argc < call->args_cnt; argc++)
 	{
@@ -873,7 +872,7 @@ static void _appinterface_argv_free(Variable ** argv, size_t argc)
 
 	for(i = 0; i < argc; i++)
 		variable_delete(argv[argc]);
-	free(argv);
+	object_delete(argv);
 }
 
 
@@ -888,20 +887,19 @@ static int _appinterface_call(App * app, Variable * result,
 	if(argc != call->args_cnt)
 		/* XXX set the error */
 		return -1;
-	if((p = malloc(sizeof(*p) * (argc + 1))) == NULL)
-		/* XXX set the error */
+	if((p = object_new(sizeof(*p) * (argc + 1))) == NULL)
 		return -1;
 	/* XXX really is a VT_POINTER (void *) */
 	if((p[0] = variable_new(VT_BUFFER, app)) == NULL)
 	{
-		free(p);
+		object_delete(p);
 		return -1;
 	}
 	for(i = 0; i < argc; i++)
 		p[i + 1] = argv[i];
 	ret = marshall_callp(result, call->func, argc, argv);
 	variable_delete(p[0]);
-	free(p);
+	object_delete(p);
 	return ret;
 }
 
@@ -919,8 +917,7 @@ static AppMessage * _appinterface_message(AppInterfaceCall * call,
 		return NULL;
 	if(argc == 0)
 		args = NULL;
-	else if((args = malloc(sizeof(*args) * argc)) == NULL)
-		/* XXX set the error */
+	else if((args = object_new(sizeof(*args) * argc)) == NULL)
 		return NULL;
 	else
 		for(i = 0; i < argc; i++)
@@ -929,6 +926,6 @@ static AppMessage * _appinterface_message(AppInterfaceCall * call,
 			args[i].arg = argv[i];
 		}
 	message = appmessage_new_call(call->name, args, argc);
-	free(args);
+	object_delete(args);
 	return message;
 }
