@@ -41,7 +41,7 @@ typedef uint32_t AppMessageID;
 /* calls */
 typedef enum _AppMessageCallDirection
 {
-	AMCD_IN = 0,
+	AMCD_IN = 1,
 	AMCD_OUT,
 	AMCD_IN_OUT
 } AppMessageCallDirection;
