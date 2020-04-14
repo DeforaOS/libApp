@@ -78,7 +78,7 @@ typedef struct _AppInterfaceCall
 	AppInterfaceCallArg type;
 	AppInterfaceCallArg * args;
 	size_t args_cnt;
-	MarshallCall func;
+	MarshallCall call;
 } AppInterfaceCall;
 
 struct _AppInterface
@@ -166,7 +166,8 @@ static AppInterfaceCall * _appinterface_get_call(AppInterface * appinterface,
 		char const * method);
 
 /* useful */
-static Variable ** _appinterface_argv(AppInterfaceCall * call, va_list args);
+static Variable ** _appinterface_argv_new(AppInterfaceCall * call,
+		va_list ap);
 static void _appinterface_argv_free(Variable ** argv, size_t argc);
 static int _appinterface_call(App * app, Variable * result,
 		AppInterfaceCall * call, size_t argc, Variable ** argv);
@@ -392,9 +393,9 @@ static int _new_interface_foreach_callbacks(char const * key, Hash * value,
 	char const * p;
 	AppInterfaceCall * callback;
 
-	if(key == NULL || strncmp(prefix, key, string_length(prefix)) != 0)
+	if(key == NULL || strncmp(prefix, key, string_get_length(prefix)) != 0)
 		return 0;
-	key += string_length(prefix);
+	key += string_get_length(prefix);
 	if((p = hash_get(value, "ret")) != NULL
 			&& (type = _string_enum(p, _string_type)) < 0)
 	{
@@ -433,9 +434,9 @@ static int _new_interface_foreach_calls(char const * key, Hash * value,
 	char const * p;
 	AppInterfaceCall * call;
 
-	if(key == NULL || strncmp(prefix, key, string_length(prefix)) != 0)
+	if(key == NULL || strncmp(prefix, key, string_get_length(prefix)) != 0)
 		return 0;
-	key += string_length(prefix);
+	key += string_get_length(prefix);
 	if((p = hash_get(value, "ret")) != NULL
 			&& (type = _string_enum(p, _string_type)) < 0)
 	{
@@ -488,9 +489,9 @@ AppInterface * _new_interface_mode_client(AppTransportMode mode,
 						ai->callbacks[i].name, NULL))
 				== NULL)
 			break;
-		ai->callbacks[i].func = plugin_lookup(plugin, name);
+		ai->callbacks[i].call = plugin_lookup(plugin, name);
 		string_delete(name);
-		if(ai->callbacks[i].func == NULL)
+		if(ai->callbacks[i].call == NULL)
 			break;
 	}
 	plugin_delete(plugin);
@@ -526,9 +527,9 @@ AppInterface * _new_interface_mode_server(AppTransportMode mode,
 		if((name = string_new_append(ai->name, "_", ai->calls[i].name,
 						NULL)) == NULL)
 			break;
-		ai->calls[i].func = plugin_lookup(plugin, name);
+		ai->calls[i].call = plugin_lookup(plugin, name);
 		string_delete(name);
-		if(ai->calls[i].func == NULL)
+		if(ai->calls[i].call == NULL)
 			break;
 	}
 	plugin_delete(plugin);
@@ -660,7 +661,7 @@ int appinterface_callv(AppInterface * appinterface, App * app, void ** result,
 		r = NULL;
 	else if((r = variable_new(call->type.type, NULL)) == NULL)
 		return -1;
-	if((argv = _appinterface_argv(call, args)) == NULL)
+	if((argv = _appinterface_argv_new(call, args)) == NULL)
 	{
 		if(r != NULL)
 			variable_delete(r);
@@ -696,7 +697,7 @@ int appinterface_call_variablev(AppInterface * appinterface, App * app,
 
 /* appinterface_messagev */
 AppMessage * appinterface_messagev(AppInterface * appinterface,
-		char const * method, va_list args)
+		char const * method, va_list ap)
 {
 	AppInterfaceCall * call;
 	Variable ** argv;
@@ -704,7 +705,7 @@ AppMessage * appinterface_messagev(AppInterface * appinterface,
 
 	if((call = _appinterface_get_call(appinterface, method)) == NULL)
 		return NULL;
-	if((argv = _appinterface_argv(call, args)) == NULL)
+	if((argv = _appinterface_argv_new(call, ap)) == NULL)
 		return NULL;
 	message = _appinterface_message(call, call->args_cnt, argv);
 	_appinterface_argv_free(argv, call->args_cnt);
@@ -726,7 +727,7 @@ AppMessage * appinterface_message_variables(AppInterface * appinterface,
 
 /* appinterface_message_variablev */
 AppMessage * appinterface_message_variablev(AppInterface * appinterface,
-		char const * method, va_list args)
+		char const * method, va_list ap)
 {
 	AppInterfaceCall * call;
 	Variable ** argv;
@@ -741,7 +742,7 @@ AppMessage * appinterface_message_variablev(AppInterface * appinterface,
 		/* XXX report error */
 		return NULL;
 	for(i = 0; i < call->args_cnt; i++)
-		argv[i] = va_arg(args, Variable *);
+		argv[i] = va_arg(ap, Variable *);
 	message = _appinterface_message(call, call->args_cnt, argv);
 	free(argv);
 	return message;
@@ -767,101 +768,205 @@ static AppInterfaceCall * _appinterface_get_call(AppInterface * appinterface,
 
 /* useful */
 /* appinterface_argv */
-static Variable ** _appinterface_argv(AppInterfaceCall * call, va_list args)
+static Variable * _argv_new_in(VariableType type, va_list ap);
+static Variable * _argv_new_in_out(VariableType type, va_list ap);
+static Variable * _argv_new_out(VariableType type, va_list ap);
+
+static Variable ** _appinterface_argv_new(AppInterfaceCall * call, va_list ap)
 {
 	Variable ** argv;
-	size_t argc;
-	union
-	{
-		bool b;
-		int8_t i8;
-		uint8_t u8;
-		int16_t i16;
-		uint16_t u16;
-		int32_t i32;
-		uint32_t u32;
-		int64_t i64;
-		uint64_t u64;
-		char * str;
-		Buffer * buf;
-		float f;
-		double d;
-	} u;
-	void * p;
+	size_t i;
 
 	if((argv = object_new(sizeof(*argv) * (call->args_cnt))) == NULL)
 		return NULL;
-	for(argc = 0; argc < call->args_cnt; argc++)
+	for(i = 0; i < call->args_cnt; i++)
 	{
-		/* FIXME also implement AICD_{,IN}OUT */
-		switch(call->args[argc].type)
+		switch(call->args[i].direction)
 		{
-			case VT_BOOL:
-				u.b = va_arg(args, unsigned int);
-				p = &u.b;
+			case AICD_IN:
+				argv[i] = _argv_new_in(call->args[i].type, ap);
 				break;
-			case VT_INT8:
-				u.i8 = va_arg(args, int);
-				p = &u.i8;
+			case AICD_IN_OUT:
+				argv[i] = _argv_new_in_out(call->args[i].type,
+						ap);
 				break;
-			case VT_UINT8:
-				u.u8 = va_arg(args, unsigned int);
-				p = &u.u8;
+			case AICD_OUT:
+				argv[i] = _argv_new_out(call->args[i].type,
+						ap);
 				break;
-			case VT_INT16:
-				u.i16 = va_arg(args, int);
-				p = &u.i16;
-				break;
-			case VT_UINT16:
-				u.u16 = va_arg(args, unsigned int);
-				p = &u.u16;
-				break;
-			case VT_INT32:
-				u.i32 = va_arg(args, int32_t);
-				p = &u.i32;
-				break;
-			case VT_UINT32:
-				u.u32 = va_arg(args, uint32_t);
-				p = &u.u32;
-				break;
-			case VT_INT64:
-				u.i64 = va_arg(args, int64_t);
-				p = &u.i64;
-				break;
-			case VT_UINT64:
-				u.u64 = va_arg(args, uint64_t);
-				p = &u.u64;
-				break;
-			case VT_STRING:
-				u.str = va_arg(args, char *);
-				p = u.str;
-				break;
-			case VT_BUFFER:
-				u.buf = va_arg(args, Buffer *);
-				p = u.buf;
-				break;
-			case VT_FLOAT:
-				u.f = va_arg(args, double);
-				p = &u.f;
-				break;
-			case VT_DOUBLE:
-				u.d = va_arg(args, double);
-				p = &u.d;
-				break;
-			case VT_NULL:
 			default:
-				p = NULL;
+				/* XXX report the error */
+				argv[i] = NULL;
 				break;
 		}
-		argv[argc] = (p != NULL)
-			? variable_new(call->args[argc].type, p) : NULL;
-		if(p == NULL || argv[argc] == NULL)
+		if(argv[i] == NULL)
 		{
-			_appinterface_argv_free(argv, argc);
+			_appinterface_argv_free(argv, i);
 			return NULL;
 		}
 	}
 	return argv;
+}
+
+static Variable * _argv_new_in(VariableType type, va_list ap)
+{
+	return variable_newv(type, ap);
+}
+
+static Variable * _argv_new_in_out(VariableType type, va_list ap)
+{
+	union
+	{
+		bool * bp;
+		int8_t * i8p;
+		uint8_t * u8p;
+		int16_t * i16p;
+		uint16_t * u16p;
+		int32_t * i32p;
+		uint32_t * u32p;
+		int64_t * i64p;
+		uint64_t * u64p;
+		char ** strp;
+		Buffer * buf;
+		float * fp;
+		double * dp;
+	} u;
+
+#ifdef DEBUG
+	fprintf(stderr, "DEBUG: %s(%u)\n", __func__, type);
+#endif
+	switch(type)
+	{
+		case VT_NULL:
+			return variable_new(type);
+		case VT_BOOL:
+			u.bp = va_arg(ap, bool *);
+			return variable_new(type, *u.bp);
+		case VT_INT8:
+			u.i8p = va_arg(ap, int8_t *);
+			return variable_new(type, *u.i8p);
+		case VT_UINT8:
+			u.u8p = va_arg(ap, uint8_t *);
+			return variable_new(type, *u.u8p);
+		case VT_INT16:
+			u.i16p = va_arg(ap, int16_t *);
+			return variable_new(type, *u.i16p);
+		case VT_UINT16:
+			u.u16p = va_arg(ap, uint16_t *);
+			return variable_new(type, *u.u16p);
+		case VT_INT32:
+			u.i32p = va_arg(ap, int32_t *);
+			return variable_new(type, *u.i32p);
+		case VT_UINT32:
+			u.u32p = va_arg(ap, uint32_t *);
+			return variable_new(type, *u.u32p);
+		case VT_INT64:
+			u.i64p = va_arg(ap, int64_t *);
+			return variable_new(type, *u.i64p);
+		case VT_UINT64:
+			u.u64p = va_arg(ap, uint64_t *);
+			return variable_new(type, *u.u64p);
+		case VT_FLOAT:
+			u.fp = va_arg(ap, float *);
+			return variable_new(type, *u.fp);
+		case VT_DOUBLE:
+			u.dp = va_arg(ap, double *);
+			return variable_new(type, *u.dp);
+		case VT_STRING:
+			u.strp = va_arg(ap, char **);
+			return variable_new(type, *u.strp);
+		case VT_BUFFER:
+			u.buf = va_arg(ap, Buffer *);
+			return variable_new(type, u.buf);
+	}
+	return NULL;
+}
+
+static Variable * _argv_new_out(VariableType type, va_list ap)
+{
+	union
+	{
+		bool * bp;
+		int8_t * i8p;
+		uint8_t * u8p;
+		int16_t * i16p;
+		uint16_t * u16p;
+		int32_t * i32p;
+		uint32_t * u32p;
+		int64_t * i64p;
+		uint64_t * u64p;
+		char ** strp;
+		Buffer * buf;
+		float * fp;
+		double * dp;
+	} u;
+	void * p;
+
+#ifdef DEBUG
+	fprintf(stderr, "DEBUG: %s(%u)\n", __func__, type);
+#endif
+	switch(type)
+	{
+		case VT_BOOL:
+			u.bp = va_arg(ap, bool *);
+			p = u.bp;
+			break;
+		case VT_INT8:
+			u.i8p = va_arg(ap, int8_t *);
+			p = u.i8p;
+			break;
+		case VT_UINT8:
+			u.u8p = va_arg(ap, uint8_t *);
+			p = u.u8p;
+			break;
+		case VT_INT16:
+			u.i16p = va_arg(ap, int16_t *);
+			p = u.i16p;
+			break;
+		case VT_UINT16:
+			u.u16p = va_arg(ap, uint16_t *);
+			p = u.u16p;
+			break;
+		case VT_INT32:
+			u.i32p = va_arg(ap, int32_t *);
+			p = u.i32p;
+			break;
+		case VT_UINT32:
+			u.u32p = va_arg(ap, uint32_t *);
+			p = u.u32p;
+			break;
+		case VT_INT64:
+			u.i64p = va_arg(ap, int64_t *);
+			p = u.i64p;
+			break;
+		case VT_UINT64:
+			u.u64p = va_arg(ap, uint64_t *);
+			p = u.u64p;
+			break;
+		case VT_STRING:
+			u.strp = va_arg(ap, char **);
+			p = u.strp;
+			break;
+		case VT_BUFFER:
+			u.buf = va_arg(ap, Buffer *);
+			p = u.buf;
+			break;
+		case VT_FLOAT:
+			u.fp = va_arg(ap, float *);
+			p = u.fp;
+			break;
+		case VT_DOUBLE:
+			u.dp = va_arg(ap, double *);
+			p = u.dp;
+			break;
+		case VT_NULL:
+		default:
+			p = NULL;
+			break;
+	}
+	if(p == NULL)
+		return NULL;
+	return variable_new(type, NULL);
 }
 
 
@@ -897,7 +1002,7 @@ static int _appinterface_call(App * app, Variable * result,
 	}
 	for(i = 0; i < argc; i++)
 		p[i + 1] = argv[i];
-	ret = marshall_callp(result, call->func, argc, argv);
+	ret = marshall_callp(result, call->call, argc, argv);
 	variable_delete(p[0]);
 	object_delete(p);
 	return ret;
@@ -913,8 +1018,12 @@ static AppMessage * _appinterface_message(AppInterfaceCall * call,
 	size_t i;
 
 	if(argc != call->args_cnt)
-		/* XXX set the error */
+	{
+		error_set_code(1, "%s: %s%zu%s%zu%s", call->name,
+				"Invalid number of arguments (", argc,
+				", expected: ", call->args_cnt, ")");
 		return NULL;
+	}
 	if(argc == 0)
 		args = NULL;
 	else if((args = object_new(sizeof(*args) * argc)) == NULL)

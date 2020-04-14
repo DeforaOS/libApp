@@ -143,12 +143,12 @@ int appclient_call(AppClient * appclient,
 
 /* appclient_callv */
 int appclient_callv(AppClient * appclient,
-		void ** result, char const * method, va_list args)
+		void ** result, char const * method, va_list ap)
 {
 	int ret;
 	AppMessage * message;
 
-	if((message = appinterface_messagev(appclient->interface, method, args))
+	if((message = appinterface_messagev(appclient->interface, method, ap))
 			== NULL)
 		return -1;
 	/* FIXME obtain the answer (AICD_{,IN}OUT) */

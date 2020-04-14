@@ -41,8 +41,7 @@ AppStatus * appstatus_new_config(Config * config, String const * section)
 	struct
 	{
 		size_t members;
-		VariableType * types;
-		void ** values;
+		Variable ** variables;
 	} data;
 
 	if((appstatus = object_new(sizeof(*appstatus))) == NULL)
@@ -52,9 +51,8 @@ AppStatus * appstatus_new_config(Config * config, String const * section)
 			NULL);
 	if(data.members == 0)
 		appstatus->variable = NULL;
-	else if((appstatus->variable = variable_new_compoundv(NULL,
-					data.members, data.types, data.values))
-			== NULL)
+	else if((appstatus->variable = variable_new_compound_variables(NULL,
+					data.members, data.variables)) == NULL)
 	{
 		appstatus_delete(appstatus);
 		return NULL;
@@ -68,8 +66,7 @@ static void _new_config_foreach_section(String const * variable,
 	struct
 	{
 		size_t members;
-		VariableType * types;
-		void ** values;
+		Variable ** variables;
 	} * d = data;
 
 	/* FIXME implement */

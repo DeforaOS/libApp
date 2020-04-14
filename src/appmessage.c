@@ -80,15 +80,13 @@ AppMessage * appmessage_new_call(char const * method,
 	message->type = AMT_CALL;
 	message->id = 0;
 	message->t.call.method = string_new(method);
-	message->t.call.args = malloc(sizeof(*args) * args_cnt);
-	if(message->t.call.args == NULL)
+	if((message->t.call.args = object_new(sizeof(*args) * args_cnt))
+			== NULL)
 	{
-		error_set_code(-errno, "%s", strerror(errno));
 		message->t.call.args_cnt = 0;
 		appmessage_delete(message);
 		return NULL;
 	}
-	message->t.call.args_cnt = args_cnt;
 	for(i = 0; i < args_cnt; i++)
 	{
 		message->t.call.args[i].direction = args[i].direction;
@@ -96,10 +94,10 @@ AppMessage * appmessage_new_call(char const * method,
 						args[i].arg)) == NULL)
 			break;
 	}
+	message->t.call.args_cnt = i;
 	/* check for errors */
 	if(i != args_cnt)
 	{
-		message->t.call.args_cnt = i;
 		appmessage_delete(message);
 		return NULL;
 	}
