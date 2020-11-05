@@ -59,6 +59,10 @@ typedef struct _AppMessageCallArgument
 	(type | (direction) << 8), (variable)
 
 
+/* constants */
+# define APPMESSAGE_MAX_SIZE	32768
+
+
 /* functions */
 AppMessage * appmessage_new_deserialize(Buffer * buffer);
 /* calls */
