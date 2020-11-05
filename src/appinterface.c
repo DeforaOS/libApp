@@ -168,8 +168,9 @@ static AppInterfaceCall * _appinterface_get_call(AppInterface * appinterface,
 static Variable ** _appinterface_argv_new(AppInterfaceCall * call,
 		va_list ap);
 static void _appinterface_argv_free(Variable ** argv, size_t argc);
-static int _appinterface_call(App * app, Variable * result,
-		AppInterfaceCall * call, size_t argc, Variable ** argv);
+static int _appinterface_call(App * app, AppServerClient * asc,
+		Variable * result, AppInterfaceCall * call,
+		size_t argc, Variable ** argv);
 static AppMessage * _appinterface_message(AppInterfaceCall * call,
 		size_t argc, Variable ** argv);
 
@@ -646,7 +647,8 @@ AppStatus * appinterface_get_status(AppInterface * appinterface)
 
 /* useful */
 /* appinterface_callv */
-int appinterface_callv(AppInterface * appinterface, App * app, void ** result,
+int appinterface_callv(AppInterface * appinterface, App * app,
+		AppServerClient * asc, void ** result,
 		String const * method, va_list args)
 {
 	int ret = 0;
@@ -667,7 +669,8 @@ int appinterface_callv(AppInterface * appinterface, App * app, void ** result,
 		return -1;
 	}
 	if(ret == 0)
-		ret = _appinterface_call(app, r, call, call->args_cnt, argv);
+		ret = _appinterface_call(app, asc, r, call,
+				call->args_cnt, argv);
 	if(r != NULL)
 	{
 		if(ret == 0 && result != NULL)
@@ -683,14 +686,14 @@ int appinterface_callv(AppInterface * appinterface, App * app, void ** result,
 
 /* appinterface_call_variablev */
 int appinterface_call_variablev(AppInterface * appinterface, App * app,
-		Variable * result, char const * method,
+		AppServerClient * asc, Variable * result, char const * method,
 		size_t argc, Variable ** argv)
 {
 	AppInterfaceCall * call;
 
 	if((call = _appinterface_get_call(appinterface, method)) == NULL)
 		return -1;
-	return _appinterface_call(app, result, call, argc, argv);
+	return _appinterface_call(app, asc, result, call, argc, argv);
 }
 
 
@@ -981,8 +984,9 @@ static void _appinterface_argv_free(Variable ** argv, size_t argc)
 
 
 /* appinterface_call */
-static int _appinterface_call(App * app, Variable * result,
-		AppInterfaceCall * call, size_t argc, Variable ** argv)
+static int _appinterface_call(App * app, AppServerClient * asc,
+		Variable * result, AppInterfaceCall * call,
+		size_t argc, Variable ** argv)
 {
 	int ret;
 	Variable ** p;
@@ -991,17 +995,23 @@ static int _appinterface_call(App * app, Variable * result,
 	if(argc != call->args_cnt)
 		/* XXX set the error */
 		return -1;
-	if((p = object_new(sizeof(*p) * (argc + 1))) == NULL)
+	if((p = object_new(sizeof(*p) * (argc + 2))) == NULL)
 		return -1;
-	/* XXX really is a VT_POINTER (void *) */
-	if((p[0] = variable_new(VT_BUFFER, app)) == NULL)
+	p[0] = variable_new(VT_POINTER, app);
+	p[1] = variable_new(VT_POINTER, asc);
+	if(p[0] == NULL || p[1] == NULL)
 	{
+		if(p[0] != NULL)
+			variable_delete(p[0]);
+		if(p[1] != NULL)
+			variable_delete(p[1]);
 		object_delete(p);
 		return -1;
 	}
 	for(i = 0; i < argc; i++)
-		p[i + 1] = argv[i];
-	ret = marshall_callp(result, call->call, argc, argv);
+		p[i + 2] = argv[i];
+	ret = marshall_callp(result, call->call, argc + 2, p);
+	variable_delete(p[1]);
 	variable_delete(p[0]);
 	object_delete(p);
 	return ret;

@@ -244,7 +244,7 @@ static int _helper_message_call(AppClient * appclient, AppTransport * transport,
 		/* XXX report errors */
 		return -1;
 	ret = appinterface_call_variablev(appclient->interface, appclient->app,
-			result, method, 0, NULL);
+			NULL, result, method, 0, NULL);
 	if(result != NULL)
 		variable_delete(result);
 	return ret;
