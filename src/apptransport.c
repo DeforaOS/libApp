@@ -79,6 +79,8 @@ static void _apptransport_helper_client_delete(AppTransport * transport,
 
 static int _apptransport_helper_client_receive(AppTransport * transport,
 		AppTransportClient * client, AppMessage * message);
+static int _apptransport_helper_receive(AppTransport * transport,
+		AppMessage * message);
 
 
 /* protected */
@@ -253,6 +255,8 @@ static void _new_plugin_helper(AppTransport * apptransport,
 		= _apptransport_helper_client_delete;
 	apptransport->thelper.client_receive
 		= _apptransport_helper_client_receive;
+	apptransport->thelper.receive
+		= _apptransport_helper_receive;
 }
 
 
@@ -460,4 +464,13 @@ static int _apptransport_helper_client_receive(AppTransport * transport,
 			appmessage_delete(message);
 		}
 	return 0;
+}
+
+
+/* apptransport_helper_receive */
+static int _apptransport_helper_receive(AppTransport * transport,
+		AppMessage * message)
+{
+	/* FIXME implement */
+	return -1;
 }
