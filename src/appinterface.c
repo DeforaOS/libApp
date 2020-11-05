@@ -44,7 +44,6 @@
 /* private */
 /* types */
 /* XXX get rid of this */
-#define VT_LAST VT_COMPOUND
 #define VT_COUNT (VT_LAST + 1)
 #define AICT_MASK 077
 
