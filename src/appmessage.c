@@ -492,7 +492,7 @@ static int _serialize_id(AppMessage * message, Buffer * buffer, Buffer * b)
 	int ret;
 	Variable * v;
 
-	if((v = variable_new(VT_UINT32, &message->id)) == NULL)
+	if((v = variable_new(VT_UINT32, message->id)) == NULL)
 		return -1;
 	ret = (variable_serialize(v, b, 0) == 0
 			&& _serialize_append(buffer, b) == 0) ? 0 : -1;
@@ -505,7 +505,7 @@ static int _serialize_type(AppMessage * message, Buffer * buffer, Buffer * b)
 	int ret;
 	Variable * v;
 
-	if((v = variable_new(VT_UINT8, &message->type)) == NULL)
+	if((v = variable_new(VT_UINT8, message->type)) == NULL)
 		return -1;
 	ret = (variable_serialize(v, b, 0) == 0
 			&& _serialize_append(buffer, b) == 0) ? 0 : -1;
