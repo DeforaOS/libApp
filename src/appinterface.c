@@ -976,7 +976,7 @@ static void _appinterface_argv_free(Variable ** argv, size_t argc)
 	size_t i;
 
 	for(i = 0; i < argc; i++)
-		variable_delete(argv[argc]);
+		variable_delete(argv[i]);
 	object_delete(argv);
 }
 
