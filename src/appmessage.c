@@ -213,13 +213,15 @@ static AppMessage * _new_deserialize_call(AppMessage * message,
 		char const * data, const size_t size, size_t pos);
 static AppMessage * _new_deserialize_id(AppMessage * message, char const * data,
 		const size_t size, size_t * pos);
+static AppMessage * _new_deserialize_status_get(AppMessage * message,
+		char const * data, const size_t size, size_t pos);
 
 AppMessage * appmessage_new_deserialize(Buffer * buffer)
 {
 	AppMessage * message;
 	char const * data = buffer_get_data(buffer);
 	size_t size = buffer_get_size(buffer);
-	size_t pos = 0;
+	size_t pos;
 	size_t s;
 	Variable * v;
 	uint8_t u8;
@@ -230,15 +232,12 @@ AppMessage * appmessage_new_deserialize(Buffer * buffer)
 	if((message = object_new(sizeof(*message))) == NULL)
 		return NULL;
 	s = size;
-	if((v = variable_new_deserialize_type(VT_UINT8, &s, &data[pos]))
-			== NULL)
+	if((v = variable_new_deserialize_type(VT_UINT8, &s, &data[0])) == NULL)
 	{
 		object_delete(message);
 		return NULL;
 	}
-	pos += s;
-	size -= s;
-	/* XXX may fail */
+	pos = s;
 	variable_get_as(v, VT_UINT8, &u8);
 	variable_delete(v);
 	switch((message->type = u8))
