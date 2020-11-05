@@ -21,6 +21,7 @@
 # include <System/buffer.h>
 # include <System/string.h>
 # include <System/variable.h>
+# include <System/Marshall.h>
 # include "app.h"
 # include "appstatus.h"
 
@@ -41,9 +42,9 @@ typedef uint32_t AppMessageID;
 /* calls */
 typedef enum _AppMessageCallDirection
 {
-	AMCD_IN = 1,
-	AMCD_OUT,
-	AMCD_IN_OUT
+	AMCD_IN = MCD_IN,
+	AMCD_OUT = MCD_OUT,
+	AMCD_IN_OUT = MCD_IN_OUT
 } AppMessageCallDirection;
 
 typedef struct _AppMessageCallArgument

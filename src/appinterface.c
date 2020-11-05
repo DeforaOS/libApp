@@ -43,32 +43,19 @@
 /* AppInterface */
 /* private */
 /* types */
-/* XXX get rid of this */
-#define VT_COUNT (VT_LAST + 1)
-#define AICT_MASK 077
-
 #ifdef DEBUG
 static const String * AICTString[VT_COUNT] =
 {
 	"void", "bool", "int8", "uint8", "int16", "uint16", "int32", "uint32",
 	"int64", "uint64", "float", "double", "Buffer", "String", "Array",
-	"Compound"
+	"Compound", "Pointer"
 };
 #endif
-
-typedef enum _AppInterfaceCallDirection
-{
-	AICD_IN		= 0100,
-	AICD_OUT	= 0200,
-	AICD_IN_OUT	= 0300,
-} AppInterfaceCallDirection;
-#define AICD_MASK 0700
 
 typedef struct _AppInterfaceCallArg
 {
 	VariableType type;
-	AppInterfaceCallDirection direction;
-	size_t size;
+	MarshallCallDirection direction;
 } AppInterfaceCallArg;
 
 typedef struct _AppInterfaceCall
@@ -95,11 +82,12 @@ struct _AppInterface
 	int error;
 };
 
-typedef struct _StringEnum
+typedef struct _StringTypeDirection
 {
 	char const * string;
-	int value;
-} StringEnum;
+	VariableType type;
+	MarshallCallDirection direction;
+} StringTypeDirection;
 
 
 /* constants */
@@ -108,57 +96,57 @@ typedef struct _StringEnum
 
 
 /* variables */
-static const StringEnum _string_type[] =
+static const StringTypeDirection _string_type_direction[] =
 {
-	{ "VOID",	VT_NULL		| AICD_IN	},
+	{ "VOID",	VT_NULL,	MCD_IN	},
 	/* implicit input */
-	{ "BOOL",	VT_BOOL		| AICD_IN	},
-	{ "INT8",	VT_INT8		| AICD_IN	},
-	{ "UINT8",	VT_UINT8	| AICD_IN	},
-	{ "INT16",	VT_INT16	| AICD_IN	},
-	{ "UINT16",	VT_UINT16	| AICD_IN	},
-	{ "INT32",	VT_INT32	| AICD_IN	},
-	{ "UINT32",	VT_UINT32	| AICD_IN	},
-	{ "INT64",	VT_INT64	| AICD_IN	},
-	{ "UINT64",	VT_UINT64	| AICD_IN	},
-	{ "STRING",	VT_STRING	| AICD_IN	},
-	{ "BUFFER",	VT_BUFFER	| AICD_IN	},
-	{ "FLOAT",	VT_FLOAT	| AICD_IN	},
-	{ "DOUBLE",	VT_DOUBLE	| AICD_IN	},
+	{ "BOOL",	VT_BOOL,	MCD_IN	},
+	{ "INT8",	VT_INT8,	MCD_IN	},
+	{ "UINT8",	VT_UINT8,	MCD_IN	},
+	{ "INT16",	VT_INT16,	MCD_IN	},
+	{ "UINT16",	VT_UINT16,	MCD_IN	},
+	{ "INT32",	VT_INT32,	MCD_IN	},
+	{ "UINT32",	VT_UINT32,	MCD_IN	},
+	{ "INT64",	VT_INT64,	MCD_IN	},
+	{ "UINT64",	VT_UINT64,	MCD_IN	},
+	{ "STRING",	VT_STRING,	MCD_IN	},
+	{ "BUFFER",	VT_BUFFER,	MCD_IN	},
+	{ "FLOAT",	VT_FLOAT,	MCD_IN	},
+	{ "DOUBLE",	VT_DOUBLE,	MCD_IN	},
 	/* input aliases */
-	{ "BOOL_IN",	VT_BOOL		| AICD_IN	},
-	{ "INT8_IN",	VT_INT8		| AICD_IN	},
-	{ "UINT8_IN",	VT_UINT8	| AICD_IN	},
-	{ "INT16_IN",	VT_INT16	| AICD_IN	},
-	{ "UINT16_IN",	VT_UINT16	| AICD_IN	},
-	{ "INT32_IN",	VT_INT32	| AICD_IN	},
-	{ "UINT32_IN",	VT_UINT32	| AICD_IN	},
-	{ "INT64_IN",	VT_INT64	| AICD_IN	},
-	{ "UINT64_IN",	VT_UINT64	| AICD_IN	},
-	{ "STRING_IN",	VT_STRING	| AICD_IN	},
-	{ "BUFFER_IN",	VT_BUFFER	| AICD_IN	},
-	{ "FLOAT_IN",	VT_FLOAT	| AICD_IN	},
-	{ "DOUBLE_IN",	VT_DOUBLE	| AICD_IN	},
+	{ "BOOL_IN",	VT_BOOL,	MCD_IN	},
+	{ "INT8_IN",	VT_INT8,	MCD_IN	},
+	{ "UINT8_IN",	VT_UINT8,	MCD_IN	},
+	{ "INT16_IN",	VT_INT16,	MCD_IN	},
+	{ "UINT16_IN",	VT_UINT16,	MCD_IN	},
+	{ "INT32_IN",	VT_INT32,	MCD_IN	},
+	{ "UINT32_IN",	VT_UINT32,	MCD_IN	},
+	{ "INT64_IN",	VT_INT64,	MCD_IN	},
+	{ "UINT64_IN",	VT_UINT64,	MCD_IN	},
+	{ "STRING_IN",	VT_STRING,	MCD_IN	},
+	{ "BUFFER_IN",	VT_BUFFER,	MCD_IN	},
+	{ "FLOAT_IN",	VT_FLOAT,	MCD_IN	},
+	{ "DOUBLE_IN",	VT_DOUBLE,	MCD_IN	},
 	/* output only */
-	{ "BOOL_OUT",	VT_BOOL		| AICD_OUT	},
-	{ "INT8_OUT",	VT_INT8		| AICD_OUT	},
-	{ "UINT8_OUT",	VT_UINT8	| AICD_OUT	},
-	{ "INT16_OUT",	VT_INT16	| AICD_OUT	},
-	{ "UINT16_OUT",	VT_UINT16	| AICD_OUT	},
-	{ "INT32_OUT",	VT_INT32	| AICD_OUT	},
-	{ "UINT32_OUT",	VT_UINT32	| AICD_OUT	},
-	{ "INT64_OUT",	VT_INT64	| AICD_OUT	},
-	{ "UINT64_OUT",	VT_UINT64	| AICD_OUT	},
-	{ "STRING_OUT",	VT_STRING	| AICD_OUT	},
-	{ "BUFFER_OUT",	VT_BUFFER	| AICD_OUT	},
-	{ "FLOAT_OUT",	VT_FLOAT	| AICD_OUT	},
-	{ "DOUBLE_OUT",	VT_DOUBLE	| AICD_OUT	},
-	{ NULL,		0				}
+	{ "BOOL_OUT",	VT_BOOL,	MCD_OUT	},
+	{ "INT8_OUT",	VT_INT8,	MCD_OUT	},
+	{ "UINT8_OUT",	VT_UINT8,	MCD_OUT	},
+	{ "INT16_OUT",	VT_INT16,	MCD_OUT	},
+	{ "UINT16_OUT",	VT_UINT16,	MCD_OUT	},
+	{ "INT32_OUT",	VT_INT32,	MCD_OUT	},
+	{ "UINT32_OUT",	VT_UINT32,	MCD_OUT	},
+	{ "INT64_OUT",	VT_INT64,	MCD_OUT	},
+	{ "UINT64_OUT",	VT_UINT64,	MCD_OUT	},
+	{ "STRING_OUT",	VT_STRING,	MCD_OUT	},
+	{ "BUFFER_OUT",	VT_BUFFER,	MCD_OUT	},
+	{ "FLOAT_OUT",	VT_FLOAT,	MCD_OUT	},
+	{ "DOUBLE_OUT",	VT_DOUBLE,	MCD_OUT	},
 };
 
 
 /* prototypes */
-static int _string_enum(String const * string, StringEnum const * se);
+static int _string_get_type_direction(String const * string,
+		VariableType * type, AppMessageCallDirection * direction);
 
 /* accessors */
 static AppInterfaceCall * _appinterface_get_call(AppInterface * appinterface,
@@ -166,8 +154,8 @@ static AppInterfaceCall * _appinterface_get_call(AppInterface * appinterface,
 
 /* useful */
 static Variable ** _appinterface_argv_new(AppInterfaceCall * call,
-		va_list ap);
-static void _appinterface_argv_free(Variable ** argv, size_t argc);
+		va_list args);
+static void _appinterface_argv_delete(Variable ** argv, size_t argc);
 static int _appinterface_call(App * app, AppServerClient * asc,
 		Variable * result, AppInterfaceCall * call,
 		size_t argc, Variable ** argv);
@@ -176,17 +164,25 @@ static AppMessage * _appinterface_message(AppInterfaceCall * call,
 
 
 /* functions */
-/* string_enum */
-/* FIXME move to string.c */
-static int _string_enum(String const * string, StringEnum const * se)
+/* string_get_direction_type */
+static int _string_get_type_direction(String const * string,
+		VariableType * type, AppMessageCallDirection * direction)
 {
 	size_t i;
 
 	if(string == NULL)
 		return -error_set_code(-EINVAL, "%s", strerror(EINVAL));
-	for(i = 0; se[i].string != NULL; i++)
-		if(string_compare(string, se[i].string) == 0)
-			return se[i].value;
+	for(i = 0; i < sizeof(_string_type_direction)
+			/ sizeof(*_string_type_direction); i++)
+		if(string_compare(_string_type_direction[i].string, string)
+				== 0)
+		{
+			if(type != NULL)
+				*type = _string_type_direction[i].type;
+			if(direction != NULL)
+				*direction = _string_type_direction[i].direction;
+			return 0;
+		}
 	return -error_set_code(1, "%s\"%s\"", "Unknown enumerated value for ",
 			string);
 }
@@ -234,7 +230,8 @@ static AppInterfaceCall * _new_interface_append_call(AppInterface * ai,
 		VariableType type, char const * method);
 static AppInterfaceCall * _new_interface_append_callback(AppInterface * ai,
 		VariableType type, char const * method);
-static int _new_interface_append_arg(AppInterfaceCall * call, char const * arg);
+static int _new_interface_append_arg(AppInterfaceCall * call,
+		String const * arg);
 AppInterface * _new_interface_do(AppTransportMode mode, String const * app,
 		String const * pathname);
 static int _new_interface_do_appstatus(AppInterface * appinterface);
@@ -274,8 +271,7 @@ static AppInterfaceCall * _new_interface_append_call(AppInterface * ai,
 	p = &ai->calls[ai->calls_cnt];
 	if((p->name = string_new(method)) == NULL)
 		return NULL;
-	p->type.type = type & AICT_MASK;
-	p->type.direction = type & AICD_MASK;
+	p->type.type = type;
 	p->args = NULL;
 	p->args_cnt = 0;
 	ai->calls_cnt++;
@@ -297,19 +293,20 @@ static AppInterfaceCall * _new_interface_append_callback(AppInterface * ai,
 	p = &ai->callbacks[ai->callbacks_cnt];
 	if((p->name = string_new(method)) == NULL)
 		return NULL;
-	p->type.type = type & AICT_MASK;
-	p->type.direction = type & AICD_MASK;
+	p->type.type = type;
 	p->args = NULL;
 	p->args_cnt = 0;
 	ai->callbacks_cnt++;
 	return p;
 }
 
-static int _new_interface_append_arg(AppInterfaceCall * call, char const * arg)
+static int _new_interface_append_arg(AppInterfaceCall * call,
+		String const * arg)
 {
 	char buf[16];
 	char * p;
-	int type;
+	VariableType type;
+	AppMessageCallDirection direction;
 	AppInterfaceCallArg * r;
 
 #ifdef DEBUG
@@ -318,14 +315,14 @@ static int _new_interface_append_arg(AppInterfaceCall * call, char const * arg)
 	snprintf(buf, sizeof(buf), "%s", arg);
 	if((p = strchr(buf, ',')) != NULL)
 		*p = '\0';
-	if((type = _string_enum(buf, _string_type)) < 0)
+	if(_string_get_type_direction(buf, &type, &direction) != 0)
 		return -1;
 	if((r = realloc(call->args, sizeof(*r) * (call->args_cnt + 1))) == NULL)
 		return error_set_code(-errno, "%s", strerror(errno));
 	call->args = r;
 	r = &call->args[call->args_cnt++];
-	r->type = type & AICT_MASK;
-	r->direction = type & AICD_MASK;
+	r->type = type;
+	r->direction = direction;
 #ifdef DEBUG
 	fprintf(stderr, "DEBUG: type %s, direction: %d\n", AICTString[r->type],
 			r->direction);
@@ -389,7 +386,7 @@ static int _new_interface_foreach_callbacks(char const * key, Hash * value,
 	String const * prefix = APPINTERFACE_CALLBACK_PREFIX;
 	unsigned int i;
 	char buf[8];
-	int type = VT_NULL;
+	VariableType type = VT_NULL;
 	char const * p;
 	AppInterfaceCall * callback;
 
@@ -397,7 +394,7 @@ static int _new_interface_foreach_callbacks(char const * key, Hash * value,
 		return 0;
 	key += string_get_length(prefix);
 	if((p = hash_get(value, "ret")) != NULL
-			&& (type = _string_enum(p, _string_type)) < 0)
+			&& _string_get_type_direction(p, &type, NULL) != 0)
 	{
 		appinterface->error = error_set_code(1, "%s: %s", p,
 				"Invalid return type for callback");
@@ -430,7 +427,7 @@ static int _new_interface_foreach_calls(char const * key, Hash * value,
 	String const * prefix = APPINTERFACE_CALL_PREFIX;
 	unsigned int i;
 	char buf[8];
-	int type = VT_NULL;
+	VariableType type = VT_NULL;
 	char const * p;
 	AppInterfaceCall * call;
 
@@ -438,7 +435,7 @@ static int _new_interface_foreach_calls(char const * key, Hash * value,
 		return 0;
 	key += string_get_length(prefix);
 	if((p = hash_get(value, "ret")) != NULL
-			&& (type = _string_enum(p, _string_type)) < 0)
+			&& _string_get_type_direction(p, &type, NULL) != 0)
 	{
 		appinterface->error = error_set_code(1, "%s: %s", p,
 				"Invalid return type for call");
@@ -669,8 +666,8 @@ int appinterface_callv(AppInterface * appinterface, App * app,
 		return -1;
 	}
 	if(ret == 0)
-		ret = _appinterface_call(app, asc, r, call,
-				call->args_cnt, argv);
+		ret = _appinterface_call(app, asc, r, call, call->args_cnt,
+				argv);
 	if(r != NULL)
 	{
 		if(ret == 0 && result != NULL)
@@ -679,7 +676,7 @@ int appinterface_callv(AppInterface * appinterface, App * app,
 		variable_delete(r);
 	}
 	/* FIXME also implement AICD_{,IN}OUT */
-	_appinterface_argv_free(argv, call->args_cnt);
+	_appinterface_argv_delete(argv, call->args_cnt);
 	return ret;
 }
 
@@ -710,7 +707,7 @@ AppMessage * appinterface_messagev(AppInterface * appinterface,
 	if((argv = _appinterface_argv_new(call, ap)) == NULL)
 		return NULL;
 	message = _appinterface_message(call, call->args_cnt, argv);
-	_appinterface_argv_free(argv, call->args_cnt);
+	_appinterface_argv_delete(argv, call->args_cnt);
 	return message;
 }
 
@@ -740,13 +737,14 @@ AppMessage * appinterface_message_variablev(AppInterface * appinterface,
 		return NULL;
 	if(call->args_cnt == 0)
 		argv = NULL;
-	else if((argv = malloc(sizeof(*argv) * call->args_cnt)) == NULL)
+	else if((argv = object_new(sizeof(*argv) * call->args_cnt)) == NULL)
 		/* XXX report error */
 		return NULL;
-	for(i = 0; i < call->args_cnt; i++)
-		argv[i] = va_arg(ap, Variable *);
+	else
+		for(i = 0; i < call->args_cnt; i++)
+			argv[i] = va_arg(ap, Variable *);
 	message = _appinterface_message(call, call->args_cnt, argv);
-	free(argv);
+	object_delete(argv);
 	return message;
 }
 
@@ -785,14 +783,14 @@ static Variable ** _appinterface_argv_new(AppInterfaceCall * call, va_list ap)
 	{
 		switch(call->args[i].direction)
 		{
-			case AICD_IN:
+			case AMCD_IN:
 				argv[i] = _argv_new_in(call->args[i].type, ap);
 				break;
-			case AICD_IN_OUT:
+			case AMCD_IN_OUT:
 				argv[i] = _argv_new_in_out(call->args[i].type,
 						ap);
 				break;
-			case AICD_OUT:
+			case AMCD_OUT:
 				argv[i] = _argv_new_out(call->args[i].type,
 						ap);
 				break;
@@ -803,7 +801,7 @@ static Variable ** _appinterface_argv_new(AppInterfaceCall * call, va_list ap)
 		}
 		if(argv[i] == NULL)
 		{
-			_appinterface_argv_free(argv, i);
+			_appinterface_argv_delete(argv, i);
 			return NULL;
 		}
 	}
@@ -832,6 +830,7 @@ static Variable * _argv_new_in_out(VariableType type, va_list ap)
 		Buffer * buf;
 		float * fp;
 		double * dp;
+		void ** pp;
 	} u;
 
 #ifdef DEBUG
@@ -880,29 +879,16 @@ static Variable * _argv_new_in_out(VariableType type, va_list ap)
 		case VT_BUFFER:
 			u.buf = va_arg(ap, Buffer *);
 			return variable_new(type, u.buf);
+		case VT_POINTER:
+			u.pp = va_arg(ap, void **);
+			return variable_new(type, u.pp);
 	}
 	return NULL;
 }
 
 static Variable * _argv_new_out(VariableType type, va_list ap)
 {
-	union
-	{
-		bool * bp;
-		int8_t * i8p;
-		uint8_t * u8p;
-		int16_t * i16p;
-		uint16_t * u16p;
-		int32_t * i32p;
-		uint32_t * u32p;
-		int64_t * i64p;
-		uint64_t * u64p;
-		char ** strp;
-		Buffer * buf;
-		float * fp;
-		double * dp;
-	} u;
-	void * p;
+	Variable * ret;
 
 #ifdef DEBUG
 	fprintf(stderr, "DEBUG: %s(%u)\n", __func__, type);
@@ -910,70 +896,36 @@ static Variable * _argv_new_out(VariableType type, va_list ap)
 	switch(type)
 	{
 		case VT_BOOL:
-			u.bp = va_arg(ap, bool *);
-			p = u.bp;
-			break;
+			return variable_new(type, false);
 		case VT_INT8:
-			u.i8p = va_arg(ap, int8_t *);
-			p = u.i8p;
-			break;
 		case VT_UINT8:
-			u.u8p = va_arg(ap, uint8_t *);
-			p = u.u8p;
-			break;
 		case VT_INT16:
-			u.i16p = va_arg(ap, int16_t *);
-			p = u.i16p;
-			break;
 		case VT_UINT16:
-			u.u16p = va_arg(ap, uint16_t *);
-			p = u.u16p;
-			break;
 		case VT_INT32:
-			u.i32p = va_arg(ap, int32_t *);
-			p = u.i32p;
-			break;
 		case VT_UINT32:
-			u.u32p = va_arg(ap, uint32_t *);
-			p = u.u32p;
-			break;
+			return variable_new(type, 0);
 		case VT_INT64:
-			u.i64p = va_arg(ap, int64_t *);
-			p = u.i64p;
-			break;
 		case VT_UINT64:
-			u.u64p = va_arg(ap, uint64_t *);
-			p = u.u64p;
-			break;
+			return variable_new(type, (uint64_t)0);
 		case VT_STRING:
-			u.strp = va_arg(ap, char **);
-			p = u.strp;
-			break;
+			return variable_new(type, "");
 		case VT_BUFFER:
-			u.buf = va_arg(ap, Buffer *);
-			p = u.buf;
-			break;
+			return variable_new(type, NULL);
 		case VT_FLOAT:
-			u.fp = va_arg(ap, float *);
-			p = u.fp;
-			break;
 		case VT_DOUBLE:
-			u.dp = va_arg(ap, double *);
-			p = u.dp;
-			break;
+			return variable_new(type, 0.0);
+		case VT_POINTER:
+			return variable_new(type, NULL);
 		case VT_NULL:
+			return variable_new(type);
 		default:
-			p = NULL;
-			break;
+			return NULL;
 	}
-	if(p == NULL)
-		return NULL;
-	return variable_new(type, NULL);
 }
 
 
-/* appinterface_argv_free */
-static void _appinterface_argv_free(Variable ** argv, size_t argc)
+/* appinterface_argv_delete */
+static void _appinterface_argv_delete(Variable ** argv, size_t argc)
 {
 	size_t i;
 

@@ -47,8 +47,8 @@ AppStatus * appinterface_get_status(AppInterface * appinterface);
 
 /* useful */
 int appinterface_callv(AppInterface * appinterface, App * app,
-		AppServerClient * asc, void ** result,
-		char const * method, va_list args);
+		AppServerClient * asc, void ** result, char const * method,
+		va_list args);
 int appinterface_call_variablev(AppInterface * appinterface, App * app,
 		AppServerClient * asc, Variable * result, char const * method,
 		size_t argc, Variable ** argv);

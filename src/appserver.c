@@ -183,9 +183,8 @@ static int _helper_message_call(AppServer * appserver, AppTransport * transport,
 	if(!appinterface_can_call(appserver->interface, method, name))
 		/* XXX report errors */
 		return -1;
-	/* FIXME provide the actual AppServerClient */
 	ret = appinterface_call_variablev(appserver->interface, appserver->app,
-			NULL, result, method, 0, NULL);
+			client, result, method, 0, NULL);
 	if(result != NULL)
 		variable_delete(result);
 	return ret;
