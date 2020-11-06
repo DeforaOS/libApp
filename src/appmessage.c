@@ -270,7 +270,8 @@ static AppMessage * _new_deserialize_call(AppMessage * message,
 	size_t s;
 	Variable * v;
 	size_t i;
-	AppMessageCallArgument * p;
+	uint8_t direction;
+	AppMessageCallArgument * arg;
 
 #ifdef DEBUG
 	fprintf(stderr, "DEBUG: %s()\n", __func__);
@@ -294,36 +295,57 @@ static AppMessage * _new_deserialize_call(AppMessage * message,
 	variable_get_as(v, VT_STRING, &message->t.call.method);
 	variable_delete(v);
 #ifdef DEBUG
-	fprintf(stderr, "DEBUG: %s() \"%s\"\n", __func__,
+	fprintf(stderr, "DEBUG: %s() method=\"%s\"\n", __func__,
 			message->t.call.method);
 #endif
 	/* deserialize the arguments */
 	for(i = 0; pos < size; i++)
 	{
 #ifdef DEBUG
-		fprintf(stderr, "DEBUG: %s() %lu\n", __func__, i);
+		fprintf(stderr, "DEBUG: %s() arg=%zu\n", __func__, i);
 #endif
-		if((p = realloc(message->t.call.args, sizeof(*p) * (i + 1)))
+		if((arg = realloc(message->t.call.args, sizeof(*arg) * (i + 1)))
 				== NULL)
 		{
 			error_set_code(-errno, "%s", strerror(errno));
 			appmessage_delete(message);
 			return NULL;
 		}
-		message->t.call.args = p;
+		message->t.call.args = arg;
+		arg = &message->t.call.args[i];
 		s = size - pos;
-		if((v = variable_new_deserialize(&s, &data[pos])) == NULL)
+		if((v = variable_new_deserialize_type(VT_UINT8, &s, &data[pos]))
+				== NULL)
 		{
 			appmessage_delete(message);
 			return NULL;
 		}
+		variable_get_as(v, VT_UINT8, &direction);
+		variable_delete(v);
 #ifdef DEBUG
-		fprintf(stderr, "DEBUG: %s() %lu (%u)\n", __func__, i,
-				variable_get_type(v));
+		fprintf(stderr, "DEBUG: %s() arg=%zu direction=%u\n", __func__,
+				i, direction);
 #endif
 		pos += s;
-		message->t.call.args[i].direction = AMCD_IN; /* XXX */
-		message->t.call.args[i].arg = v;
+		s = size - pos;
+		if(direction != AMCD_OUT)
+		{
+			if((v = variable_new_deserialize(&s, &data[pos]))
+					== NULL)
+			{
+				appmessage_delete(message);
+				return NULL;
+			}
+#ifdef DEBUG
+			fprintf(stderr, "DEBUG: %s() arg=%zu type=%u\n",
+					__func__, i, variable_get_type(v));
+#endif
+			pos += s;
+			arg->arg = v;
+		}
+		else
+			arg->arg = NULL;
+		arg->direction = direction;
 		message->t.call.args_cnt = i + 1;
 	}
 	return message;
@@ -465,6 +487,7 @@ static int _serialize_call(AppMessage * message, Buffer * buffer, Buffer * b)
 	int ret;
 	Variable * v;
 	size_t i;
+	AppMessageCallArgument * arg;
 
 	if(_serialize_id(message, buffer, b) != 0)
 		return -1;
@@ -477,9 +500,23 @@ static int _serialize_call(AppMessage * message, Buffer * buffer, Buffer * b)
 		return ret;
 	for(i = 0; i < message->t.call.args_cnt; i++)
 	{
-		if(message->t.call.args[i].direction == AMCD_OUT)
+		arg = &message->t.call.args[i];
+#ifdef DEBUG
+		fprintf(stderr, "DEBUG: %s() arg=%zu direction=%u\n", __func__,
+				i, arg->direction);
+#endif
+		if((v = variable_new(VT_UINT8, arg->direction)) == NULL)
+			break;
+		if(variable_serialize(v, b, false) != 0
+				|| _serialize_append(buffer, b) != 0)
+		{
+			variable_delete(v);
+			break;
+		}
+		variable_delete(v);
+		if(arg->direction == AMCD_OUT)
 			continue;
-		if(variable_serialize(message->t.call.args[i].arg, b, 1) != 0
+		if(variable_serialize(arg->arg, b, true) != 0
 				|| _serialize_append(buffer, b) != 0)
 			break;
 	}
