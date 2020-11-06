@@ -271,6 +271,7 @@ static AppMessage * _new_deserialize_call(AppMessage * message,
 	Variable * v;
 	size_t i;
 	uint8_t direction;
+	uint8_t type;
 	AppMessageCallArgument * arg;
 
 #ifdef DEBUG
@@ -314,6 +315,7 @@ static AppMessage * _new_deserialize_call(AppMessage * message,
 		message->t.call.args = arg;
 		arg = &message->t.call.args[i];
 		s = size - pos;
+		/* obtain the direction */
 		if((v = variable_new_deserialize_type(VT_UINT8, &s, &data[pos]))
 				== NULL)
 		{
@@ -328,7 +330,22 @@ static AppMessage * _new_deserialize_call(AppMessage * message,
 #endif
 		pos += s;
 		s = size - pos;
-		if(direction != AMCD_OUT)
+		if(direction == AMCD_OUT)
+		{
+			/* obtain the type */
+			if((v = variable_new_deserialize_type(VT_UINT8, &s,
+							&data[pos])) == NULL)
+			{
+				appmessage_delete(message);
+				return NULL;
+			}
+			variable_get_as(v, VT_UINT8, &type);
+			variable_delete(v);
+			pos += s;
+			s = size - pos;
+			arg->arg = NULL;
+		}
+		else
 		{
 			if((v = variable_new_deserialize(&s, &data[pos]))
 					== NULL)
@@ -343,8 +360,6 @@ static AppMessage * _new_deserialize_call(AppMessage * message,
 			pos += s;
 			arg->arg = v;
 		}
-		else
-			arg->arg = NULL;
 		arg->direction = direction;
 		message->t.call.args_cnt = i + 1;
 	}
@@ -510,7 +525,10 @@ static int _serialize_call(AppMessage * message, Buffer * buffer, Buffer * b)
 		if(_serialize_call_arg_direction(buffer, b, arg) != 0)
 			break;
 		if(arg->direction == AMCD_OUT)
-			continue;
+		{
+			if(_serialize_call_arg_type(buffer, b, arg) != 0)
+				break;
+		}
 		else if(variable_serialize(arg->arg, b, true) != 0
 				|| _serialize_append(buffer, b) != 0)
 			break;
