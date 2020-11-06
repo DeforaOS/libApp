@@ -445,8 +445,16 @@ static int _serialize_acknowledgement(AppMessage * message, Buffer * buffer,
 		Buffer * b);
 static int _serialize_append(Buffer * buffer, Buffer * b);
 static int _serialize_call(AppMessage * message, Buffer * buffer, Buffer * b);
-static int _serialize_id(AppMessage * message, Buffer * buffer, Buffer * b);
-static int _serialize_type(AppMessage * message, Buffer * buffer, Buffer * b);
+static int _serialize_call_arg_direction(Buffer * buffer, Buffer * b,
+		AppMessageCallArgument * arg);
+static int _serialize_call_arg_type(Buffer * buffer, Buffer * b,
+		AppMessageCallArgument * arg);
+static int _serialize_call_method(Buffer * buffer, Buffer * b,
+		String const * method);
+static int _serialize_message_id(AppMessage * message, Buffer * buffer,
+		Buffer * b);
+static int _serialize_message_type(AppMessage * message, Buffer * buffer,
+		Buffer * b);
 
 int appmessage_serialize(AppMessage * message, Buffer * buffer)
 {
@@ -456,7 +464,7 @@ int appmessage_serialize(AppMessage * message, Buffer * buffer)
 		return -1;
 	/* reset the output buffer */
 	buffer_set_size(buffer, 0);
-	if(_serialize_type(message, buffer, b) != 0)
+	if(_serialize_message_type(message, buffer, b) != 0)
 		return -1;
 	switch(message->type)
 	{
@@ -474,7 +482,7 @@ int appmessage_serialize(AppMessage * message, Buffer * buffer)
 static int _serialize_acknowledgement(AppMessage * message, Buffer * buffer,
 		Buffer * b)
 {
-	return _serialize_id(message, buffer, b);
+	return _serialize_message_id(message, buffer, b);
 }
 
 static int _serialize_append(Buffer * buffer, Buffer * b)
@@ -485,20 +493,13 @@ static int _serialize_append(Buffer * buffer, Buffer * b)
 
 static int _serialize_call(AppMessage * message, Buffer * buffer, Buffer * b)
 {
-	int ret;
-	Variable * v;
 	size_t i;
 	AppMessageCallArgument * arg;
 
-	if(_serialize_id(message, buffer, b) != 0)
+	if(_serialize_message_id(message, buffer, b) != 0)
 		return -1;
-	if((v = variable_new(VT_STRING, message->t.call.method)) == NULL)
+	if(_serialize_call_method(buffer, b, message->t.call.method) != 0)
 		return -1;
-	ret = (variable_serialize(v, b, 0) == 0
-			&& _serialize_append(buffer, b) == 0) ? 0 : -1;
-	variable_delete(v);
-	if(ret != 0)
-		return ret;
 	for(i = 0; i < message->t.call.args_cnt; i++)
 	{
 		arg = &message->t.call.args[i];
@@ -506,18 +507,11 @@ static int _serialize_call(AppMessage * message, Buffer * buffer, Buffer * b)
 		fprintf(stderr, "DEBUG: %s() arg=%zu direction=%u\n", __func__,
 				i, arg->direction);
 #endif
-		if((v = variable_new(VT_UINT8, arg->direction)) == NULL)
+		if(_serialize_call_arg_direction(buffer, b, arg) != 0)
 			break;
-		if(variable_serialize(v, b, false) != 0
-				|| _serialize_append(buffer, b) != 0)
-		{
-			variable_delete(v);
-			break;
-		}
-		variable_delete(v);
 		if(arg->direction == AMCD_OUT)
 			continue;
-		if(variable_serialize(arg->arg, b, true) != 0
+		else if(variable_serialize(arg->arg, b, true) != 0
 				|| _serialize_append(buffer, b) != 0)
 			break;
 	}
@@ -525,7 +519,58 @@ static int _serialize_call(AppMessage * message, Buffer * buffer, Buffer * b)
 	return (i == message->t.call.args_cnt) ? 0 : -1;
 }
 
-static int _serialize_id(AppMessage * message, Buffer * buffer, Buffer * b)
+static int _serialize_call_arg_direction(Buffer * buffer, Buffer * b,
+		AppMessageCallArgument * arg)
+{
+	int ret = 0;
+	Variable * v;
+
+	if((v = variable_new(VT_UINT8, arg->direction)) == NULL)
+		return -1;
+	if(variable_serialize(v, b, false) != 0
+			|| _serialize_append(buffer, b) != 0)
+		ret = -1;
+	variable_delete(v);
+	return ret;
+}
+
+static int _serialize_call_arg_type(Buffer * buffer, Buffer * b,
+		AppMessageCallArgument * arg)
+{
+	int ret = 0;
+	VariableType type;
+	Variable * v;
+
+	type = variable_get_type(arg->arg);
+	if((v = variable_new(VT_UINT8, type)) == NULL)
+		return -1;
+	if(variable_serialize(v, b, false) != 0
+			|| _serialize_append(buffer, b) != 0)
+		ret = -1;
+	variable_delete(v);
+	return ret;
+}
+
+static int _serialize_call_method(Buffer * buffer, Buffer * b,
+		String const * method)
+{
+	int ret = 0;
+	Variable * v;
+
+#ifdef DEBUG
+	fprintf(stderr, "DEBUG: %s(\"%s\")\n", __func__, method);
+#endif
+	if((v = variable_new(VT_STRING, method)) == NULL)
+		return -1;
+	if(variable_serialize(v, b, 0) != 0
+			|| _serialize_append(buffer, b) != 0)
+		ret = -1;
+	variable_delete(v);
+	return ret;
+}
+
+static int _serialize_message_id(AppMessage * message, Buffer * buffer,
+		Buffer * b)
 {
 	int ret;
 	Variable * v;
@@ -538,7 +583,8 @@ static int _serialize_id(AppMessage * message, Buffer * buffer, Buffer * b)
 	return ret;
 }
 
-static int _serialize_type(AppMessage * message, Buffer * buffer, Buffer * b)
+static int _serialize_message_type(AppMessage * message, Buffer * buffer,
+		Buffer * b)
 {
 	int ret;
 	Variable * v;
