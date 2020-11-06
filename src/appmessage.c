@@ -401,7 +401,8 @@ static void _delete_call(AppMessage * message)
 	size_t i;
 
 	for(i = 0; i < message->t.call.args_cnt; i++)
-		variable_delete(message->t.call.args[i].arg);
+		if(message->t.call.args[i].arg != NULL)
+			variable_delete(message->t.call.args[i].arg);
 	free(message->t.call.args);
 	string_delete(message->t.call.method);
 }
