@@ -200,8 +200,8 @@ AppTransport * apptransport_new_plugin(AppTransportMode mode,
 	AppTransport * apptransport;
 
 #ifdef DEBUG
-	fprintf(stderr, "DEBUG: %s(%u, \"%s\", \"%s\", %p)\n", __func__, mode,
-			plugin, name, (void *)event);
+	fprintf(stderr, "DEBUG: %s(%u, %p, \"%s\", %p)\n", __func__, mode,
+			(void *)plugin, name, (void *)event);
 #endif
 	/* check the arguments */
 	if(plugin == NULL)
