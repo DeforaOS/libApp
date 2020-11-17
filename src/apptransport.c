@@ -335,11 +335,11 @@ String * apptransport_lookup(char const * app)
 
 /* apptransport_client_send */
 int apptransport_client_send(AppTransport * transport, AppMessage * message,
-		int acknowledge)
+		AppTransportFlags flags)
 {
 	if(transport->mode == ATM_CLIENT
 			&& appmessage_get_type(message) == AMT_CALL
-			&& acknowledge != 0)
+			&& (flags & ATF_ACKNOWLEDGE) != 0)
 		/* FIXME will wrap around after 2^32-1 acknowledgements */
 		appmessage_set_id(message, ++transport->id);
 	return transport->definition->client_send(transport->tplugin, message);

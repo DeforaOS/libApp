@@ -26,6 +26,10 @@
 /* AppTransport */
 /* protected */
 /* types */
+typedef unsigned int AppTransportFlags;
+# define ATF_ACKNOWLEDGE	0x1
+# define ATF_SYNC		0x2
+
 typedef struct _AppTransportHelper
 {
 	void * data;
@@ -57,7 +61,7 @@ String * apptransport_lookup(char const * app);
 
 /* ATM_CLIENT */
 int apptransport_client_send(AppTransport * transport, AppMessage * message,
-		int acknowledge);
+		AppTransportFlags flags);
 
 /* ATM_SERVER */
 int apptransport_server_register(AppTransport * transport, char const * app,

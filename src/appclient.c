@@ -44,6 +44,9 @@ struct _AppClient
 
 
 /* prototypes */
+static int _appclient_call_message(AppClient * appclient,
+		AppMessage * appmessage);
+
 /* helpers */
 static int _appclient_helper_message(void * data, AppTransport * transport,
 		AppTransportClient * client, AppMessage * message);
@@ -151,8 +154,7 @@ int appclient_callv(AppClient * appclient,
 	if((message = appinterface_messagev(appclient->interface, method, ap))
 			== NULL)
 		return -1;
-	/* FIXME obtain the answer (AICD_{,IN}OUT) */
-	ret = apptransport_client_send(appclient->transport, message, 1);
+	ret = _appclient_call_message(appclient, message);
 	appmessage_delete(message);
 	return ret;
 }
@@ -182,8 +184,7 @@ int appclient_call_variables(AppClient * appclient,
 	if((message = appinterface_message_variables(appclient->interface,
 					method, args)) == NULL)
 		return -1;
-	/* FIXME obtain the answer (AICD_{,IN}OUT) */
-	ret = apptransport_client_send(appclient->transport, message, 1);
+	ret = _appclient_call_message(appclient, message);
 	appmessage_delete(message);
 	return ret;
 }
@@ -199,14 +200,24 @@ int appclient_call_variablev(AppClient * appclient,
 	if((message = appinterface_message_variablev(appclient->interface,
 					method, args)) == NULL)
 		return -1;
-	/* FIXME obtain the answer (AICD_{,IN}OUT) */
-	ret = apptransport_client_send(appclient->transport, message, 1);
+	ret = _appclient_call_message(appclient, message);
 	appmessage_delete(message);
 	return ret;
 }
 
 
 /* private */
+/* appclient_call_message */
+static int _appclient_call_message(AppClient * appclient,
+		AppMessage * appmessage)
+{
+	/* FIXME obtain the answer (AICD_{,IN}OUT) */
+	return apptransport_client_send(appclient->transport, appmessage,
+			ATF_ACKNOWLEDGE);
+}
+
+
+/* helpers */
 /* appclient_helper_message */
 static int _helper_message_call(AppClient * appclient, AppTransport * transport,
 		AppMessage * message);
