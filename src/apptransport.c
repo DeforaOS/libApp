@@ -227,9 +227,8 @@ AppTransport * apptransport_new_plugin(AppTransportMode mode,
 	/* load the transport plug-in */
 	apptransport->plugin = plugin;
 	if(apptransport->name == NULL
-			|| (apptransport->definition = plugin_lookup(
-					apptransport->plugin, "transport"))
-			== NULL
+			|| (apptransport->definition = plugin_lookup(plugin,
+					"transport")) == NULL
 			|| apptransport->definition->init == NULL
 			|| apptransport->definition->destroy == NULL
 			|| (apptransport->tplugin
