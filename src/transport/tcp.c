@@ -118,6 +118,7 @@ static int _tcp_error(char const * message);
 
 /* servers */
 static int _tcp_server_add_client(TCP * tcp, TCPSocket * client);
+static int _tcp_server_remove_client(TCP * tcp, TCPSocket * client);
 
 /* sockets */
 static int _tcp_socket_init(TCPSocket * tcpsocket, int domain, int flags,
@@ -462,6 +463,25 @@ static int _tcp_server_add_client(TCP * tcp, TCPSocket * client)
 }
 
 
+/* tcp_server_remove_client */
+static int _tcp_server_remove_client(TCP * tcp, TCPSocket * client)
+{
+	size_t i;
+
+	for(i = 0; i < tcp->u.server.clients_cnt; i++)
+		if(tcp->u.server.clients[i] == client)
+			break;
+	if(i == tcp->u.server.clients_cnt)
+		return -1;
+	tcp->u.server.clients[i] = NULL;
+	_tcp_socket_delete(client);
+	for(i = tcp->u.server.clients_cnt;
+			i > 0 && tcp->u.server.clients[i - 1] == NULL;)
+		tcp->u.server.clients_cnt = --i;
+	return 0;
+}
+
+
 /* sockets */
 /* tcp_socket_init */
 static int _tcp_socket_init(TCPSocket * tcpsocket, int domain, int flags,
@@ -709,7 +729,8 @@ static int _tcp_callback_connect(int fd, TCP * tcp)
 
 
 /* tcp_socket_callback_read */
-static AppMessage * _socket_callback_message(TCPSocket * tcpsocket);
+static int _socket_callback_message(TCPSocket * tcpsocket,
+		AppMessage ** message);
 static void _socket_callback_read_client(TCPSocket * tcpsocket,
 		AppMessage * message);
 static void _socket_callback_read_server(TCPSocket * tcpsocket,
@@ -719,6 +740,7 @@ static int _socket_callback_recv(TCPSocket * tcpsocket);
 static int _tcp_socket_callback_read(int fd, TCPSocket * tcpsocket)
 {
 	AppMessage * message;
+	int res;
 
 #ifdef DEBUG
 	fprintf(stderr, "DEBUG: %s(%d)\n", __func__, fd);
@@ -728,7 +750,7 @@ static int _tcp_socket_callback_read(int fd, TCPSocket * tcpsocket)
 		return -1;
 	if(_socket_callback_recv(tcpsocket) != 0)
 		return -1;
-	while((message = _socket_callback_message(tcpsocket)) != NULL)
+	while((res = _socket_callback_message(tcpsocket, &message)) > 0)
 	{
 		switch(tcpsocket->tcp->mode)
 		{
@@ -743,32 +765,54 @@ static int _tcp_socket_callback_read(int fd, TCPSocket * tcpsocket)
 		}
 		appmessage_delete(message);
 	}
+	if(res < 0)
+	{
+		_tcp_server_remove_client(tcpsocket->tcp, tcpsocket);
+		return -1;
+	}
 	return 0;
 }
 
-static AppMessage * _socket_callback_message(TCPSocket * tcpsocket)
+static int _socket_callback_message(TCPSocket * tcpsocket,
+		AppMessage ** message)
 {
-	AppMessage * message = NULL;
+	int ret = 0;
 	size_t size;
 	Variable * variable;
 	Buffer * buffer;
+	uint32_t u32;
 
-	size = tcpsocket->bufin_cnt;
+	/* XXX assumes the serialized size is sizeof(u32) */
+	if((size = tcpsocket->bufin_cnt) < sizeof(u32))
+		return 0;
+	/* obtain the message size */
+	if((variable = variable_new_deserialize_type(VT_UINT32, &size,
+					tcpsocket->bufin)) == NULL)
+		return -1;
+	variable_get_as(variable, VT_UINT32, &u32);
+	variable_delete(variable);
+	/* verify the message size */
+	if(u32 > APPMESSAGE_MAX_SIZE)
+		return -error_set_code(E2BIG, "Message too big (%#x)", u32);
+	/* XXX assumes the serialized size is u32 */
+	if(u32 > tcpsocket->bufin_cnt)
+		return 0;
 	/* deserialize the data as a buffer (containing a message) */
+	size = tcpsocket->bufin_cnt;
 	if((variable = variable_new_deserialize_type(VT_BUFFER, &size,
 					tcpsocket->bufin)) == NULL)
-		/* XXX assumes not enough data was available */
-		return NULL;
+		return -1;
 	tcpsocket->bufin_cnt -= size;
 	memmove(tcpsocket->bufin, &tcpsocket->bufin[size],
 			tcpsocket->bufin_cnt);
 	if((variable_get_as(variable, VT_BUFFER, &buffer)) == 0)
 	{
-		message = appmessage_new_deserialize(buffer);
+		*message = appmessage_new_deserialize(buffer);
 		buffer_delete(buffer);
+		ret = (*message != NULL) ? 1 : -1;
 	}
 	variable_delete(variable);
-	return message;
+	return ret;
 }
 
 static void _socket_callback_read_client(TCPSocket * tcpsocket,
