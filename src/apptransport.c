@@ -471,6 +471,10 @@ static int _apptransport_helper_client_receive(AppTransport * transport,
 static int _apptransport_helper_receive(AppTransport * transport,
 		AppMessage * message)
 {
-	/* FIXME implement */
-	return -1;
+	if(transport->mode != ATM_CLIENT)
+		/* XXX improve the error message */
+		return -error_set_code(1, "Not a client");
+	transport->helper.message(transport->helper.data, transport, NULL,
+			message);
+	return 0;
 }

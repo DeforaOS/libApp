@@ -24,7 +24,7 @@
 #include <errno.h>
 #include <System.h>
 #include "App/appclient.h"
-#include "App/appmessage.h"
+#include "appmessage.h"
 #include "apptransport.h"
 #include "appinterface.h"
 
@@ -40,12 +40,14 @@ struct _AppClient
 	int event_free;
 	AppTransport * transport;
 	AppTransportHelper helper;
+	AppMessageID id;
+	int flag;
 };
 
 
 /* prototypes */
 static int _appclient_call_message(AppClient * appclient,
-		AppMessage * appmessage);
+		AppMessage * appmessage, Variable * result);
 
 /* helpers */
 static int _appclient_helper_message(void * data, AppTransport * transport,
@@ -81,6 +83,8 @@ AppClient * appclient_new_event(App * self, char const * app,
 	appclient->event_free = (event != NULL) ? 0 : 1;
 	appclient->transport = apptransport_new_app(ATM_CLIENT,
 			&appclient->helper, app, name, appclient->event);
+	appclient->id = 0;
+	appclient->flag = 0;
 	/* check for errors */
 	if(appclient->interface == NULL
 			|| appclient->transport == NULL
@@ -154,7 +158,8 @@ int appclient_callv(AppClient * appclient,
 	if((message = appinterface_messagev(appclient->interface, method, ap))
 			== NULL)
 		return -1;
-	ret = _appclient_call_message(appclient, message);
+	/* FIXME implement the result */
+	ret = _appclient_call_message(appclient, message, NULL);
 	appmessage_delete(message);
 	return ret;
 }
@@ -184,7 +189,7 @@ int appclient_call_variables(AppClient * appclient,
 	if((message = appinterface_message_variables(appclient->interface,
 					method, args)) == NULL)
 		return -1;
-	ret = _appclient_call_message(appclient, message);
+	ret = _appclient_call_message(appclient, message, result);
 	appmessage_delete(message);
 	return ret;
 }
@@ -200,7 +205,7 @@ int appclient_call_variablev(AppClient * appclient,
 	if((message = appinterface_message_variablev(appclient->interface,
 					method, args)) == NULL)
 		return -1;
-	ret = _appclient_call_message(appclient, message);
+	ret = _appclient_call_message(appclient, message, result);
 	appmessage_delete(message);
 	return ret;
 }
@@ -209,16 +214,25 @@ int appclient_call_variablev(AppClient * appclient,
 /* private */
 /* appclient_call_message */
 static int _appclient_call_message(AppClient * appclient,
-		AppMessage * appmessage)
+		AppMessage * appmessage, Variable * result)
 {
-	/* FIXME obtain the answer (AICD_{,IN}OUT) */
-	return apptransport_client_send(appclient->transport, appmessage,
-			ATF_ACKNOWLEDGE);
+	int ret;
+
+	if((ret = apptransport_client_send(appclient->transport, appmessage,
+					ATF_ACKNOWLEDGE)) != 0)
+		return ret;
+	appclient->id = appmessage_get_id(appmessage);
+	appclient->flag = 1;
+	event_loop_while(appclient->event, &appclient->flag);
+	/* FIXME obtain the answer (AICD_{,IN}OUT) and set the result */
+	return ret;
 }
 
 
 /* helpers */
 /* appclient_helper_message */
+static int _helper_message_acknowledgement(AppClient * appclient,
+		AppMessage * message);
 static int _helper_message_call(AppClient * appclient, AppTransport * transport,
 		AppMessage * message);
 
@@ -232,12 +246,24 @@ static int _appclient_helper_message(void * data, AppTransport * transport,
 		return -1;
 	switch(appmessage_get_type(message))
 	{
+		case AMT_ACKNOWLEDGEMENT:
+			return _helper_message_acknowledgement(appclient,
+					message);
 		case AMT_CALL:
 			return _helper_message_call(appclient, transport,
 					message);
 	}
 	/* FIXME implement */
 	return -1;
+}
+
+static int _helper_message_acknowledgement(AppClient * appclient,
+		AppMessage * message)
+{
+	/* stop looping if we were expecting this acknowledgement */
+	if(appmessage_get_id(message) == appclient->id)
+		appclient->flag = 0;
+	return 0;
 }
 
 static int _helper_message_call(AppClient * appclient, AppTransport * transport,
