@@ -379,7 +379,8 @@ static int _tcp_client_send(TCP * tcp, AppMessage * message)
 	if((buffer = buffer_new(0, NULL)) == NULL)
 		return -1;
 	if((ret = appmessage_serialize(message, buffer)) == 0
-			&& (ret = _tcp_socket_queue(&tcp->u.client, buffer)) == 0)
+			&& (ret = _tcp_socket_queue(&tcp->u.client,
+					buffer)) == 0)
 		event_loop(tcp->helper->event);
 	buffer_delete(buffer);
 	return ret;
