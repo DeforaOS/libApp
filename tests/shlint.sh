@@ -1,6 +1,6 @@
 #!/bin/sh
 #$Id$
-#Copyright (c) 2014-2017 Pierre Pronchery <khorben@defora.org>
+#Copyright (c) 2014-2020 Pierre Pronchery <khorben@defora.org>
 #
 #Redistribution and use in source and binary forms, with or without
 #modification, are permitted provided that the following conditions are met:
@@ -25,23 +25,27 @@
 
 
 #variables
+CONFIGSH="${0%/shlint.sh}/../config.sh"
 PROGNAME="shlint.sh"
 PROJECTCONF="../project.conf"
 #executables
 DATE="date"
 DEBUG="_debug"
 FIND="find"
+MKDIR="mkdir -p"
 SHLINT="sh -n"
 SORT="sort -n"
 TR="tr"
+
+[ -f "$CONFIGSH" ] && . "$CONFIGSH"
 
 
 #functions
 #shlint
 _shlint()
 {
-	ret=0
-	subdirs="data doc src tests tools"
+	res=0
+	subdirs=
 
 	$DATE
 	echo
@@ -56,6 +60,10 @@ _shlint()
 				;;
 		esac
 	done < "$PROJECTCONF"
+	if [ ! -n "$subdirs" ]; then
+		_error "Could not locate directories to analyze"
+		return $?
+	fi
 	for subdir in $subdirs; do
 		[ -d "../$subdir" ] || continue
 		for filename in $($FIND "../$subdir" -type f -a -name '*.sh' | $SORT); do
@@ -64,11 +72,11 @@ _shlint()
 				echo "$filename:"
 			else
 				echo "$PROGNAME: $filename: FAIL" 1>&2
-				ret=2
+				res=2
 			fi
 		done
 	done
-	return $ret
+	return $res
 }
 
 _shlint_file()
@@ -88,7 +96,7 @@ _shlint_file()
 		esac
 	done < "$filename"
 	if [ $warn -ne 0 ]; then
-		_warning "$filename: return instead of exit in the global scope"
+		_error "$filename: return instead of exit in the global scope"
 	fi
 	return 0
 }
@@ -106,19 +114,19 @@ _debug()
 }
 
 
+#error
+_error()
+{
+	echo "$PROGNAME: $@" 1>&2
+	return 2
+}
+
+
 #usage
 _usage()
 {
 	echo "Usage: $PROGNAME [-c] target..." 1>&2
 	return 1
-}
-
-
-#warning
-_warning()
-{
-	echo "$PROGNAME: $@" 1>&2
-	return 2
 }
 
 
@@ -151,9 +159,15 @@ fi
 [ $clean -ne 0 ] && exit 0
 
 exec 3>&1
+ret=0
 while [ $# -gt 0 ]; do
 	target="$1"
+	dirname="${target%/*}"
 	shift
 
-	_shlint > "$target"					|| exit 2
+	if [ -n "$dirname" -a "$dirname" != "$target" ]; then
+		$MKDIR -- "$dirname"				|| ret=$?
+	fi
+	_shlint > "$target"					|| ret=$?
 done
+exit $ret
