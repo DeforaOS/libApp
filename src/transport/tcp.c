@@ -762,7 +762,7 @@ static AppMessage * _socket_callback_message(TCPSocket * tcpsocket)
 	tcpsocket->bufin_cnt -= size;
 	memmove(tcpsocket->bufin, &tcpsocket->bufin[size],
 			tcpsocket->bufin_cnt);
-	if((variable_get_as(variable, VT_BUFFER, &buffer)) == 0)
+	if((variable_get_as(variable, VT_BUFFER, &buffer, NULL)) == 0)
 	{
 		message = appmessage_new_deserialize(buffer);
 		buffer_delete(buffer);

@@ -41,6 +41,7 @@ AppStatus * appstatus_new_config(Config * config, String const * section)
 	struct
 	{
 		size_t members;
+		String const ** names;
 		Variable ** variables;
 	} data;
 
@@ -52,7 +53,8 @@ AppStatus * appstatus_new_config(Config * config, String const * section)
 	if(data.members == 0)
 		appstatus->variable = NULL;
 	else if((appstatus->variable = variable_new_compound_variables(NULL,
-					data.members, data.variables)) == NULL)
+					data.members, data.names,
+					data.variables)) == NULL)
 	{
 		appstatus_delete(appstatus);
 		return NULL;
@@ -66,6 +68,7 @@ static void _new_config_foreach_section(String const * variable,
 	struct
 	{
 		size_t members;
+		String const ** names;
 		Variable ** variables;
 	} * d = data;
 

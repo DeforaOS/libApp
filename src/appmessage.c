@@ -239,7 +239,7 @@ AppMessage * appmessage_new_deserialize(Buffer * buffer)
 	pos += s;
 	size -= s;
 	/* XXX may fail */
-	variable_get_as(v, VT_UINT8, &u8);
+	variable_get_as(v, VT_UINT8, &u8, NULL);
 	variable_delete(v);
 	switch((message->type = u8))
 	{
@@ -292,7 +292,7 @@ static AppMessage * _new_deserialize_call(AppMessage * message,
 	}
 	pos += s;
 	/* XXX may fail */
-	variable_get_as(v, VT_STRING, &message->t.call.method);
+	variable_get_as(v, VT_STRING, &message->t.call.method, NULL);
 	variable_delete(v);
 #ifdef DEBUG
 	fprintf(stderr, "DEBUG: %s() \"%s\"\n", __func__,
@@ -347,7 +347,7 @@ static AppMessage * _new_deserialize_id(AppMessage * message, char const * data,
 		appmessage_delete(message);
 		return NULL;
 	}
-	ret = variable_get_as(v, VT_UINT32, &message->id);
+	ret = variable_get_as(v, VT_UINT32, &message->id, NULL);
 	variable_delete(v);
 	if(ret != 0)
 	{

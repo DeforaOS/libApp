@@ -675,7 +675,8 @@ int appinterface_callv(AppInterface * appinterface, App * app,
 	{
 		if(ret == 0 && result != NULL)
 			/* XXX return 0 anyway? */
-			ret = variable_get_as(r, call->type.type, *result);
+			ret = variable_get_as(r, call->type.type, *result,
+					NULL);
 		variable_delete(r);
 	}
 	/* FIXME also implement AICD_{,IN}OUT */

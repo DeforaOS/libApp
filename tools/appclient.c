@@ -213,7 +213,8 @@ static int _appclient_call(int verbose, AppClient * ac, AppClientCall * call)
 			case VT_UINT32:
 			case VT_INT64:
 			case VT_UINT64:
-				if(variable_get_as(v, VT_INT64, &res) == 0)
+				if(variable_get_as(v, VT_INT64, &res, NULL)
+						== 0)
 					printf("\"%s\"%s%ld\n", call->name,
 							" returned ", res);
 				else
@@ -222,7 +223,8 @@ static int _appclient_call(int verbose, AppClient * ac, AppClientCall * call)
 				break;
 			case VT_FLOAT:
 			case VT_DOUBLE:
-				if(variable_get_as(v, VT_DOUBLE, &dres) == 0)
+				if(variable_get_as(v, VT_DOUBLE, &dres, NULL)
+						== 0)
 					printf("\"%s\"%s%f\n", call->name,
 							" returned ", dres);
 				else
@@ -231,7 +233,8 @@ static int _appclient_call(int verbose, AppClient * ac, AppClientCall * call)
 				break;
 			case VT_STRING:
 				sres = NULL;
-				if(variable_get_as(v, VT_STRING, &sres) == 0)
+				if(variable_get_as(v, VT_STRING, &sres, NULL)
+						== 0)
 					printf("\"%s\"%s\"%s\"\n", call->name,
 							" returned ", sres);
 				else
