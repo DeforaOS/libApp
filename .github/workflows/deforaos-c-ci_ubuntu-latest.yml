@@ -18,7 +18,7 @@ jobs:
     - name: bootstrap configure
       run: git clone https://github.com/DeforaOS/configure.git configure && for dir in data src; do (cd configure/$dir && PKG_CONFIG_PATH="$HOME/opt/DeforaOS/lib/pkgconfig" make PREFIX="$HOME/opt/DeforaOS" install); done
     - name: bootstrap libMarshall
-      run: git clone https://github.com/DeforaOS/libMarshall.git libMarshall && $HOME/opt/DeforaOS/bin/configure -p "$HOME/opt/DeforaOS" libMarshall && for dir in include data src tools; do (cd libMarshall/$dir && make PREFIX="$HOME/opt/DeforaOS" install); done
+      run: git clone https://github.com/DeforaOS/libMarshall.git libMarshall && $HOME/opt/DeforaOS/bin/configure -p "$HOME/opt/DeforaOS" libMarshall && for dir in include data src tools; do (cd libMarshall/$dir && PKG_CONFIG_PATH="$HOME/opt/DeforaOS/lib/pkgconfig" make install); done
     - name: configure
       run: $HOME/opt/DeforaOS/bin/configure -p "$HOME/opt/DeforaOS"
     - name: make
