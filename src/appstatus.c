@@ -32,7 +32,8 @@ struct _AppStatus
 /* public */
 /* methods */
 /* appstatus_new */
-static void _new_config_foreach_section(String const * variable,
+static void _new_config_foreach_section(Config const * config,
+		String const * section, String const * variable,
 		String const * value, void * data);
 
 AppStatus * appstatus_new_config(Config * config, String const * section)
@@ -62,7 +63,8 @@ AppStatus * appstatus_new_config(Config * config, String const * section)
 	return appstatus;
 }
 
-static void _new_config_foreach_section(String const * variable,
+static void _new_config_foreach_section(Config const * config,
+		String const * section, String const * variable,
 		String const * value, void * data)
 {
 	struct
