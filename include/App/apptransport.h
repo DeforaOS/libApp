@@ -84,4 +84,8 @@ struct _AppTransportPluginDefinition
 			AppTransportClient * client, AppMessage * message);
 };
 
+
+/* constants */
+# define APP_TRANSPORT_PATH	APP_PATH "/transport"
+
 #endif /* !LIBAPP_APP_APPTRANSPORT_H */

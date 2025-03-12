@@ -25,4 +25,8 @@ typedef struct _App App;
 
 typedef struct _AppMessage AppMessage;
 
+
+/* constants */
+# define APP_PATH	"@LIBDIR@/App"
+
 #endif /* !LIBAPP_APP_APP_H */
