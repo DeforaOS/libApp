@@ -24,7 +24,7 @@
 #include <System.h>
 #include "App.h"
 
-#ifndef PROGNAME
+#ifndef PROGNAME_APPCLIENT
 # define PROGNAME_APPCLIENT "AppClient"
 #endif
 
