@@ -22,7 +22,7 @@
 #include <string.h>
 #include <errno.h>
 #include <System.h>
-#include "App.h"
+#include "App/appclient.h"
 
 #ifndef PROGNAME_APPCLIENT
 # define PROGNAME_APPCLIENT "AppClient"

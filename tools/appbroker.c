@@ -20,7 +20,8 @@
 #include <string.h>
 #include <errno.h>
 #include <System.h>
-#include "App.h"
+#include "App/appserver.h"
+#include "App/apptransport.h"
 
 #ifndef PROGNAME_APPBROKER
 # define PROGNAME_APPBROKER "AppBroker"
