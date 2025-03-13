@@ -95,9 +95,10 @@ static int _appclient_call(int verbose, AppClient * ac, AppClientCall * call)
 	int ret = 0;
 	Variable * v;
 	VariableType type;
-	int64_t res;
 	double dres;
+	int64_t ires;
 	String * sres;
+	uint64_t ures;
 
 #ifdef DEBUG
 	fprintf(stderr, "DEBUG: %s()\n", __func__);
@@ -206,17 +207,25 @@ static int _appclient_call(int verbose, AppClient * ac, AppClientCall * call)
 		{
 			case VT_BOOL:
 			case VT_INT8:
-			case VT_UINT8:
 			case VT_INT16:
-			case VT_UINT16:
 			case VT_INT32:
-			case VT_UINT32:
 			case VT_INT64:
-			case VT_UINT64:
-				if(variable_get_as(v, VT_INT64, &res, NULL)
+				if(variable_get_as(v, VT_INT64, &ires, NULL)
 						== 0)
 					printf("\"%s\"%s%ld\n", call->name,
-							" returned ", res);
+							" returned ", ires);
+				else
+					printf("\"%s\"%s\n", call->name,
+							" returned");
+				break;
+			case VT_UINT8:
+			case VT_UINT16:
+			case VT_UINT32:
+			case VT_UINT64:
+				if(variable_get_as(v, VT_UINT64, &ures, NULL)
+						== 0)
+					printf("\"%s\"%s%lu\n", call->name,
+							" returned ", ures);
 				else
 					printf("\"%s\"%s\n", call->name,
 							" returned");
