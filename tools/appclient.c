@@ -213,7 +213,8 @@ static int _appclient_call(int verbose, AppClient * ac, AppClientCall * call)
 			case VT_INT64:
 				if(variable_get_as(v, VT_INT64, &ires, NULL)
 						== 0)
-					printf("\"%s\"%s%" PRId64 "\n", call->name,
+					printf("\"%s\"%s%" PRId64 "\n",
+							call->name,
 							" returned ", ires);
 				else
 					printf("\"%s\"%s\n", call->name,
@@ -225,7 +226,8 @@ static int _appclient_call(int verbose, AppClient * ac, AppClientCall * call)
 			case VT_UINT64:
 				if(variable_get_as(v, VT_UINT64, &ures, NULL)
 						== 0)
-					printf("\"%s\"%s%" PRIu64 "\n", call->name,
+					printf("\"%s\"%s%" PRIu64 "\n",
+							call->name,
 							" returned ", ures);
 				else
 					printf("\"%s\"%s\n", call->name,
