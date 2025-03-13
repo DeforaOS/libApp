@@ -16,4 +16,5 @@
 
 
 #define UDP_DOMAIN AF_INET6
+#define TRANSPORT_DESCRIPTION	"Plain UDP (IPv6 only)"
 #include "udp.c"

@@ -126,7 +126,10 @@ static int _udp_callback_read(int fd, UDP * udp);
 AppTransportPluginDefinition transport =
 {
 	"UDP",
-	NULL,
+#ifndef TRANSPORT_DESCRIPTION
+# define TRANSPORT_DESCRIPTION	"Plain UDP"
+#endif
+	TRANSPORT_DESCRIPTION,
 	_udp_init,
 	_udp_destroy,
 	_udp_send,

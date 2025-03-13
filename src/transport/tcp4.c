@@ -15,5 +15,6 @@
 
 
 
-#define TCP_DOMAIN AF_INET
+#define TCP_DOMAIN		AF_INET
+#define TRANSPORT_DESCRIPTION	"Plain TCP/IP (IPv4 only)"
 #include "tcp.c"

@@ -144,7 +144,10 @@ static int _tcp_socket_callback_write(int fd, TCPSocket * tcpsocket);
 AppTransportPluginDefinition transport =
 {
 	"TCP",
-	NULL,
+#ifndef TRANSPORT_DESCRIPTION
+# define TRANSPORT_DESCRIPTION	"Plain TCP/IP"
+#endif
+	TRANSPORT_DESCRIPTION,
 	_tcp_init,
 	_tcp_destroy,
 	_tcp_client_send,

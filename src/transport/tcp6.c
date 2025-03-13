@@ -16,4 +16,5 @@
 
 
 #define TCP_DOMAIN AF_INET6
+#define TRANSPORT_DESCRIPTION	"Plain TCP/IP (IPv6 only)"
 #include "tcp.c"
