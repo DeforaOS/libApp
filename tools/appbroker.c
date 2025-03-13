@@ -22,7 +22,9 @@
 #include <System.h>
 #include "App.h"
 
-#define PROGNAME_APPBROKER "AppBroker"
+#ifndef PROGNAME_APPBROKER
+# define PROGNAME_APPBROKER "AppBroker"
+#endif
 
 
 /* AppBroker */
