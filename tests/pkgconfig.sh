@@ -55,18 +55,14 @@ _pkgconfig()
 )}
 
 _pkgconfig_do()
-{(
-	ret=0
+{
 	caption="$1"
 	options="$2"
 	packages="$3"
 
 	$ECHO -n "$caption"
-	output=$($PKGCONFIG $options "$packages")
-	ret=$?
-	echo "$output"
-	return $ret
-)}
+	PKG_CONFIG_PATH="$PKG_CONFIG_PATH" $PKGCONFIG $options "$packages"
+}
 
 
 #usage
