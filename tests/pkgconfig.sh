@@ -23,18 +23,39 @@
 #OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 
+
 #variables
-PACKAGE="libApp"
+CONFIGSH="${0%/pkgconfig.sh}/../config.sh"
 PKG_CONFIG_PATH="$OBJDIR../data:$PKG_CONFIG_PATH"
 PKG_CONFIG_PATH="${PKG_CONFIG_PATH%:}"
+PROGNAME="pkgconfig.sh"
 #executables
 ECHO="echo"
 PKGCONFIG="pkg-config"
 UNAME="uname"
 [ "$($UNAME -s)" != "Darwin" ] || ECHO="/bin/echo"
 
+[ -f "$CONFIGSH" ] && . "$CONFIGSH"
+
+
+#functions
+#pkgconfig
 _pkgconfig()
-{
+{(
+	ret=0
+
+	_pkgconfig_do "EXISTS:" --exists "$PACKAGE"		|| return 2
+
+	_pkgconfig_do "VERSION:" --modversion "$PACKAGE"	|| ret=3
+	_pkgconfig_do "CFLAGS:	" --cflags "$PACKAGE"		|| ret=4
+	_pkgconfig_do "LIBS:	" --libs "$PACKAGE"		|| ret=5
+	_pkgconfig_do "PROVIDES:" --print-provides "$PACKAGE"	|| ret=6
+	_pkgconfig_do "REQUIRES:" --print-requires "$PACKAGE"	|| ret=7
+	return $ret
+)}
+
+_pkgconfig_do()
+{(
 	ret=0
 	caption="$1"
 	options="$2"
@@ -45,16 +66,55 @@ _pkgconfig()
 	ret=$?
 	echo "$output"
 	return $ret
+)}
+
+
+#usage
+_usage()
+{
+	echo "Usage: $PROGNAME [-c] target..." 1>&2
+	return 1
 }
 
-_pkgconfig "EXISTS:" --exists "$PACKAGE"			|| exit 2
 
+#main
+clean=0
+while getopts "cO:P:" name; do
+	case "$name" in
+		c)
+			clean=1
+			;;
+		O)
+			export "${OPTARG%%=*}"="${OPTARG#*=}"
+			;;
+		P)
+			#XXX ignored for compatibility
+			;;
+		?)
+			_usage
+			exit $?
+			;;
+	esac
+done
+shift $((OPTIND - 1))
+if [ $# -lt 1 ]; then
+	_usage
+	exit $?
+fi
+
+#clean
+[ $clean -ne 0 ] && exit 0
+
+exec 3>&1
 ret=0
+while [ $# -gt 0 ]; do
+	target="$1"
+	dirname="${target%/*}"
+	shift
 
-_pkgconfig "VERSION:" --modversion "$PACKAGE"			|| ret=3
-_pkgconfig "CFLAGS:	" --cflags "$PACKAGE"			|| ret=4
-_pkgconfig "LIBS:	" --libs "$PACKAGE"			|| ret=5
-_pkgconfig "PROVIDES:" --print-provides "$PACKAGE"		|| ret=6
-_pkgconfig "REQUIRES:" --print-requires "$PACKAGE"		|| ret=7
-
+	if [ -n "$dirname" -a "$dirname" != "$target" ]; then
+		$MKDIR -- "$dirname"				|| ret=$?
+	fi
+	_pkgconfig > "$target"					|| ret=$?
+done
 exit $ret
