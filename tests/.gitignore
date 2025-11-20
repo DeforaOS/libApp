@@ -10,6 +10,7 @@
 /fixme.log
 /includes
 /lookup
+/pclint.log
 /pkgconfig.log
 /shlint.log
 /tests.log
